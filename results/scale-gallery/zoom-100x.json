@@ -1,0 +1,50 @@
+{
+ "raster": "results/upscale100/raster_c100.f64",
+ "width": 8192,
+ "height": 5760,
+ "somata_in_raster": 13924100,
+ "somata_expected": 13924100,
+ "occupied_pixels": 7691492,
+ "max_count_per_pixel": 22.0,
+ "nm_per_pixel_x": 28.076,
+ "nm_per_pixel_y": 28.073,
+ "levels": [
+  {
+   "level": 0,
+   "width": 8192,
+   "height": 5760,
+   "tiles": 736
+  },
+  {
+   "level": 1,
+   "width": 4096,
+   "height": 2880,
+   "tiles": 192
+  },
+  {
+   "level": 2,
+   "width": 2048,
+   "height": 1440,
+   "tiles": 48
+  },
+  {
+   "level": 3,
+   "width": 1024,
+   "height": 720,
+   "tiles": 12
+  },
+  {
+   "level": 4,
+   "width": 512,
+   "height": 360,
+   "tiles": 4
+  },
+  {
+   "level": 5,
+   "width": 256,
+   "height": 180,
+   "tiles": 1
+  }
+ ],
+ "note": "built by scripts/deep_zoom.py from the Vyb/CUDA raster; counts come from the same placement pass that produced children.bin"
+}

@@ -61,7 +61,14 @@ def main() -> int:
     ap.add_argument("--c", type=int, default=100)
     args = ap.parse_args()
 
-    path = Path(args.raster)
+    path = Path(args.raster).resolve()
+
+    def rel(p: Path) -> str:
+        try:
+            return str(p.relative_to(ROOT))
+        except ValueError:
+            return str(p)          # a raster outside the repo is fine; just do not pretend it is inside
+
     arr = np.memmap(path, dtype="<f8", mode="r", shape=(args.height, args.width))
     total = float(arr.sum())
     expected = args.n_parents * args.c
@@ -140,7 +147,7 @@ OpenSeadragon({{ id: "osd", prefixUrl:
         (OUT / "zoom-100x.html").write_text(html)
         print(f"  wrote {OUT.relative_to(ROOT)}/zoom-100x.dzi, zoom-100x.html")
         (OUT / "zoom-100x.json").write_text(json.dumps({
-            "raster": str(path.relative_to(ROOT)),
+            "raster": rel(path),
             "width": args.width, "height": args.height,
             "somata_in_raster": int(round(total)), "somata_expected": expected,
             "occupied_pixels": nonzero, "max_count_per_pixel": float(arr.max()),
