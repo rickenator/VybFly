@@ -1,0 +1,99 @@
+// Minimal repros: 32-bit device stores and atomics are lowered as 64-bit operations.
+//
+// Verified on upstream main 5167646 (2026-09-18) AND on Vyb 0.7.5 - the emitted PTX is
+// byte-identical for both, so this is neither a regression nor a fix.
+//
+//   st_f32(out + i*4, 1.5)
+//       emits:  mov.u64 %rd21, 4609434218613702656   ; st.global.u64 [%rd23], %rd21
+//       i.e. the f64 bit pattern of 1.5 and an EIGHT-byte store through a 4-byte-typed pointer.
+//       Expected: st.global.f32 with 0x3FC00000. Symptom: launch returns 0, the next
+//       cuCtxSynchronize returns 716, and the context is poisoned for every later call.
+//
+//   atomic_add_i32(buf + idx*4, 1)
+//       emits:  atom.global.add.u64 %rd32, [%rd31], 1
+//       i.e. an eight-byte atomic into four-byte cells, which writes past the last cell.
+//       Expected: atom.global.add.u32. Same 716 symptom.
+//
+// The controls below are lowered correctly (st_f64 -> st.global.u64, st_i32 -> st.global.u32,
+// atomic_add_f64 -> atom.global.add.f64) and stay green, which is what isolates the fault to the
+// 32-bit paths rather than to atomics or stores in general.
+//
+// Show the evidence (no GPU needed; ptxas validates the module as it is emitted):
+//   VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb --kernel \
+//       src/vyb_kernels/probes/probe_width.vyb --ptx /tmp/probe_width.ptx
+//   grep -E "st.global|atom.global" /tmp/probe_width.ptx
+//
+// Observed on an RTX 3090 through the main runner in src/vyb_kernels/upscale100.vyb before its
+// probe launches were withdrawn: the f32-store kernel and the array-i32-atomic kernel each returned
+// launch 0 with the next cuCtxSynchronize returning 716, and the context stayed poisoned afterwards.
+// The same class shows up as silent corruption rather than a fault when the array is larger than the
+// overrun: writing sigma[139255] as per-neuron 4-byte values left all but the first entry reading
+// zero and collapsed 98.6% of the 100x children onto their parents.
+//
+// A host-side runner for these probes is not committed yet; only the kernels and the PTX evidence are.
+
+// control: 64-bit float store (8-byte record, correct)
+st_f64_probe(dsc<Int>) -> {
+    out<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        st_f64(out + gid * 8, 1.5)
+        gid = gid + stride
+    }
+}
+
+// control: 32-bit integer store (4-byte record, correct)
+st_i32_probe(dsc<Int>) -> {
+    out<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        st_i32(out + gid * 4, 7)
+        gid = gid + stride
+    }
+}
+
+// control: array atomic on f64 (correct)
+atomic_f64_probe(dsc<Int>) -> {
+    buf<Int> = ld_i64(dsc + 0) as Int
+    cnt<Int> = ld_i64(dsc + 8) as Int
+    n<Int> = ld_i64(dsc + 16) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        idx<Int> = gid % 1024
+        atomic_add_f64(buf + idx * 8, 1.0)
+        atomic_add_i32(cnt, 1)
+        gid = gid + stride
+    }
+}
+
+// DEFECT 1: f32 store
+st_f32_probe(dsc<Int>) -> {
+    out<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        st_f32(out + gid * 4, 1.5)
+        gid = gid + stride
+    }
+}
+
+// DEFECT 2: 32-bit array atomic with a computed index
+atomic_i32_array_probe(dsc<Int>) -> {
+    buf<Int> = ld_i64(dsc + 0) as Int
+    cnt<Int> = ld_i64(dsc + 8) as Int
+    n<Int> = ld_i64(dsc + 16) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        idx<Int> = gid % 1024
+        atomic_add_i32(buf + idx * 4, 1)
+        atomic_add_i32(cnt, 1)
+        gid = gid + stride
+    }
+}

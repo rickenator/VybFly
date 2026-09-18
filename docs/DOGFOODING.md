@@ -26,7 +26,7 @@ Two device-code faults appeared only under this workload:
    `probe_stf32`.
 2. An array `atomic_add_i32` with a computed index faults once the index is actually in range,
    while a scalar `atomic_add_i32` and an array `atomic_add_f64` both work. The repro is
-   `probe_loop_f64`.
+   `probe_width.vyb (with probe_loop_f64 still in upscale_kernel.vyb)`.
 
 Both repros are committed in `src/vyb_kernels/upscale_kernel.vyb`, and `docs/VYB-PORT.md` records
 them.

@@ -238,6 +238,26 @@ convention), `coord_checksum` counts 139,241 usable somata and rejects exactly t
 position, and each scale's raster must sum to `n_parents * c` exactly. Those are checks against
 values the project already published, not a second implementation.
 
+### Root cause (found on upstream main 5167646, 2026-09-18)
+
+32-bit device stores and atomics are **lowered as 64-bit** operations. Minimal repros and the exact
+PTX are in `src/vyb_kernels/probes/probe_width.vyb`:
+
+```
+st_f32(out + i*4, 1.5)      ->  mov.u64 %rd21, 4609434218613702656 ; st.global.u64 [%rd23], %rd21
+atomic_add_i32(buf + i*4, 1) -> atom.global.add.u64 %rd28, [%rd27], 1
+st_i32(out + i*4, 7)         ->  two st.global.u32 halves (one 8-byte store split in two)
+```
+
+Expected: `st.global.f32` / `atom.global.add.u32` / one `st.global.u32`. The 64-bit lowering is
+harmless when the destination really is an 8-byte slot (which is why a *scalar* `atomic_add_i32`
+counter survives) and destructive when it is not: an array atomic writes past the last cell, and an
+`i32` array written element-wise is clobbered by its own left neighbour - which is precisely what
+turned every sigma entry except the first into zero.
+
+Controls that lower correctly and stay green: `st_f64` -> `st.global.u64`, `atomic_add_f64` ->
+`atom.global.add.f64`.
+
 ### The one that actually blocked the deliverable
 
 | Device feature | Verdict |

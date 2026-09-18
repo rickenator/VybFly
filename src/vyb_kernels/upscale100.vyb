@@ -676,11 +676,10 @@ main()<Int> -> {
 
     println("upscale100 stage=" + stage)
     println("device_free_bytes=" + dev_free.to_string() + " total=" + dev_total.to_string())
-    println("probe_loop_f64 rc=" + rc_p1.to_string() + " sync=" + s_rc_p1.to_string()
-            + " sum=" + ((probe_f64_sum * 1000.0) as Int).to_string() + " (expect ~24576 = 4096*6)")
-    println("probe_stf32  rc=" + rc_p2.to_string() + " sync=" + s_rc_p2.to_string()
-            + " (launch clean, sync 716: st_f32 faults the device; probe withdrawn so the context"
-            + " stays usable)")
+    println("note: the probe_loop_f64 / probe_stf32 launches are withdrawn from this runner "
+            + "(a device fault poisons the context); the numbers below are initializer zeros, "
+            + "not measurements. The real repros are src/vyb_kernels/probes/probe_width*.vyb")
+
     println("launch_rc thr/grid/sig/place/stats=" + rc_thr.to_string() + "/" + rc_grid.to_string() + "/"
             + rc_sig.to_string() + "/" + rc_place.to_string() + "/" + rc_stats.to_string())
     println("sync_rc grid/sig/place/stats=" + s_rc_grid.to_string() + "/" + s_rc_sig.to_string() + "/"
