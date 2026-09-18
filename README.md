@@ -7,7 +7,7 @@ behaves like a brain.
 
 ---
 
-## What is this, in plain words
+## What is this
 
 A fruit fly has about **139,000 neurons** and roughly **500 million synapses** — the tiny
 connection points where one neuron talks to another. In 2024 a large collaboration called
