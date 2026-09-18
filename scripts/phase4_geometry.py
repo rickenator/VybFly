@@ -7,7 +7,7 @@ Fits and compares candidate geometries for the connectome's latent scale space:
   * anatomical 3-D Euclidean coordinates (the published annotation position),
   * the 2-D Euclidean projection of those coordinates,
   * a 2-D hyperbolic (Poincare ball) embedding fitted by SGD on the connection law,
-  * normalised-Laplacian spectral embeddings at 16 and 32 dimensions,
+  * normalized-Laplacian spectral embeddings at 16 and 32 dimensions,
 
 against a degree-only baseline (product of total degrees). Held-out quality is ROC AUC
 and average precision on train/test-split connections plus the mean Bernoulli
@@ -188,10 +188,10 @@ def write_summary(path: Path, results: dict, protocol: dict, extra: dict) -> str
                      f"{b['heldout']['auc']:.4f}, AP {b['heldout']['average_precision']:.4f}, "
                      f"in-sample AUC {b['in_sample_auc'] if b['in_sample_auc'] is None else round(b['in_sample_auc'], 4)}")
         L.append("")
-        L.append("  The uniform-radius initialisation puts no degree information into the")
-        L.append("  starting point; the degree-ranked initialisation starts the hubs near the")
+        L.append("  The uniform-radius initialization puts no degree information into the")
+        L.append("  starting point; the degree-ranked initialization starts the hubs near the")
         L.append("  origin. Comparing the two at the same budget separates 'the latent geometry")
-        L.append("  captures connectivity' from 'the initialisation handed the model the degree")
+        L.append("  captures connectivity' from 'the initialization handed the model the degree")
         L.append("  ranking, which the degree-only baseline already scores well'.")
     L.append("")
     L.append("Headline (fair statement of what the numbers show)")
@@ -266,12 +266,12 @@ def write_summary(path: Path, results: dict, protocol: dict, extra: dict) -> str
              "and its optimum moves with the sampled non-edges, so the delivered embedding is "
              "one sample from that distribution"
              + (" (run_to_run_sensitivity.json quantifies it)" if extra.get("run_to_run") else ""))
-    L.append("  * the hyperbolic fit is initialised by total-degree rank (hubs near the origin); "
-             + ("the budget study shows a uniform-radius initialisation (no degree information) "
+    L.append("  * the hyperbolic fit is initialized by total-degree rank (hubs near the origin); "
+             + ("the budget study shows a uniform-radius initialization (no degree information) "
                 "reaches a comparable optimum at the same budget, so "
-                if extra.get("budget_study") else "a uniform-radius initialisation ")
+                if extra.get("budget_study") else "a uniform-radius initialization ")
              + "the advantage over the anatomical coordinates does not depend on that "
-               "initialisation")
+               "initialization")
     L.append("  * the fitted (R, T) are in each geometry's own distance units (nanometres for "
              "the anatomical coordinates, eigenmap units for the spectral ones), so only "
              "within-geometry readings are meaningful: e.g. for anatomy R = 3.9e4 nm against a "
@@ -299,8 +299,8 @@ def write_summary(path: Path, results: dict, protocol: dict, extra: dict) -> str
 BUDGET_STUDY_NOTE = (
     "exploratory: each configuration is scored on the same held-out pairs, so these numbers "
     "are reported for transparency about the training budget. The uniform-radius "
-    "initialisation carries no degree information, so comparing it with the degree-ranked "
-    "initialisation at the same budget separates 'the latent geometry captures connectivity' "
+    "initialization carries no degree information, so comparing it with the degree-ranked "
+    "initialization at the same budget separates 'the latent geometry captures connectivity' "
     "from 'the starting point handed the model the degree ranking'."
 )
 
@@ -478,7 +478,7 @@ def main() -> int:
     geometries["anatomical_xy"] = {"coords": X2, "kind": "euclidean"}
     # auxiliary: PCA of the 3-D coordinates to 2-D, and per-axis standardisation (the
     # published z axis has a much smaller range than x/y, so the comparison is also run
-    # with each axis standardised to unit variance)
+    # with each axis standardized to unit variance)
     Xc = X3 - np.nanmean(X3, axis=0)
     Xf = np.where(np.isfinite(Xc), Xc, 0.0)
     _, _, Vt = np.linalg.svd(Xf, full_matrices=False)
@@ -618,7 +618,7 @@ def main() -> int:
                if k not in ("pairs", "eval_node_mask", "deg_total_fit")},
             "analysis_graph": "undirected, autapse-free, unweighted projection of "
                               f"Connectome.thresholded({args.threshold})",
-            "analysis_nodes_reason": "normalised-Laplacian eigenmaps are undefined on a "
+            "analysis_nodes_reason": "normalized-Laplacian eigenmaps are undefined on a "
                                      "disconnected graph (each component contributes a trivial "
                                      "eigenvalue 1), so the analysis is restricted to the giant "
                                      "weakly-connected component; every geometry is fit and "
@@ -638,7 +638,7 @@ def main() -> int:
                 "log_likelihood_mean": "mean Bernoulli log-likelihood of the held-out pairs "
                                        "under the fitted law (balanced-sample calibration)",
             },
-            "spectral_definition": "normalised-Laplacian eigenmaps psi_j(i) = u_j(i)/sqrt(deg_i), "
+            "spectral_definition": "normalized-Laplacian eigenmaps psi_j(i) = u_j(i)/sqrt(deg_i), "
                                    "u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
             "prevalence_pi_used_for_density_matching": prevalence_full,
             "prevalence_definition": "undirected connections of the thresholded graph / "

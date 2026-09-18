@@ -16,7 +16,7 @@ DATASET AND ENVIRONMENT
 
 WHAT WAS RUN AT EVERY SCALE
   graphs:      canonical v783 thresholded at 5 synapses (1x), then renorm.upscale to
-               2x/5x/10x with the recorded geometry (standardised anatomical xyz,
+               2x/5x/10x with the recorded geometry (standardized anatomical xyz,
                P(connect)=1/(1+exp((d-R)/T)) fit on the graph itself)
        1x: N=139,255  connections=2,700,513  synapses=34,153,566
        2x: N=278,510  connections=5,187,641  synapses=68,433,997
@@ -75,7 +75,7 @@ CAPABILITY TABLE (one row per scale)
     complexity: distinct-pattern ratio              1.0000      1.0000      1.0000      1.0000
     complexity: readout unit coverage               0.7452      0.7224      0.7298      0.7335
     complexity: stimulus-response MI (bits)         6.2984      6.5433      6.5850      6.5850
-    complexity: normalised MI                       0.9565      0.9937      1.0000      1.0000
+    complexity: normalized MI                       0.9565      0.9937      1.0000      1.0000
     complexity: MI at the class ceiling              False       False        True        True
     complexity: avalanche size exponent             0.3466      0.5079      0.0254      0.0929
     complexity: avalanche exponent R^2              0.3142      0.2675      0.0003      0.0036
@@ -166,7 +166,7 @@ DID CAPABILITY GROW WITH SCALE? (the honest answer, metric by metric)
     - robustness_accuracy_at_max_synapses_lesion (alpha=0.187, R2=0.8435385344531238)
     - robustness_max_tolerated_rate_synapses (alpha=0.132, R2=0.8435385344531237)
   grew, but the evidence is marginal (small exponent, weak fit, or a grid/ceiling
-  artefact - do not quote these as scaling laws without the caveat):
+  artifact - do not quote these as scaling laws without the caveat):
     - components_for_90pct_variance (alpha=0.096, R2=0.9420597323673412)  [small exponent or weak fit]
     - discrimination_bits_at_finest_delta (alpha=0.303, R2=0.34218206345838353)  [small exponent or weak fit]
     - discrimination_bits_at_overlap_0.95 (alpha=0.303, R2=0.34218206345838353)  [small exponent or weak fit]

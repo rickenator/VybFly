@@ -42,5 +42,5 @@ the two runs from overwriting each other.
 Related, and already fixed: scripts/phase7_closure.py used to reset its output file at
 startup, so starting a run for one factor erased the factors a previous run established. It
 now merges with any scales already on disk. The 2x closure result (composite 0.018407118,
-normalised degree Wasserstein 0.007422, motif L1 1.0638e-05, community ARI 0.911867) was
+normalized degree Wasserstein 0.007422, motif L1 1.0638e-05, community ARI 0.911867) was
 measured before that overwrite and is reproduced in the report and in docs/ROADMAP.md.

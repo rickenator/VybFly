@@ -301,7 +301,7 @@
   "analysis_graph": "undirected, autapse-free, unweighted projection of Connectome.thresholded(5)",
   "analysis_node_fraction": 0.9492011058848875,
   "analysis_nodes": 132181,
-  "analysis_nodes_reason": "normalised-Laplacian eigenmaps are undefined on a disconnected graph (each component contributes a trivial eigenvalue 1), so the analysis is restricted to the giant weakly-connected component; every geometry is fit and scored on that same node set",
+  "analysis_nodes_reason": "normalized-Laplacian eigenmaps are undefined on a disconnected graph (each component contributes a trivial eigenvalue 1), so the analysis is restricted to the giant weakly-connected component; every geometry is fit and scored on that same node set",
   "build_seconds": 2.6,
   "connection_law": "P(connect|d) = 1/(1+exp((d-R)/T)) fitted by maximum likelihood on the fit pairs (balanced 1:1) for each geometry and for the degree baseline (logistic in the summed log degrees)",
   "degrees": {
@@ -334,7 +334,7 @@
   "prevalence_definition": "undirected connections of the thresholded graph / (analysis_nodes choose 2)",
   "prevalence_pi_used_for_density_matching": 0.0003091302372859114,
   "seed": 0,
-  "spectral_definition": "normalised-Laplacian eigenmaps psi_j(i) = u_j(i)/sqrt(deg_i), u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
+  "spectral_definition": "normalized-Laplacian eigenmaps psi_j(i) = u_j(i)/sqrt(deg_i), u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
   "test_edges_inside_giant": 269478,
   "test_frac": 0.1,
   "threshold": 5
@@ -1055,7 +1055,7 @@
     "0.5": 114486002.0
    }
   },
-  "purpose": "documents the g_syn operating point: the same Level-1 stimulus at several synaptic gains, 0.5 s each, dense engine only. The default g_syn = 0.15 is an intermediate point of the ladder - sparse enough to keep the event-driven engine cheap, but with clear recurrent recruitment beyond the driven sensory neurons. The ladder is recorded so the choice can be re-derived rather than trusted; it is a recorded operating point, not an optimised one.",
+  "purpose": "documents the g_syn operating point: the same Level-1 stimulus at several synaptic gains, 0.5 s each, dense engine only. The default g_syn = 0.15 is an intermediate point of the ladder - sparse enough to keep the event-driven engine cheap, but with clear recurrent recruitment beyond the driven sensory neurons. The ladder is recorded so the choice can be re-derived rather than trusted; it is a recorded operating point, not an optimized one.",
   "runs": {
    "0.05": {
     "fraction_neurons_active": 0.086252,
@@ -2080,8 +2080,8 @@
  "mb_annotations": {
   "annotation_caveats": [
    "Kenyon cells carry top_nt == 'dopamine' in neurons.parquet for 5172/5177 cells while known_nt is 'acetylcholine; sNPF; ...' for every one of them (known_nt_source: Barnstedt 2016 / Johard 2008 / Aso 2019). top_nt is therefore not trustworthy for Kenyon cells in this canonical build and was NOT used. The neuropil-level nt_code on KC->MBON edges is acetylcholine for 100% of those edges (21438/21438 at thr=5), which is the transmitter check actually used here.",
-   "cell_class 'ALPN' (685) = cell_sub_class uniglomerular (277) + multiglomerular (400) + 8 unlabelled; only the 277 uniglomerular cells define the 56 glomerulus channels. The multiglomerular cells stay unassigned (channel -1) because they genuinely innervate several glomeruli, so an odour over 5 glomeruli drives 284 of the 685 ALPNs.",
-   "cell_class 'olfactory' (2281, all cell_type ORN_*) is the olfactory receptor neuron population. It is not used: FlyWire contains no odour data, so an ORN layer would add purely synthetic structure.",
+   "cell_class 'ALPN' (685) = cell_sub_class uniglomerular (277) + multiglomerular (400) + 8 unlabelled; only the 277 uniglomerular cells define the 56 glomerulus channels. The multiglomerular cells stay unassigned (channel -1) because they genuinely innervate several glomeruli, so an odor over 5 glomeruli drives 284 of the 685 ALPNs.",
+   "cell_class 'olfactory' (2281, all cell_type ORN_*) is the olfactory receptor neuron population. It is not used: FlyWire contains no odor data, so an ORN layer would add purely synthetic structure.",
    "MBON cell_class holds 96 neurons; MBON25 and MBON34 share the cell_type 'MBON25,MBON34' and two cells are published as MBON15-like / MBON17-like.",
    "4 'MBIN' (mushroom-body input) neurons exist in cell_class but are not used: the MB intrinsic layer is not part of this pathway."
   ],
@@ -5458,7 +5458,7 @@
     true,
     true
    ],
-   "criterion": "Minimum success - 2x synthetic connectome preserving statistics, renormalising back toward the real graph, executing stably, retaining baseline circuit behaviour",
+   "criterion": "Minimum success - 2x synthetic connectome preserving statistics, renormalising back toward the real graph, executing stably, retaining baseline circuit behavior",
    "evidence": [
     "2x closure composite=0.018407118 degree_wasserstein_normalised=0.007422",
     "downscaled dynamics jaccard>0.5: True",

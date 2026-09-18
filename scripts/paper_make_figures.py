@@ -19,6 +19,7 @@ import heapq
 import numpy as np
 import pandas as pd
 from matplotlib.patches import Circle
+from matplotlib.ticker import LogLocator
 
 ROOT = Path(__file__).resolve().parents[1]
 RES = ROOT / "results"
@@ -28,15 +29,31 @@ FIGS.mkdir(parents=True, exist_ok=True)
 D = json.loads((PAPER / "data.json").read_text())
 
 plt.rcParams.update({
-    "font.size": 9, "axes.titlesize": 10, "axes.labelsize": 9,
+    "font.size": 8, "axes.titlesize": 8.5, "axes.labelsize": 8,
+    "xtick.labelsize": 7.5, "ytick.labelsize": 7.5, "legend.fontsize": 7.5,
     "figure.dpi": 160, "savefig.bbox": "tight", "axes.grid": True,
-    "grid.alpha": 0.25, "grid.linewidth": 0.5, "axes.axisbelow": True,
-    "legend.frameon": False, "font.family": "DejaVu Sans",
+    "axes.titlepad": 3.0, "xtick.major.pad": 5.0, "ytick.major.pad": 3.0, "grid.alpha": 0.25, "grid.linewidth": 0.5,
+    "axes.axisbelow": True, "legend.frameon": False, "font.family": "DejaVu Sans",
+    # constrained layout keeps titles, tick labels and legends out of each other's way; the
+    # figures are small, so this is the difference between readable and collided
+    "figure.constrained_layout.use": True,
+    "figure.constrained_layout.h_pad": 0.06,
+    "figure.constrained_layout.w_pad": 0.06,
 })
 INK = "#1b1f24"
 ACCENT = "#0b6fa4"
 WARM = "#c1121f"
 MUTED = "#6c757d"
+
+
+def thin(ax, n: int = 3) -> None:
+    """Fewer, wider-spaced decade labels.
+
+    Dense log ticks made adjacent panels' labels overlap each other, which is what read as
+    "the figures have overlapping text".
+    """
+    ax.xaxis.set_major_locator(LogLocator(base=10.0, subs=(1.0,), numticks=n))
+    ax.yaxis.set_major_locator(LogLocator(base=10.0, subs=(1.0,), numticks=n))
 
 
 def save(fig, name: str) -> None:
@@ -80,13 +97,13 @@ def cover() -> None:
     axm.scatter(x[mbon], y[mbon], s=3.6, c="#ff2d78", alpha=0.90, linewidths=0)
     axm.scatter(x[kc], y[kc], s=1.2, c="#ffd166", alpha=0.72, linewidths=0)
     # limits from the data with symmetric padding: hard-coded limits were asymmetric and pushed
-    # the brain about 5% right of the page centre
-    # centre on the robust extent (0.05-99.95 percentile), not the raw min/max: a handful of
-    # stray somata stretch the raw range and push the body of the brain off-centre
+    # the brain about 5% right of the page center
+    # center on the robust extent (0.05-99.95 percentile), not the raw min/max: a handful of
+    # stray somata stretch the raw range and push the body of the brain off-center
     xlo, xhi = (float(v) for v in np.nanpercentile(x, [0.05, 99.95]))
     ylo, yhi = (float(v) for v in np.nanpercentile(y, [0.05, 99.95]))
-    # centre on the median, not the extent midpoint: the brain's mass centroid sits ~8um right
-    # of the midpoint of its own bounding box, which is what read as "off centre"
+    # center on the median, not the extent midpoint: the brain's mass centroid sits ~8um right
+    # of the midpoint of its own bounding box, which is what read as "off center"
     xc, yc = float(np.nanmedian(x)), float(np.nanmedian(y))
     hx, hy = 0.5 * (xhi - xlo) * 1.02, 0.5 * (yhi - ylo) * 1.12
     axm.set_xlim(xc - hx, xc + hx)
@@ -223,7 +240,7 @@ def cover() -> None:
              "every mark on this cover is measured data. the brain is the FlyWire v783 connectome, all "
              "139,255 neurons at their soma positions,\n"
              "with the mushroom-body circuit highlighted; the small panel is a real circuit (edge width = "
-             "synapse count, edge colour = predicted transmitter,\n"
+             "synapse count, edge color = predicted transmitter,\n"
              "positions rescaled to fit); the disk is the hyperbolic geometry fitted to the same connectome "
              "in section 5.",
              color="#5f7480", fontsize=6.4)
@@ -239,13 +256,13 @@ def geometry() -> None:
     names = [r["geometry"] for r in rows]
     auc = [r["auc"] for r in rows]
     cols = [WARM if "degree" in n else (ACCENT if "spectral" in n else MUTED) for n in names]
-    fig, ax = plt.subplots(figsize=(6.4, 2.9))
+    fig, ax = plt.subplots(figsize=(6.6, 3.1))
     ax.barh(names, auc, color=cols, height=0.62)
     for i, v in enumerate(auc):
         ax.text(v + 0.004, i, f"{v:.4f}", va="center", fontsize=7.5, color=INK)
     ax.set_xlim(0.75, 1.0)
     ax.set_xlabel("held-out AUC for predicting connections from distance")
-    ax.set_title("Which space predicts connectivity? (identical held-out pairs, 269,478 pos/neg)")
+    ax.set_title("Which space predicts connectivity?")
     ax.axvline(auc[names.index("degree_only_baseline")] if "degree_only_baseline" in names else 0.8739,
                color=MUTED, ls="--", lw=0.9)
     save(fig, "fig_geometry.pdf")
@@ -261,7 +278,9 @@ def scaling() -> None:
     n = np.array([v for v in n if v], dtype=float)
     e = np.array([v for v in e if v], dtype=float)
     s = np.array([v for v in s if v], dtype=float)
-    fig, axes = plt.subplots(1, 2, figsize=(6.9, 2.9))
+    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.1))
+    for _ax in axes:
+        thin(_ax)
     for ax, yv, lab, col in ((axes[0], e, "connections", ACCENT),
                              (axes[1], s, "synapses", WARM)):
         ax.loglog(n, yv, "o-", color=col, ms=4, lw=1.1)
@@ -273,18 +292,20 @@ def scaling() -> None:
         ax.set_ylabel(lab)
         ax.legend(loc="upper left", fontsize=7.5)
         ax.set_title(f"{lab} scale with $N$")
-    fig.suptitle("Inverse geometric renormalization preserves sparsity ($E \\propto N$, not $N^2$)",
+    fig.suptitle("Upscaling preserves sparsity: $E \\propto N$, not $N^2$",
                  fontsize=10, y=1.04)
     save(fig, "fig_scaling.pdf")
 
 
 # ------------------------------------------------------------------ downscale
 def downscale() -> None:
-    fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.5))
+    fig, axes = plt.subplots(1, 3, figsize=(7.2, 3.0))
+    for _ax in axes:
+        thin(_ax)
     series = (("anatomical xyz", D.get("downscale_anatomical"), ACCENT),
               ("learned hyperbolic", D.get("downscale_hyperbolic"), WARM))
     for ax, key, lab in ((axes[0], "composite", "closure composite (lower better)"),
-                         (axes[1], "degree_wasserstein", "normalised degree Wasserstein"),
+                         (axes[1], "degree_wasserstein", "normalized degree Wasserstein"),
                          (axes[2], "ari", "community ARI vs G1")):
         for name, rows, col in series:
             rows = sorted(rows or [], key=lambda r: r["factor"])
@@ -297,7 +318,7 @@ def downscale() -> None:
         ax.set_xlabel("coarse-grained scale")
         ax.set_title(lab, fontsize=9)
     axes[0].legend(fontsize=7.5)
-    fig.suptitle("Coarse-graining: the learned geometry fits the law better but does not renormalize better",
+    fig.suptitle("Coarse-graining under two geometries",
                  fontsize=10, y=1.05)
     save(fig, "fig_downscale.pdf")
 
@@ -306,7 +327,8 @@ def downscale() -> None:
 def closure() -> None:
     rows = sorted(D.get("closure") or [], key=lambda r: r["factor"])
     f = [r["factor"] for r in rows]
-    fig, axes = plt.subplots(1, 2, figsize=(6.9, 2.7))
+    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.0))
+    thin(axes[0])
     ax = axes[0]
     ax.semilogy(f, [r["composite"] for r in rows], "o-", color=ACCENT, ms=5, lw=1.2, label="composite")
     ax.semilogy(f, [max(r["degree_wasserstein"], 1e-9) for r in rows], "s-", color=WARM, ms=4,
@@ -318,7 +340,7 @@ def closure() -> None:
     ax.set_xlabel("generated scale $G_s$")
     ax.set_ylabel("distance from $G_1$ (log)")
     ax.legend(fontsize=7.5)
-    ax.set_title("$R(G_s)$ approaches the biological graph")
+    ax.set_title("$R(G_s)$ toward $G_1$ (log distance)")
     ax = axes[1]
     ax.plot(f, [r["ari"] for r in rows], "o-", color=ACCENT, ms=5, lw=1.2)
     ax.set_ylim(0.85, 1.005)
@@ -326,7 +348,7 @@ def closure() -> None:
     ax.set_xticklabels([f"{int(x)}x" for x in f])
     ax.set_xlabel("generated scale $G_s$")
     ax.set_ylabel("community ARI")
-    ax.set_title("community partition recovered")
+    ax.set_title("community agreement (ARI)")
     for x, r in zip(f, rows):
         ax.annotate(f"{r['ari']:.3f}", (x, r["ari"]), textcoords="offset points", xytext=(0, 6),
                     ha="center", fontsize=7.5)
@@ -335,7 +357,7 @@ def closure() -> None:
 
 # ------------------------------------------------------------------ dynamics
 def dynamics() -> None:
-    fig, ax = plt.subplots(figsize=(6.4, 2.8))
+    fig, ax = plt.subplots(figsize=(6.6, 3.1))
     ref = D.get("cascade_ref_anatomical") or {}
     curve = ref.get("active_curve") or []
     if curve:
@@ -350,7 +372,7 @@ def dynamics() -> None:
                     label=f"G{str(r['factor']).rstrip('0').rstrip('.')}  (Jaccard {r['active_set_jaccard']:.3f})")
     ax.set_xlabel("cascade step")
     ax.set_ylabel("active neurons / G1 final active")
-    ax.set_title("Identical normalized sensory stimulus through each scale (\\S 11 dynamic validation)")
+    ax.set_title("Normalized stimulus through each scale")
     ax.legend(fontsize=7.5, loc="lower right")
     save(fig, "fig_dynamics.pdf")
 
@@ -359,7 +381,9 @@ def dynamics() -> None:
 def capability() -> None:
     rows = sorted(D.get("capability") or [], key=lambda r: r["scale"])
     n = [r["n_neurons"] or 0 for r in rows]
-    fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.5))
+    fig, axes = plt.subplots(1, 3, figsize=(7.2, 3.0))
+    for _ax in axes:
+        thin(_ax)
     ax = axes[0]
     ax.loglog(n, [r["mi_delta_0_1"] or 1e-3 for r in rows], "o-", color=ACCENT, ms=4, lw=1.1)
     for x, r in zip(n, rows):
@@ -367,12 +391,12 @@ def capability() -> None:
                     xytext=(2, 5), fontsize=7)
     ax.set_xlabel("neurons $N$")
     ax.set_ylabel("mutual information (bits)")
-    ax.set_title("discrimination at 90% stimulus overlap\nfitted $\\propto N^{1.014}$ ($R^2$=0.957)")
+    ax.set_title("discrimination ($N^{1.014}$)")
     ax = axes[1]
     ax.semilogx(n, [r["participation_ratio"] or np.nan for r in rows], "o-", color=WARM, ms=4, lw=1.1)
     ax.set_xlabel("neurons $N$")
     ax.set_ylabel("participation ratio")
-    ax.set_title("effective dimensionality\nfitted $\\propto N^{0.318}$ ($R^2$=0.946)")
+    ax.set_title("dimensionality ($N^{0.318}$)")
     ax = axes[2]
     caps = [r["memory_capacity"] or 0 for r in rows]
     cens = [bool(r["memory_censored"]) for r in rows]
@@ -381,13 +405,12 @@ def capability() -> None:
         if cn:
             ax.plot([x], [c], "v", color=WARM, ms=7, mfc="none")
     ax.axhline(96, color=MUTED, ls=":", lw=0.9)
-    ax.text(n[0], 99, "grid ceiling (censored)", fontsize=6.5, color=MUTED)
+    ax.text(0.02, 0.88, "grid ceiling (censored)", transform=ax.transAxes, fontsize=6.5,
+            color=MUTED)
     ax.set_xlabel("neurons $N$")
     ax.set_ylabel("associations held")
-    ax.set_title("memory capacity (lower bound\nfrom 2x up)")
-    fig.suptitle("Capability across scales: some axes grow, others are flat or non-monotone",
-                 fontsize=10, y=0.995)
-    fig.subplots_adjust(top=0.72)          # reserve the band the panel titles need
+    ax.set_title("memory capacity (lower bound)")
+    fig.suptitle("Capability across scales", fontsize=9.5)
     save(fig, "fig_capability.pdf")
 
 
@@ -398,29 +421,30 @@ def energy() -> None:
     j = np.array([r["gpu_joules"] for r in rows], dtype=float)
     js = np.array([r["j_per_spike"] for r in rows], dtype=float)
     bio = np.array([r["bio_watts"] for r in rows], dtype=float)
-    fig, axes = plt.subplots(1, 3, figsize=(7.2, 2.5))
+    fig, axes = plt.subplots(1, 3, figsize=(7.2, 3.0))
+    for _ax in axes:
+        thin(_ax)
     ax = axes[0]
     ax.loglog(n, j, "o-", color=ACCENT, ms=4, lw=1.1)
     a, b = np.polyfit(np.log(n), np.log(j), 1)
     ax.loglog(n, np.exp(b) * n ** a, "--", color=INK, lw=0.9, label=f"$\\propto N^{{{a:.2f}}}$")
     ax.set_xlabel("neurons $N$")
     ax.set_ylabel("GPU joules per run")
-    ax.set_title("measured hardware work\n(sub-linear: launch overhead amortises)")
+    ax.set_title("measured GPU joules")
     ax.legend(fontsize=7.5)
     ax = axes[1]
     ax.loglog(n, js, "o-", color=WARM, ms=4, lw=1.1)
     ax.set_xlabel("neurons $N$")
     ax.set_ylabel("joules per spike")
-    ax.set_title("cost per spike falls 2.1x\n(9.5 $\\mu$J $\\to$ 4.4 $\\mu$J)")
+    ax.set_title("cost per spike")
     ax = axes[2]
     ax.loglog(n, bio, "o-", color="#1f9d55", ms=4, lw=1.1)
     ax.loglog(n, bio[0] * (n / n[0]), "--", color=INK, lw=0.9, label="$\\propto N$ by construction")
     ax.set_xlabel("neurons $N$")
     ax.set_ylabel("biological-equivalent watts")
-    ax.set_title("biological track\n(property of $N$, not of the run)")
+    ax.set_title("biological-equivalent power")
     ax.legend(fontsize=7.5)
-    fig.suptitle("Two energy tracks, never conflated (\\S 17-\\S 18)", fontsize=10, y=0.995)
-    fig.subplots_adjust(top=0.72)          # reserve the band the panel titles need
+    fig.suptitle("Two energy tracks, never conflated", fontsize=9.5)
     save(fig, "fig_energy.pdf")
 
 
@@ -430,7 +454,7 @@ def gpu_equivalence() -> None:
     checks = g.get("checks") or {}
     gpu = (checks.get("spikes_per_step") or {}).get("gpu") or []
     cpu = (checks.get("spikes_per_step") or {}).get("cpu") or []
-    fig, axes = plt.subplots(1, 2, figsize=(6.9, 2.6))
+    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.0))
     ax = axes[0]
     idx = np.arange(min(len(gpu), 10))
     w = 0.38
@@ -439,9 +463,8 @@ def gpu_equivalence() -> None:
     ax.set_xlabel("simulation tick")
     ax.set_ylabel("neurons firing")
     ax.set_xticks(idx)
-    ax.set_title(f"tick-by-tick agreement; total {checks.get('gpu_spikes_total', {}).get('gpu')} vs "
-                 f"{checks.get('gpu_spikes_total', {}).get('cpu')},\nlaunch errors "
-                 f"{g.get('launch_errors')}")
+    ax.set_title(f"tick-by-tick agreement ({checks.get('gpu_spikes_total', {}).get('gpu')} vs "
+                 f"{checks.get('gpu_spikes_total', {}).get('cpu')} spikes)")
     ax.legend(fontsize=7.5)
     ax = axes[1]
     gv = (checks.get("membrane_probe_first8_milli") or {}).get("gpu") or []
@@ -453,7 +476,7 @@ def gpu_equivalence() -> None:
     ax.set_xlabel("neuron index")
     ax.set_ylabel("membrane potential (mV x 1000)")
     ax.set_xticks(idx)
-    ax.set_title("membrane trace after 30 ticks\n(quiet state, exact agreement)")
+    ax.set_title("membrane trace after 30 ticks (exact)")
     ax.legend(fontsize=7.5)
     save(fig, "fig_gpu.pdf")
 

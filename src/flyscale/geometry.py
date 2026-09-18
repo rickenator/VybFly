@@ -17,7 +17,7 @@ recorded in the emitted JSON so the numbers cannot drift from their meaning):
   * Analysis graph: the ``>= 5`` synapse convention (``Connectome.thresholded(5)``,
     Lin et al. 2024), projected to an undirected, autapse-free, unweighted graph.
   * Analysis nodes: the giant weakly-connected component of that projection, because
-    normalised-Laplacian eigenmaps are undefined for disconnected components (each
+    normalized-Laplacian eigenmaps are undefined for disconnected components (each
     component contributes a trivial eigenvalue 1). Every geometry is therefore fit
     and scored on the same node and pair sets.
   * Undirected edges are split 90% fit / 10% test. Test edges never enter any fit
@@ -46,7 +46,7 @@ Public API
 ``anatomical_xy(c)`` / ``anatomical_xyz(c)``
     Published annotation coordinates (nm), (N, 2) and (N, 3), NaN where missing.
 ``spectral_embedding(c, k=32)``
-    Normalised-Laplacian eigenmaps, (N, k); NaN for nodes not fitted.
+    Normalized-Laplacian eigenmaps, (N, k); NaN for nodes not fitted.
 ``hyperbolic_embedding(c, dim=2, ...)``
     Position in the Poincare ball by SGD on the connection-likelihood objective;
     returns a dict with the coordinates plus the fitted ``(R, T)``.
@@ -399,7 +399,7 @@ def hyperbolic_embedding(c, dim: int = 2, edges=None, n_neg: int | None = None,
     Returns a dict: ``coords`` (N, dim) Poincare coordinates, ``R``, ``T``,
     ``train_log_likelihood`` (per-pair, on the fit sample of the final epoch),
     ``history`` (per-epoch monitoring), ``protocol`` and ``seconds``. Nodes with no
-    incident edge in the fit sample keep their initialisation and are reported as
+    incident edge in the fit sample keep their initialization and are reported as
     ``n_unconstrained_nodes``.
     """
     t0 = time.time()
@@ -415,7 +415,7 @@ def hyperbolic_embedding(c, dim: int = 2, edges=None, n_neg: int | None = None,
     all_keys = edge_keys(*undirected_edges(c)[:2], n)
     neg_i, neg_j = sample_non_edges(n, int(n_neg), all_keys, rng, nodes=nodes)
 
-    # --- initialise on the hyperboloid via Poincare disk coordinates
+    # --- initialize on the hyperboloid via Poincare disk coordinates
     if init == "degree":
         # scale-free connectomes embed with the hubs near the origin and the periphery on
         # the rim, so the initial radius is assigned by total-degree rank (the same
@@ -446,7 +446,7 @@ def hyperbolic_embedding(c, dim: int = 2, edges=None, n_neg: int | None = None,
         s = u0 * v0_ - np.sum(phi[pi_] * phi[pj_], axis=1)
         return np.arccosh(np.maximum(s, 1.0 + 1e-15))
 
-    # --- initial law from the initialisation (must see both classes)
+    # --- initial law from the initialization (must see both classes)
     n_init = int(min(200_000, pos_i.size))
     dp0 = _distances(pos_i[:n_init], pos_j[:n_init])
     dn0 = _distances(neg_i[:min(n_init, neg_i.size)], neg_j[:min(n_init, neg_i.size)])
@@ -582,11 +582,11 @@ def hyperbolic_embedding(c, dim: int = 2, edges=None, n_neg: int | None = None,
 def spectral_embedding(c, k: int = 32, edges=None, nodes: np.ndarray | None = None,
                        tol: float = 1e-5, return_info: bool = False,
                        maxiter: int | None = None):
-    """Normalised-Laplacian eigenmaps of the undirected, autapse-free projection.
+    """Normalized-Laplacian eigenmaps of the undirected, autapse-free projection.
 
-    Coordinates are the ``k`` non-trivial eigenvectors of the symmetric normalised
+    Coordinates are the ``k`` non-trivial eigenvectors of the symmetric normalized
     adjacency ``M = D^-1/2 A D^-1/2`` scaled to the eigenmap basis
-    ``psi_j(i) = u_j(i) / sqrt(deg_i)`` (eigenvectors of the symmetric normalised
+    ``psi_j(i) = u_j(i) / sqrt(deg_i)`` (eigenvectors of the symmetric normalized
     Laplacian ``I - M``; the trivial ``lambda = 1`` eigenvector is dropped). This is
     mathematically the same subspace as ``eigsh(L, which='SA')`` but converges much
     faster.
@@ -646,7 +646,7 @@ def spectral_embedding(c, k: int = 32, edges=None, nodes: np.ndarray | None = No
         "n_edges_in_fit_graph": int(sub.nnz / 2),
         "tol": tol,
         "seconds": round(time.time() - t0, 1),
-        "definition": "normalised-Laplacian eigenmaps: psi_j(i) = u_j(i)/sqrt(deg_i), "
+        "definition": "normalized-Laplacian eigenmaps: psi_j(i) = u_j(i)/sqrt(deg_i), "
                       "u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
     }
     return (coords, info) if return_info else coords
@@ -868,7 +868,7 @@ def degree_baseline(protocol: dict, seed: int = DEFAULT_SEED) -> dict:
         "n_tied_scores": int(s_te.size - np.unique(s_te).size),
         "note": "scores are integer-valued (degree products) so ties are frequent; AUC "
                 "uses exact midpoint tie credit and AP is the exact expectation over "
-                "random tie-breaking, so the ties do not favour the baseline",
+                "random tie-breaking, so the ties do not favor the baseline",
         "seconds": round(time.time() - t0, 1),
     }
 

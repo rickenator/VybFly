@@ -203,7 +203,7 @@ def main() -> int:
                            "biological block is a property of the neuron count alone",
         "caveat": "the CUDA payload (scripts/cuda/sparse_prop.cu) is a bounded, counter-rich "
                   "sparse workload, not the project's biological baseline model; the numbers "
-                  "characterise the *machine* at each scale",
+                  "characterize the *machine* at each scale",
         "protocol": {"steps": args.steps, "epochs": args.epochs, "dt_ms": DT_MS,
                      "sampling_interval_s": args.interval, "exe": str(EXE.relative_to(ROOT))},
         "per_scale": per_scale,

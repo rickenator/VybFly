@@ -77,7 +77,7 @@ connected neurons while the giant components themselves are the same absolute si
 
 Also computed: triad census (450.06 trillion triads, 177,055 fully connected), Leiden communities
 (giant WCC: 20 communities, modularity 0.693), threshold-robustness sweep (1/2/3/4/5/10 synapses),
-neuropil-to-neuropil and cell-type mixing matrices, normalised Laplacian spectrum, degree
+neuropil-to-neuropil and cell-type mixing matrices, normalized Laplacian spectrum, degree
 distributions with Gini and tail exponents.
 
 ## Reproducing the dataset

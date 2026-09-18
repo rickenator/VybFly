@@ -1,4 +1,4 @@
-"""Vectorised breadth-first search over a CSR adjacency.
+"""Vectorized breadth-first search over a CSR adjacency.
 
 Used for shortest-path distributions on a graph too large for all-pairs work: we sample
 source nodes and expand frontiers with numpy slices, which stays in C loops.

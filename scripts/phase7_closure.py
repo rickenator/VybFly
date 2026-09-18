@@ -140,7 +140,7 @@ def main() -> int:
                      f"{str(c['composite']):>10} {str(c['degree_wasserstein_normalised']):>11} "
                      f"{str(c['motif_divergence_L1']):>10} {str(c['community_ari']):>7}")
     lines += ["",
-              "composite = weighted mean of the normalised distances (lower is closer to G1);",
+              "composite = weighted mean of the normalized distances (lower is closer to G1);",
               "raw metrics for every scale are kept in closure.json - the composite exists only",
               "for internal comparison between scales."]
     (PHASE7 / "SUMMARY.txt").write_text("\n".join(lines) + "\n")

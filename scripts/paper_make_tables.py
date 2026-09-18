@@ -18,6 +18,22 @@ TAB.mkdir(parents=True, exist_ok=True)
 D = json.loads((PAPER / "data.json").read_text())
 
 
+US_DISPLAY = {"normalised": "normalized", "normalise": "normalize", "colour": "color",
+              "centre": "center", "behaviour": "behavior", "grey": "gray", "odour": "odor"}
+
+
+def us_display(s) -> str:
+    """US spelling for anything printed.
+
+    Metric names arrive from the artifacts, where they are identifiers (JSON keys, check names) and
+    stay exactly as recorded; only their rendering on the page is Americanized.
+    """
+    out = str(s)
+    for brit, us in US_DISPLAY.items():
+        out = out.replace(brit, us).replace(brit.capitalize(), us.capitalize())
+    return out
+
+
 def esc(s) -> str:
     return (str(s).replace("_", r"\_").replace("%", r"\%").replace("&", r"\&")
             .replace("#", r"\#").replace("$", r"\$"))
@@ -53,14 +69,14 @@ def th(*cols) -> str:
 
 
 def write(name: str, body: str, resize: bool = False) -> None:
-    """Emit one LaTeX table, normalised and bounded.
+    """Emit one LaTeX table, normalized and bounded.
 
     Wide numeric tables are scaled to the text width so they cannot overflow the margin; a table
     that needs scaling is one whose column count or identifiers grew, which is worth knowing.
     """
     # A non-raw source string silently eats the backslash of any LaTeX command whose first
     # letter is a Python escape (\approx -> BEL+"pprox", \times -> TAB+"imes", \rho -> CR+"ho").
-    # Repair exactly those, then normalise any other stray control character.
+    # Repair exactly those, then normalize any other stray control character.
     for mangled, fixed in (("\x07pprox", r"\approx"), ("\x07lpha", r"\alpha"), ("\x07st", r"\ast"),
                            ("\rho", r"\rho"), ("\times", r"\times"), ("\beta", r"\beta"),
                            ("\nu", r"\nu"), ("\x0ctorall", r"\forall"), ("\x0c", r"\f"),
@@ -108,13 +124,13 @@ def dataset() -> None:
         ("neurons (annotated)", cnt(ds.get("n_annotated_neurons")), "canonical counts"),
         ("neurons (in graph)", cnt(ds.get("n_neurons")), "canonical counts"),
         ("edge rows released", cnt(ds.get("n_edges_rows")), "unthresholded"),
-        ("connections (all)", cnt(ds.get("n_pairs")), "threshold $\geq 1$ synapse"),
-        ("connections (scaling graph)", cnt(ref.get("n_connections")), "threshold $\geq 5$ synapses"),
-        ("synapses (all)", cnt(ds.get("n_synapses_pairs")), "threshold $\geq 1$"),
-        ("synapses (scaling graph)", cnt(ref.get("n_synapses")), "threshold $\geq 5$"),
+        ("connections (all)", cnt(ds.get("n_pairs")), r"threshold $\geq 1$ synapse"),
+        ("connections (scaling graph)", cnt(ref.get("n_connections")), r"threshold $\geq 5$ synapses"),
+        ("synapses (all)", cnt(ds.get("n_synapses_pairs")), r"threshold $\geq 1$"),
+        ("synapses (scaling graph)", cnt(ref.get("n_synapses")), r"threshold $\geq 5$"),
         ("autapse pairs", cnt(ds.get("n_autapse_pairs")), "none in v783"),
-        ("reciprocal pairs", cnt(ds.get("n_reciprocal_pairs")), "threshold $\geq 1$"),
-        ("reciprocity", num(ds.get("reciprocity"), 4), "threshold $\geq 1$"),
+        ("reciprocal pairs", cnt(ds.get("n_reciprocal_pairs")), r"threshold $\geq 1$"),
+        ("reciprocity", num(ds.get("reciprocity"), 4), r"threshold $\geq 1$"),
         ("mean out-degree", num(ref.get("mean_out_degree"), 4), "scaling graph"),
         ("mean synapses per connection", num(ref.get("mean_synapses_per_connection"), 4),
          "published: 12.6"),
@@ -135,7 +151,7 @@ def gate() -> None:
     for c in checks:
         cls = "advisory" if c.get("advisory") else "required"
         mark = r"\checkmark" if c.get("passed") else r"\ding{55}"
-        body.append(f"{esc(c.get('name'))} & {cls} & {mark}~{esc(c.get('comment'))[:150]} \\\\")
+        body.append(f"{us_display(esc(c.get('name')))} & {cls} & {mark}~{esc(c.get('comment'))[:150]} \\\\")
     body += [r"\bottomrule", r"\end{tabular}"]
     write("tab_gate.tex", "\n".join(body) + "\n", resize=True)
 
@@ -278,7 +294,7 @@ def milestones() -> None:
         ("M7", "dynamic validation of downscaled scales", "done",
          "active-set Jaccard 0.909 / 0.950 / 0.853"),
         ("M8", "2x inverse scaling", "done", "sparsity preserved, strengths bounded"),
-        ("M9", "closure R(G_2) toward G_1 (lineage)", "done$^{\dagger}$",
+        ("M9", "closure R(G_2) toward G_1 (lineage)", r"done$^{\dagger}$",
          "composite 0.0184, degree Wasserstein 0.0074, ARI 0.912"),
         ("M10", "10x graph (1.39M neurons)", "done", "closure composite 0.00098, ARI 1.0"),
         ("M11", "plasticity / associative learning", "done",
@@ -307,28 +323,29 @@ def defects() -> None:
          "kernel-mode data corruption in the GPU pipeline", "fixed upstream (PR \\#273)"),
         ("a parenthesised operand after `*` inside an addition",
          "the multiplication's left operand is typed as a pointer; `p + s * (q)` fails to compile outside kernel mode",
-         "blocks ordinary arithmetic expressions", "open (probe saved)"),
+         "blocks ordinary arithmetic expressions", "fixed upstream (verified on main@51ced31)"),
         ("`Vec<Vec<T>>` is unusable", "four failure modes incl. silent garbage from `.get(i).get(0)` and `.push` into a temporary",
-         "forced the DES scheduler into a structure-of-arrays design", "open"),
+         "forced the DES scheduler into a structure-of-arrays design", "open (issue \\#284)"),
         ("re-borrowing an existing borrow segfaults", "`f(borrow(v))` where `v` is already borrowed (exit 139)",
-         "API shape constraint in the DES runtime", "open"),
+         "API shape constraint in the DES runtime", "open (issue \\#285)"),
         ("raw io byte buffers corrupt across a module boundary",
          "the same 16 bytes read inline give 0, 62 and via a module function give a 64-bit value",
-         "forced decoding inside the module", "open"),
+         "forced decoding inside the module", "open (issue \\#281)"),
         ("optional `Vec` returns are rejected", "a function declared `Vec<UInt8>?` cannot `return` a `Vec<UInt8>`",
-         "forced a rewrite of the loader", "open"),
+         "forced a rewrite of the loader", "open (issue \\#282)"),
         ("`Vec` parameters are not mutated for the caller", "out-parameters come back empty",
-         "design constraint for the loader", "open"),
+         "design constraint for the loader", "open (issue \\#283)"),
         ("device intrinsics return `CInt`", "`tid\\_x`/`blk\\_x`/`dim\\_x`/`ld\\_i32` need an explicit `as Int` in assignments",
          "documented; cost a compile cycle", "open (by design?)"),
-        ("`ptr` is a reserved struct-field name", "rejected with a message that never names the token", "minor ergonomics", "open"),
+        ("`ptr` is a reserved struct-field name", "rejected with a message that never names the token", "minor ergonomics", "open (issue \\#286)"),
         ("`String.to_int`/`to_float` do not exist", "documented in the reference manual but absent in the compiler",
-         "the DES app ships its own integer parser", "open"),
-        ("byte-at-a-time decode throughput", "$\approx 29\\,\mu$s per element ($\approx$34k elements/s); a 15M-element pass takes $\approx$7 min",
-         "project-level blocker for a whole-connectome Vyb simulation; a bulk byte$\to$int read is required", "open"),
+         "the DES app ships its own integer parser", "open (issue \\#287)"),
+        ("byte-at-a-time decode throughput", r"$\\approx 29\\,\\mu$s per element ($\\approx$34k elements/s); a 15M-element pass takes $\\approx$7 min",
+         "project-level blocker for a whole-connectome Vyb simulation; a bulk byte$\\to$int read is required",
+         "open (re-measuring on current upstream)"),
     ]
     body = [r"\begin{tabular}{p{4.4cm} p{5.6cm} p{3.6cm} l}", r"\toprule",
-            r"defect found while building this project & reproduction / observed behaviour & consequence here & status \\",
+            r"defect found while building this project & reproduction / observed behavior & consequence here & status \\",
             r"\midrule"]
     body += [f"{a} & {b} & {c} & {d} \\\\" for a, b, c, d in rows]
     body += [r"\bottomrule", r"\end{tabular}"]

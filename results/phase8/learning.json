@@ -3490,8 +3490,8 @@
   "annotations": {
     "annotation_caveats": [
       "Kenyon cells carry top_nt == 'dopamine' in neurons.parquet for 5172/5177 cells while known_nt is 'acetylcholine; sNPF; ...' for every one of them (known_nt_source: Barnstedt 2016 / Johard 2008 / Aso 2019). top_nt is therefore not trustworthy for Kenyon cells in this canonical build and was NOT used. The neuropil-level nt_code on KC->MBON edges is acetylcholine for 100% of those edges (21438/21438 at thr=5), which is the transmitter check actually used here.",
-      "cell_class 'ALPN' (685) = cell_sub_class uniglomerular (277) + multiglomerular (400) + 8 unlabelled; only the 277 uniglomerular cells define the 56 glomerulus channels. The multiglomerular cells stay unassigned (channel -1) because they genuinely innervate several glomeruli, so an odour over 5 glomeruli drives 284 of the 685 ALPNs.",
-      "cell_class 'olfactory' (2281, all cell_type ORN_*) is the olfactory receptor neuron population. It is not used: FlyWire contains no odour data, so an ORN layer would add purely synthetic structure.",
+      "cell_class 'ALPN' (685) = cell_sub_class uniglomerular (277) + multiglomerular (400) + 8 unlabelled; only the 277 uniglomerular cells define the 56 glomerulus channels. The multiglomerular cells stay unassigned (channel -1) because they genuinely innervate several glomeruli, so an odor over 5 glomeruli drives 284 of the 685 ALPNs.",
+      "cell_class 'olfactory' (2281, all cell_type ORN_*) is the olfactory receptor neuron population. It is not used: FlyWire contains no odor data, so an ORN layer would add purely synthetic structure.",
       "MBON cell_class holds 96 neurons; MBON25 and MBON34 share the cell_type 'MBON25,MBON34' and two cells are published as MBON15-like / MBON17-like.",
       "4 'MBIN' (mushroom-body input) neurons exist in cell_class but are not used: the MB intrinsic layer is not part of this pathway."
     ],
@@ -4112,10 +4112,10 @@
   "condition_notes": {
     "additive_plastic": "same gate/homeostasis but the additive three-factor update dw = eta*da*x*y (ablates the soft-bound form)",
     "allpool_plastic": "readout pool = all 96 MBONs instead of only the PAM-gated ones",
-    "aversive_sign_plastic": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odour is predicted to fall in the readout",
+    "aversive_sign_plastic": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odor is predicted to fall in the readout",
     "bounded_plastic": "real wiring, plastic, every synapse capped at 4x / 0.25x its anatomical weight (explicit architecture-preservation constraint)",
     "ppl_wiring_plastic": "punishment routed through the measured PPL1/PPL2 -> MBON wiring instead of the PAM wiring; the two dopamine populations innervate largely different MBON sets, so this is a wiring comparison, not a clean sign control",
-    "randcode_plastic": "real MB, odour coding replaced by a degree-matched random ALPN->KC projection, plastic",
+    "randcode_plastic": "real MB, odor coding replaced by a degree-matched random ALPN->KC projection, plastic",
     "random_weight_plastic": "real KC->MBON topology but synapse weights randomly permuted, plastic",
     "real_frozen": "no-plasticity control: KC->MBON weights frozen at their anatomical values",
     "real_plastic": "real MB wiring, reward-modulated Hebbian plasticity (main condition)",
@@ -40720,9 +40720,9 @@
   },
   "milestone": "M11",
   "model": {
-    "odour_code": "synthetic odour = sparse pattern over the 56 glomeruli (channels_per_odor), pushed through the measured row-normalised ALPN->KC synapse matrix and passed through a fixed-fraction k-winner-take-all; trial-to-trial code jitter documented below",
+    "odour_code": "synthetic odor = sparse pattern over the 56 glomeruli (channels_per_odor), pushed through the measured row-normalized ALPN->KC synapse matrix and passed through a fixed-fraction k-winner-take-all; trial-to-trial code jitter documented below",
     "pathway": "ALPN -> KC -> MBON, with DAN providing the teaching signal",
-    "readout": "mean MBON activity over the dopamine-gated (PAM-innervated) MBON pool; the value of an odour is this mean",
+    "readout": "mean MBON activity over the dopamine-gated (PAM-innervated) MBON pool; the value of an odor is this mean",
     "rule": {
       "additive": "dw_ij = eta * da * g_j * x_i * y_j",
       "dopamine_gate": "g_j = 1 iff MBON j receives >= 1 reward-DAN (PAM->MBON) connection at the same threshold; da = +1 on rewarded presentations, 0 otherwise",
@@ -40915,7 +40915,7 @@
     "capacity": {
       "criterion_auc": 0.9,
       "criterion_auc_loose": 0.75,
-      "metric": "AUC = tie-aware fraction of (rewarded, unrewarded) odour pairs whose readout value is correctly ordered; chance = 0.5. 'learned' AUC uses the change in value relative to the untrained readout, which removes the innate bias of the naive connectome readout.",
+      "metric": "AUC = tie-aware fraction of (rewarded, unrewarded) odor pairs whose readout value is correctly ordered; chance = 0.5. 'learned' AUC uses the change in value relative to the untrained readout, which removes the innate bias of the naive connectome readout.",
       "n_odors": 64,
       "n_rewarded_grid": [
         1,
@@ -49855,7 +49855,7 @@
         },
         "n_kc": 5177,
         "n_mbon": 96,
-        "note": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odour is predicted to fall in the readout",
+        "note": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odor is predicted to fall in the readout",
         "readout_pool_mbons": 34
       },
       "drift": {
@@ -50665,7 +50665,7 @@
         },
         "n_kc": 5177,
         "n_mbon": 96,
-        "note": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odour is predicted to fall in the readout",
+        "note": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odor is predicted to fall in the readout",
         "readout_pool_mbons": 34
       },
       "drift": {
@@ -51475,7 +51475,7 @@
         },
         "n_kc": 5177,
         "n_mbon": 96,
-        "note": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odour is predicted to fall in the readout",
+        "note": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odor is predicted to fall in the readout",
         "readout_pool_mbons": 34
       },
       "drift": {
@@ -52285,7 +52285,7 @@
         },
         "n_kc": 5177,
         "n_mbon": 96,
-        "note": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odour is predicted to fall in the readout",
+        "note": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odor is predicted to fall in the readout",
         "readout_pool_mbons": 34
       },
       "drift": {
@@ -53095,7 +53095,7 @@
         },
         "n_kc": 5177,
         "n_mbon": 96,
-        "note": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odour is predicted to fall in the readout",
+        "note": "identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odor is predicted to fall in the readout",
         "readout_pool_mbons": 34
       },
       "drift": {
@@ -62011,7 +62011,7 @@
         },
         "n_kc": 5177,
         "n_mbon": 96,
-        "note": "real MB, odour coding replaced by a degree-matched random ALPN->KC projection, plastic",
+        "note": "real MB, odor coding replaced by a degree-matched random ALPN->KC projection, plastic",
         "readout_pool_mbons": 34
       },
       "drift": {
@@ -62827,7 +62827,7 @@
         },
         "n_kc": 5177,
         "n_mbon": 96,
-        "note": "real MB, odour coding replaced by a degree-matched random ALPN->KC projection, plastic",
+        "note": "real MB, odor coding replaced by a degree-matched random ALPN->KC projection, plastic",
         "readout_pool_mbons": 34
       },
       "drift": {
@@ -63643,7 +63643,7 @@
         },
         "n_kc": 5177,
         "n_mbon": 96,
-        "note": "real MB, odour coding replaced by a degree-matched random ALPN->KC projection, plastic",
+        "note": "real MB, odor coding replaced by a degree-matched random ALPN->KC projection, plastic",
         "readout_pool_mbons": 34
       },
       "drift": {
@@ -64459,7 +64459,7 @@
         },
         "n_kc": 5177,
         "n_mbon": 96,
-        "note": "real MB, odour coding replaced by a degree-matched random ALPN->KC projection, plastic",
+        "note": "real MB, odor coding replaced by a degree-matched random ALPN->KC projection, plastic",
         "readout_pool_mbons": 34
       },
       "drift": {
@@ -65275,7 +65275,7 @@
         },
         "n_kc": 5177,
         "n_mbon": 96,
-        "note": "real MB, odour coding replaced by a degree-matched random ALPN->KC projection, plastic",
+        "note": "real MB, odor coding replaced by a degree-matched random ALPN->KC projection, plastic",
         "readout_pool_mbons": 34
       },
       "drift": {

@@ -1,0 +1,47 @@
+// QUESTION: which Vec return shapes resolve on this build? VYB-PORT.md constraint 2 recorded that a
+// function declared `Vec<UInt8>?` could not return a `Vec<UInt8>` (internal cast error, vyb 0.7.5,
+// 2026-09-12). This isolates optional-ness from the element type.
+//
+// RUN: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//          src/vyb/probes/probe_m3_vec_return_shapes.vyb
+
+import io::{open_read, close, read_bytes_at}
+
+plain_ints(n<Int>)<Vec<Int>> -> {
+    out<Vec<Int>> = Vec::new()
+    for (i in 0..n) { out.push(i) }
+    return out
+}
+
+optional_ints(n<Int>)<Vec<Int>?> -> {
+    out<Vec<Int>> = Vec::new()
+    for (i in 0..n) { out.push(i) }
+    return out
+}
+
+optional_bytes(n<Int>)<Vec<UInt8>?> -> {
+    out<Vec<UInt8>> = Vec::new()
+    for (i in 0..n) { out.push(7) }
+    return out
+}
+
+main()<Int> -> {
+    a<Vec<Int>> = plain_ints(3)
+    println("plain Vec<Int> len=" + a.len().to_string())
+
+    b<Vec<Int>?> = optional_ints(3)
+
+    match (b) {
+        v -> { println("optional Vec<Int>? present, len=" + v.len().to_string()) }
+        ? -> { println("optional Vec<Int>? absent") }
+    }
+
+    c<Vec<UInt8>?> = optional_bytes(3)
+
+    match (c) {
+        v -> { println("optional Vec<UInt8>? present, len=" + v.len().to_string()) }
+        ? -> { println("optional Vec<UInt8>? absent") }
+    }
+
+    return 0
+}

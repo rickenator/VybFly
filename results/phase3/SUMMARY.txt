@@ -14,7 +14,7 @@ WHAT WORKS (verified on the RTX 3090, build vyb 0.7.5)
     tick, spike counts and membrane state read back to the host. Exit 0.
   * Device state verified by readback, not assumed: descriptor words decode to the exact host
     values, indptr = [0,3,6,9], indices = [1,3,7,2,4,8], syn = [-4,-6,-10,4,6,10] (neuron 0
-    inhibitory by construction), v and accum are exactly 0 after initialisation.
+    inhibitory by construction), v and accum are exactly 0 after initialization.
   * The first accumulation step is exactly right: neuron 1 receives the single edge from the
     inhibitory neuron 0 and holds acum = -0.08 = g * syn, confirmed on-device.
 
@@ -139,7 +139,7 @@ Two independent defects had to be fixed, and the second one was mine:
 
 1. UPSTREAM (Vyb issue #270, PR #273). `st_*` in kernel mode stored the operand's own LLVM type
    instead of the intrinsic's element type, so `st_i32(ptr, i64_value)` emitted an 8-byte store:
-   the low word at the address, the high word at address+4 - into the neighbouring slot. With a
+   the low word at the address, the high word at address+4 - into the neighboring slot. With a
    computed value the high word is 0, so every lane zeroed the next lane's slot. That is what
    corrupted the refractory store in update_and_fire. Verified fixed with the fresh checkout
    (36a86fe4): the failing probe now reads 1818 x8, and the update selftest is exact.
@@ -186,7 +186,7 @@ AFTER THE UPSTREAM FIX (Vyb PR #273 for issue #270, fresh checkout 36a86fe4, bui
 
 Fix: src/vre/llvm/cgen_expr.cpp - `st_*` stored the operand's own LLVM type instead of the
 intrinsic's element type, so `st_i32(ptr, i64_value)` emitted an 8-byte store: the low word at the
-address and the high word at address+4, i.e. into the NEIGHBOURING slot. With a computed value the
+address and the high word at address+4, i.e. into the NEIGHBORING slot. With a computed value the
 high word is 0, so every lane zeroed the next lane's slot - exactly the "1818 0 0 0 0 0 0 0"
 pattern reported. The third hypothesis recorded above (two stores clobbering the next slot) was
 the correct one; my kern_store control was a FALSE NEGATIVE - it also does a lane-dependent i32

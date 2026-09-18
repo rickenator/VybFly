@@ -15,7 +15,7 @@ against each other on identical stimulus event streams:
                                                reference for the Phase 3 DES, §8/§9)
 
 Stimuli: the §20 Level-1 environment (Poisson light pulse on photoreceptors plus a Poisson
-odour pulse on olfactory receptor neurons) and the engine-agreement protocol suggested for
+odor pulse on olfactory receptor neurons) and the engine-agreement protocol suggested for
 the Phase 3 gate (20,000 uniformly random neurons driven with a known Poisson input).
 
 Everything written to results/phase1/lif_baseline.json is measured by this run: the
@@ -159,7 +159,7 @@ def main() -> int:
     ap.add_argument("--g-syn", type=float, default=0.15,
                     help="synaptic gain: input units delivered per unit anatomical weight")
     ap.add_argument("--alpha", type=float, default=1.0,
-                    help="weight rule exponent: w = syn_count**alpha, mean-normalised")
+                    help="weight rule exponent: w = syn_count**alpha, mean-normalized")
     ap.add_argument("--inhibitory-gain", type=float, default=1.0)
     ap.add_argument("--modulatory-scale", type=float, default=0.25)
     ap.add_argument("--tau-ms", type=float, default=20.0)
@@ -169,7 +169,7 @@ def main() -> int:
     ap.add_argument("--delay-speed-um-per-ms", type=float, default=50.0)
     ap.add_argument("--delay-max-steps", type=int, default=5)
     ap.add_argument("--drive-rate-hz", type=float, default=20.0,
-                    help="Poisson rate of the Level-1 light and odour pulses")
+                    help="Poisson rate of the Level-1 light and odor pulses")
     ap.add_argument("--drive-amplitude", type=float, default=0.9,
                     help="external input per drive event, in threshold units")
     ap.add_argument("--random-n", type=int, default=20000,
@@ -295,17 +295,17 @@ def main() -> int:
     light = PoissonDrive(sets["photoreceptors"], rate_hz=args.drive_rate_hz, steps=steps,
                          dt_ms=args.dt_ms, amplitude=args.drive_amplitude, rng=rng,
                          t_start=int(round(0.1 * steps)), t_end=int(round(0.6 * steps)))
-    odour = PoissonDrive(sets["olfactory_receptor_neurons"], rate_hz=args.drive_rate_hz,
+    odor = PoissonDrive(sets["olfactory_receptor_neurons"], rate_hz=args.drive_rate_hz,
                          steps=steps, dt_ms=args.dt_ms, amplitude=args.drive_amplitude,
                          rng=rng, t_start=int(round(0.4 * steps)), t_end=int(round(0.9 * steps)))
-    level1 = CombinedDrive([light, odour])
+    level1 = CombinedDrive([light, odor])
     print(f"protocol level1_light_odour: {level1.n_events} external events, {steps} steps")
     t0 = time.time()
     out1 = run_engines(net, level1, steps, engines, tag="level1")
     report["protocols"]["level1_light_odour"] = {
         "stimulus": {
             "description": "§20 Level 1: Poisson light pulse on photoreceptors "
-                           "(R1-6/R7/R8) during 100-600 ms, Poisson odour pulse on "
+                           "(R1-6/R7/R8) during 100-600 ms, Poisson odor pulse on "
                            "olfactory receptor neurons (ORN_*) during 400-900 ms",
             "components": level1.summary(),
             "drive_seed": args.seed,
@@ -418,7 +418,7 @@ def main() -> int:
             "intermediate point of the ladder - sparse enough to keep the event-driven "
             "engine cheap, but with clear recurrent recruitment beyond the driven sensory "
             "neurons. The ladder is recorded so the choice can be re-derived rather than "
-            "trusted; it is a recorded operating point, not an optimised one."),
+            "trusted; it is a recorded operating point, not an optimized one."),
             "ladder": ladder, "steps": scan_steps, "default_g_syn": args.g_syn,
             "measured_trend": None, "runs": {}}
         try:
@@ -494,7 +494,7 @@ def main() -> int:
 
     # ---------------------------------------------------------------- notes + write
     report["notes"] = [
-        "Weights: w_anat = syn_count**alpha normalised so the mean edge weight is 1; the "
+        "Weights: w_anat = syn_count**alpha normalized so the mean edge weight is 1; the "
         "input per spike is g_syn * sign(transmitter) * modulatory_scale. 'alpha' and "
         "'g_syn' are model parameters, not measured quantities.",
         "Signs: ach excitatory, gaba and glut inhibitory (most adult-fly glutamatergic "

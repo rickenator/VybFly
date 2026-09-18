@@ -18,8 +18,8 @@ the canonical v783 dataset:
 
 Everything that shapes the computation is taken from the connectome: which KCs a given MBON
 listens to, the relative synaptic weights, which MBONs a reward DAN can gate, and the
-ALPN->KC fan-in that turns an odour into a sparse KC code.  The only synthetic element is
-the odour -> glomerulus input pattern (no odour data exists in FlyWire), which is drawn as a
+ALPN->KC fan-in that turns an odor into a sparse KC code.  The only synthetic element is
+the odor -> glomerulus input pattern (no odor data exists in FlyWire), which is drawn as a
 sparse random pattern over the 56 glomeruli defined by the uniglomerular projection neurons.
 
 Design constraints from the scope document:
@@ -38,7 +38,7 @@ Design constraints from the scope document:
     asserted.
 
 The readout is fixed across every condition (the MBONs the measured reward DANs innervate),
-so ablating the dopamine gate or the odour code never moves the goalposts.
+so ablating the dopamine gate or the odor code never moves the goalposts.
 """
 from __future__ import annotations
 
@@ -267,7 +267,7 @@ class MBGraph:
 
     W0: np.ndarray                 # (n_kc, n_mbon) anatomical synapses, dense (496k cells)
     mask: np.ndarray               # W0 > 0 : exactly the synapses plasticity may touch
-    A: sparse.csr_matrix           # (n_alpn, n_kc) row-normalised ALPN->KC drive
+    A: sparse.csr_matrix           # (n_alpn, n_kc) row-normalized ALPN->KC drive
     channel_of_alpn: np.ndarray
     channel_names: list[str]
     pam_gate: np.ndarray           # (n_mbon,) MBONs reachable by a reward (PAM) DAN
@@ -363,7 +363,7 @@ def build_mb_graph(c, sub: MBSubgraph, threshold: int = 5, *, seed: int = 0,
                    meta=meta)
 
 
-# ------------------------------------------------------------------------ odour coding ----
+# ------------------------------------------------------------------------ odor coding ----
 @dataclass
 class OdorCodes:
     X: np.ndarray                  # (n_odors, n_kc) binary sparse KC codes
@@ -377,10 +377,10 @@ def odor_codes(g: MBGraph, n_odors: int, *, sparsity: float = 0.05,
                lognormal_sigma: float = 0.25) -> OdorCodes:
     """Sparse Kenyon-cell codes for synthetic odorants.
 
-    An odour is a sparse pattern over glomeruli (the real antennal-lobe channels: each
+    An odor is a sparse pattern over glomeruli (the real antennal-lobe channels: each
     glomerulus is the set of uniglomerular projection neurons carrying that glomerulus
     name).  That pattern is pushed through the *measured* ALPN->KC synaptic fan-in (row
-    normalised, so each active projection neuron contributes unit drive), scaled by a
+    normalized, so each active projection neuron contributes unit drive), scaled by a
     per-Kenyon-cell log-normal gain, and then passed through a k-winner-take-all with a
     fixed active fraction.  The k-WTA is what makes the code sparse in the same way real
     Kenyon cells are: a fixed number of cells fire per stimulus, chosen by relative drive.
@@ -446,9 +446,9 @@ class PlasticityConfig:
     min_factor: float | None = None
     punish_gain: float = 1.0
     code_jitter: float = 0.0
-    """Fraction of the active Kenyon-cell set re-drawn on each *presentation* of an odour.
+    """Fraction of the active Kenyon-cell set re-drawn on each *presentation* of an odor.
 
-    Kenyon-cell responses to the same odour vary from trial to trial (the PN->KC drive is
+    Kenyon-cell responses to the same odor vary from trial to trial (the PN->KC drive is
     noisy), so learning has to average over presentations rather than being complete after
     one.  0.0 makes the codes deterministic and acquisition effectively single-trial."""
 
@@ -500,14 +500,14 @@ class MBLearner:
         self.da_sign = (g.pam_gate.astype(float) - cfg.punish_gain * g.ppl_gate.astype(float)
                         if cfg.da_mode == "signed" else np.ones(g.n_mbon))
         # RPE mode: the dopamine signal must be in the same units as the reward, so the
-        # readout is normalised by its own untrained maximum response over the odour set.
+        # readout is normalized by its own untrained maximum response over the odor set.
         self.value_scale = 1.0
         if cfg.da_mode == "rpe":
             y = self.response()
             v = float(np.max(y[:, self._pool("readout")].mean(axis=1)))
             self.value_scale = v if v > 1e-9 else 1.0
         # multiplicative rule: the update is expressed as a fraction of the current weight,
-        # so the post-synaptic activity is normalised by its own untrained mean level.
+        # so the post-synaptic activity is normalized by its own untrained mean level.
         self.value_ref = 1.0
         if cfg.rule == "multiplicative":
             y = self.response()
@@ -519,12 +519,12 @@ class MBLearner:
 
     # -- forward pass -------------------------------------------------------------------
     def response(self, X: np.ndarray | None = None) -> np.ndarray:
-        """MBON activity y = W^T x for every odour (n_odors, n_mbon)."""
+        """MBON activity y = W^T x for every odor (n_odors, n_mbon)."""
         X = self.code.X if X is None else X
         return X @ self.W
 
     def value(self, X: np.ndarray | None = None, pool: str = "readout") -> np.ndarray:
-        """Scalar learned value per odour: mean MBON activity over the readout pool."""
+        """Scalar learned value per odor: mean MBON activity over the readout pool."""
         y = self.response(X)
         m = self._pool(pool)
         return y[:, m].mean(axis=1)
@@ -559,9 +559,9 @@ class MBLearner:
 
     # -- learning -----------------------------------------------------------------------
     def reward_update(self, o: int, da_scale: float = 1.0) -> float:
-        """One three-factor update on odour `o` with teaching signal `da`.
+        """One three-factor update on odor `o` with teaching signal `da`.
 
-        Only Kenyon cells that are active for this odour are touched (x is sparse), so the
+        Only Kenyon cells that are active for this odor are touched (x is sparse), so the
         update is O(active KCs x MBONs) rather than O(n_kc x n_mbon).
         """
         cfg = self.cfg
@@ -586,7 +586,7 @@ class MBLearner:
             return 0.0
         mask = self.g.mask[active]
         if cfg.rule == "multiplicative":
-            yhat = y / self.value_ref                       # normalised post-synaptic activity
+            yhat = y / self.value_ref                       # normalized post-synaptic activity
             fac = 1.0 + cfg.eta * da * self.da_gate[None, :] * self.da_sign[None, :] * yhat[None, :]
             fac = np.clip(fac, 0.0, 10.0)
             sub = np.where(mask, sub * fac, 0.0)
@@ -643,7 +643,7 @@ def zero_below_tolerance(d: np.ndarray, ref: np.ndarray, rel: float = 1e-9) -> n
     """Zero changes that are floating-point noise (below `rel` of the reference scale).
 
     Without this, a condition whose readout is invariant by construction (e.g. a readout
-    over the whole MBON layer under per-KC weight normalisation) would report an arbitrary
+    over the whole MBON layer under per-KC weight normalization) would report an arbitrary
     'learned' rank separation computed from 1e-14 rounding differences instead of the
     correct answer, a tie.
     """
@@ -656,14 +656,14 @@ def zero_below_tolerance(d: np.ndarray, ref: np.ndarray, rel: float = 1e-9) -> n
 def acquisition(learner: MBLearner, n_odors: int = 8, rewarded=(0,), trials: int = 300,
                 probe_every: int = 10, mode: str = "reward", pool: str = "readout",
                 seed: int = 0) -> dict:
-    """Classic conditioning: one target odour among N, associatively rewarded or punished.
+    """Classic conditioning: one target odor among N, associatively rewarded or punished.
 
-    `mode='reward'` delivers the teaching signal only on target-odour trials (+1), which is
+    `mode='reward'` delivers the teaching signal only on target-odor trials (+1), which is
     how reward dopaminergic (PAM) neurons behave; `mode='punish'` delivers -1 on target
     trials, the PPL1 convention.  Returns the acquisition curve measured as (a) the value of
-    the target odour, (b) the rank separation between the target and every non-target odour
-    (AUC over all target/non-target odour pairs), and (c) the fraction of probes at which the
-    target odour is the arg-max of the readout.
+    the target odor, (b) the rank separation between the target and every non-target odor
+    (AUC over all target/non-target odor pairs), and (c) the fraction of probes at which the
+    target odor is the arg-max of the readout.
     """
     rng = np.random.default_rng(seed + 101)
     rewarded = np.asarray(rewarded, dtype=np.int64)
@@ -701,8 +701,8 @@ def capacity_protocol(learner: MBLearner, n_odors: int = 64, n_rewarded: int = 1
                       probe_every: int | None = 50, da_value: float = 1.0) -> dict:
     """How many odor->reward associations can the same plastic pathway hold at once?
 
-    `n_rewarded` odours out of `n_odors` are rewarded; the network is trained on a random
-    interleaved stream and then scored on its ability to rank *every* rewarded odour above
+    `n_rewarded` odors out of `n_odors` are rewarded; the network is trained on a random
+    interleaved stream and then scored on its ability to rank *every* rewarded odor above
     *every* unrewarded one.  Capacity is read off a sweep of `n_rewarded`.  `da_value` is the
     sign of the teaching signal, so the same protocol also runs as punishment learning (in
     which case `pair_auc_inverted` is the separation in the learned direction).

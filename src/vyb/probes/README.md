@@ -1,9 +1,9 @@
 # Vyb probes (FlyScale)
 
-Minimal reproductions of compiler/runtime behaviour, run against the pinned build
+Minimal reproductions of compiler/runtime behavior, run against the pinned build
 (`Vyb 0.7.5 (build=Debug, sanitize=none)`, `~/Projects/Vyb/build/vyb`, build dated 2026-09-12).
 Each file is a standalone program; the header comment states the question it answers and the exact
-command. Keep them: several encode behaviour that costs hours to rediscover.
+command. Keep them: several encode behavior that costs hours to rediscover.
 
 Run one:
 
@@ -57,3 +57,27 @@ VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb <probe>.vyb
    name the offending token (probe_m2_h).
 4. `String.to_int` / `to_float` are advertised in `docs/refman/language.md` but missing from the
    build's semantic table (probe_m2_c).
+
+## Re-check probes (2026-09-17, against upstream `main@51ced31`)
+
+Written because three original probes had gone stale (the module or its exports had changed underneath
+them). Each isolates one claim from `docs/VYB-PORT.md`, and each was run against a fresh build of
+upstream main in a scratch checkout:
+
+| Probe | Question | Result on main@51ced31 | Issue |
+|---|---|---|---|
+| `probe_m3_vec_return_shapes.vyb` | can a function return `Vec<Int>?` / `Vec<UInt8>?`? | no — internal cast error, then a core dump | #282 |
+| `probe_m3_vec_param_copy.vyb` | does mutating a plain `Vec` parameter reach the caller? | no — silent no-op (`caller_len=0`) | #283 |
+| `probe_m3_optional_vec_return.vyb` | the same shape in the smallest form we could write | `UInt8` unresolved in a return type | (rolled into #282) |
+
+Run them from the repository root:
+
+```
+VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb src/vyb/probes/probe_m3_vec_return_shapes.vyb
+VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb src/vyb/probes/probe_m3_vec_param_copy.vyb
+```
+
+`probe_b_module_read_chunk.vyb` and `probe_d_loader.vyb` are kept for the record but no longer test what
+they were written for: `flyload` no longer exports `read_chunk`, and `probe_d` was rewritten to use a
+return value instead of an out-parameter (which is how the out-parameter claim went unnoticed until the
+`probe_m3_*` pair was written).

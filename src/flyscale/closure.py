@@ -58,7 +58,7 @@ def _symmetric_laplacian(g: GraphView, autapses: bool = False):
 
 
 def spectral_signature(g: GraphView, k: int = 50) -> list[float]:
-    """Top-k eigenvalues of the symmetric normalised Laplacian (Laplacian eigenvalue proxy)."""
+    """Top-k eigenvalues of the symmetric normalized Laplacian (Laplacian eigenvalue proxy)."""
     from scipy.sparse import linalg as splinalg
     L, _, _ = _symmetric_laplacian(g)
     kk = int(min(k, g.n - 2))
@@ -99,7 +99,7 @@ def two_node_motifs(g: GraphView) -> dict:
 
 
 def triad_frequencies(g: GraphView, max_edges: int = 4_000_000) -> dict | None:
-    """Normalised 16-class triad census (None when the graph exceeds `max_edges`)."""
+    """Normalized 16-class triad census (None when the graph exceeds `max_edges`)."""
     import igraph as ig
     from .metrics import TRIAD_LABELS
     if g.pre.size > max_edges:
@@ -427,7 +427,7 @@ COMPOSITE_WEIGHTS = {
 
 
 def composite_score(metrics: dict) -> float | None:
-    """Weighted mean of available normalised distances; ARI enters as (1 - ARI).
+    """Weighted mean of available normalized distances; ARI enters as (1 - ARI).
 
     Internal optimisation score only - §13 requires the raw metrics to be kept alongside it,
     and they are (this dict is stored whole in the results JSON).

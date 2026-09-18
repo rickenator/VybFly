@@ -8,16 +8,16 @@ This script builds the benchmark:
 
   * extract the real MB subgraph by cell-type annotation (Kenyon cells, MBONs, DANs,
     antennal-lobe projection neurons), reporting the exact labels found,
-  * sparse Kenyon-cell odour codes driven through the measured ALPN->KC fan-in (fixed
+  * sparse Kenyon-cell odor codes driven through the measured ALPN->KC fan-in (fixed
     k-winner-take-all sparsity, with trial-to-trial variability of the active KC set),
   * a reward-modulated Hebbian (three-factor) rule on the KC->MBON pathway, dopamine-gated
-    through the measured DAN->MBON wiring, with homeostatic per-KC weight normalisation,
-  * protocol 1 — acquisition: N odours, one rewarded; learning curve over trials,
-  * protocol 2 — memory capacity: raise the number of odour->reward associations until the
-    trained network can no longer rank rewarded odours above unrewarded ones,
+    through the measured DAN->MBON wiring, with homeostatic per-KC weight normalization,
+  * protocol 1 — acquisition: N odors, one rewarded; learning curve over trials,
+  * protocol 2 — memory capacity: raise the number of odor->reward associations until the
+    trained network can no longer rank rewarded odors above unrewarded ones,
   * controls — degree-preserving shuffle of the KC->MBON targets, randomised dopamine gate,
     no-plasticity (frozen) runs, random weights on the real topology, shuffled ALPN->KC
-    odour coding, uniform (non-anatomical) dopamine broadcast, and the additive rule,
+    odor coding, uniform (non-anatomical) dopamine broadcast, and the additive rule,
   * architecture-preservation audit — synapses created/lost, weight drift, row budgets.
 
 Outputs: results/phase8/learning.json, results/phase8/SUMMARY.txt.
@@ -102,7 +102,7 @@ CONDITIONS: dict[str, dict] = {
                 "DAN->MBON gate, plastic"},
     "randcode_plastic": {
         "graph": {"shuffle_alpn_kc": True}, "cfg": {},
-        "note": "real MB, odour coding replaced by a degree-matched random ALPN->KC "
+        "note": "real MB, odor coding replaced by a degree-matched random ALPN->KC "
                 "projection, plastic"},
     "bounded_plastic": {
         "graph": {}, "cfg": {"max_factor": 4.0, "min_factor": 0.25},
@@ -123,7 +123,7 @@ CONDITIONS: dict[str, dict] = {
         "graph": {}, "cfg": {}, "mode": "punish", "capacity_direction": "down",
         "note": "identical to real_plastic in every respect (same anatomical PAM gate, same "
                 "readout) except that the teaching signal is -1: isolates the SIGN of the "
-                "dopamine signal, so the punished odour is predicted to fall in the readout"},
+                "dopamine signal, so the punished odor is predicted to fall in the readout"},
     "ppl_wiring_plastic": {
         "graph": {}, "cfg": {"gate": "ppl"}, "mode": "punish", "capacity_direction": "down",
         "note": "punishment routed through the measured PPL1/PPL2 -> MBON wiring instead of "
@@ -267,7 +267,7 @@ def main() -> int:
     ap.add_argument("--eta", type=float, default=0.1, help="plasticity rate")
     ap.add_argument("--sparsity", type=float, default=0.05, help="active KC fraction")
     ap.add_argument("--channels-per-odor", type=int, default=5,
-                    help="glomeruli activated per synthetic odour")
+                    help="glomeruli activated per synthetic odor")
     ap.add_argument("--jitter", type=float, default=0.3,
                     help="fraction of the active KC set re-drawn per presentation")
     ap.add_argument("--rule", default="multiplicative", choices=["multiplicative", "additive"])
@@ -306,9 +306,9 @@ def main() -> int:
                 "multiglomerular (400) + 8 unlabelled; only the 277 uniglomerular cells "
                 "define the 56 glomerulus channels. The multiglomerular cells stay "
                 "unassigned (channel -1) because they genuinely innervate several "
-                "glomeruli, so an odour over 5 glomeruli drives 284 of the 685 ALPNs.",
+                "glomeruli, so an odor over 5 glomeruli drives 284 of the 685 ALPNs.",
                 "cell_class 'olfactory' (2281, all cell_type ORN_*) is the olfactory "
-                "receptor neuron population. It is not used: FlyWire contains no odour "
+                "receptor neuron population. It is not used: FlyWire contains no odor "
                 "data, so an ORN layer would add purely synthetic structure.",
                 "MBON cell_class holds 96 neurons; MBON25 and MBON34 share the cell_type "
                 "'MBON25,MBON34' and two cells are published as MBON15-like / MBON17-like.",
@@ -319,8 +319,8 @@ def main() -> int:
         "subgraph_stats": stats,
         "model": {
             "pathway": "ALPN -> KC -> MBON, with DAN providing the teaching signal",
-            "odour_code": "synthetic odour = sparse pattern over the 56 glomeruli "
-                          "(channels_per_odor), pushed through the measured row-normalised "
+            "odour_code": "synthetic odor = sparse pattern over the 56 glomeruli "
+                          "(channels_per_odor), pushed through the measured row-normalized "
                           "ALPN->KC synapse matrix and passed through a fixed-fraction "
                           "k-winner-take-all; trial-to-trial code jitter documented below",
             "rule": {
@@ -337,7 +337,7 @@ def main() -> int:
                                          "connectome: no synapse can be created or deleted",
             },
             "readout": "mean MBON activity over the dopamine-gated (PAM-innervated) MBON "
-                       "pool; the value of an odour is this mean",
+                       "pool; the value of an odor is this mean",
         },
         "protocols": {
             "acquisition": {"n_odors": N_ODORS, "rewarded_odor": 0, "trials": ACQ_TRIALS,
@@ -346,7 +346,7 @@ def main() -> int:
                          "trials_per_association": CAP_TRIALS_PER_ASSOC,
                          "criterion_auc": CAP_CRITERION, "criterion_auc_loose": CAP_LOOSE,
                          "metric": "AUC = tie-aware fraction of (rewarded, unrewarded) "
-                                   "odour pairs whose readout value is correctly ordered; "
+                                   "odor pairs whose readout value is correctly ordered; "
                                    "chance = 0.5. 'learned' AUC uses the change in value "
                                    "relative to the untrained readout, which removes the "
                                    "innate bias of the naive connectome readout."},
@@ -664,7 +664,7 @@ def write_summary(out: dict, path: Path) -> None:
     add(f"subgraph     : {out['dataset']['threshold_synapses']}-synapse threshold "
         "(published convention)")
     add(f"parameters   : eta={par['eta']}, rule={par['rule']}, KC sparsity={par['sparsity']}, "
-        f"glomeruli/odour={par['channels_per_odor']},")
+        f"glomeruli/odor={par['channels_per_odor']},")
     add(f"               per-presentation KC jitter={par['code_jitter']}, seeds={par['seeds']}")
     add(f"command      : {par['command']}")
     add(f"runtime      : {out['qc']['runtime_s']:.0f} s")
@@ -708,9 +708,9 @@ def write_summary(out: dict, path: Path) -> None:
     add("")
     add("3. MODEL")
     add("-" * 78)
-    add(f"  odour -> KC code: {par['channels_per_odor']} of {lab['upn']['n_glomeruli']} glomeruli "
+    add(f"  odor -> KC code: {par['channels_per_odor']} of {lab['upn']['n_glomeruli']} glomeruli "
         "activated, drive pushed through the")
-    add("  measured row-normalised ALPN->KC matrix, then a k-winner-take-all at fixed")
+    add("  measured row-normalized ALPN->KC matrix, then a k-winner-take-all at fixed")
     add(f"  sparsity. Measured: {out['qc']['kc_codes']['active_per_odour']:.0f} active KCs of "
         f"{out['qc']['kc_codes']['n_kc']} (sparsity "
         f"{out['qc']['kc_codes']['sparsity_measured']:.3f}),")
@@ -730,10 +730,10 @@ def write_summary(out: dict, path: Path) -> None:
     add(f"  readout: mean activity over the {pool_mbons} anatomically PAM-innervated MBONs")
     add("    (fixed for every condition, so ablating the dopamine gate does not change the")
     add("    readout; the 'allpool' condition re-runs it over all 96 MBONs as a check)")
-    add("  protocol 1 (acquisition): 8 odours, odour 0 rewarded, 300 trials, probe every 10")
-    add(f"  protocol 2 (capacity): 64 odours, m rewarded, m in {list(CAP_GRID)}, "
+    add("  protocol 1 (acquisition): 8 odors, odor 0 rewarded, 300 trials, probe every 10")
+    add(f"  protocol 2 (capacity): 64 odors, m rewarded, m in {list(CAP_GRID)}, "
         f"{CAP_TRIALS_PER_ASSOC} trials per association;")
-    add("    score = AUC over all (rewarded, unrewarded) odour pairs of the readout value")
+    add("    score = AUC over all (rewarded, unrewarded) odor pairs of the readout value")
     add("    ('learned' AUC uses the change in value from the untrained readout, removing")
     add("    the innate bias of the naive connectome)")
     add("")
@@ -748,7 +748,7 @@ def write_summary(out: dict, path: Path) -> None:
             f"{agg['trials_to_auc90']:>13.0f}"
             f"{agg['value_target_relative_change']:>13.3f}")
     add("")
-    add("  acquisition curves — mean AUC (rewarded-odour vs unrewarded rank separation)")
+    add("  acquisition curves — mean AUC (rewarded-odor vs unrewarded rank separation)")
     add(f"  {'condition':<26}{'t=10':>7}{'t=30':>7}{'t=60':>7}{'t=100':>7}{'t=150':>7}"
         f"{'t=200':>7}{'t=300':>7}")
     grid = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170,
@@ -766,7 +766,7 @@ def write_summary(out: dict, path: Path) -> None:
     for name, note in out["condition_notes"].items():
         add(f"    {name:<24} {note}")
     add("")
-    add("5. MEMORY CAPACITY — how many odour->reward associations are held at once")
+    add("5. MEMORY CAPACITY — how many odor->reward associations are held at once")
     add("-" * 78)
     add(f"  {'m':>4}  {'real+plastic':>13}{'shuffled+pl':>13}{'real frozen':>13}"
         f"{'shuf frozen':>13}{'randw+pl':>11}{'additive':>11}")
@@ -866,13 +866,13 @@ def write_summary(out: dict, path: Path) -> None:
     add("")
     add("9. WHAT IS AND IS NOT SHOWN")
     add("-" * 78)
-    add(f"  * The plastic pathway learns the association: the rewarded odour's rank")
+    add(f"  * The plastic pathway learns the association: the rewarded odor's rank")
     add(f"    separation rises from AUC {A['auc_initial']:.2f} (naive connectome readout) to "
         f"{A['auc_final']:.2f}")
     add(f"    within {A['trials_to_auc90']:.0f} of 300 trials and the mean MBON response to it")
     add(f"    rises by {A['value_target_relative_change']:+.1%} while the untrained connectome "
         "readout")
-    add("    puts it below the unrewarded odours; the no-plasticity control is exactly flat.")
+    add("    puts it below the unrewarded odors; the no-plasticity control is exactly flat.")
     add("  * The connectome geometry is NOT what makes learning work: a degree-preserving")
     add(f"    shuffle of the KC->MBON targets reproduces acquisition "
         f"({a['shuffled_plastic']['auc_final']:.3f} vs "
@@ -881,7 +881,7 @@ def write_summary(out: dict, path: Path) -> None:
         f"per-seed, {gc['shuffled_plastic']['capacity_auc90']:.0f} vs "
         f"{gc['real_plastic']['capacity_auc90']:.0f} on the seed-averaged curve), as do "
         "shuffled")
-    add("    weights, a shuffled dopamine gate, a random-projection odour code and the")
+    add("    weights, a shuffled dopamine gate, a random-projection odor code and the")
     add("    additive variant of the rule. Under this benchmark §27 is confirmed in the")
     add("    strong form:")
     add("    the imposed rule carries the performance and the connectome only sets the")
@@ -893,17 +893,17 @@ def write_summary(out: dict, path: Path) -> None:
         f"{gc['shuffled_frozen']['capacity_auc90']:.0f} for the two frozen controls.")
     add("  * The 'allpool' condition is flat by construction, and that is worth stating:")
     add("    with the readout taken over the entire MBON layer, per-KC output-weight")
-    add("    normalisation makes the pool mean exactly invariant (sum_j y_j = sum_i x_i *")
+    add("    normalization makes the pool mean exactly invariant (sum_j y_j = sum_i x_i *")
     add("    budget_i), so a uniform readout over all 96 MBONs cannot move no matter how the")
     add("    weights redistribute. Only a restricted readout can express learning.")
     add("  * The rpe variant reaches a much higher capacity (48 vs 8) because in that mode an")
     add("    unrewarded presentation carries an active negative teaching signal")
-    add("    (da = 0 - V/V_ref < 0) that suppresses the competitor odours; the reward-only")
-    add("    rule never depresses an unrewarded odour and is limited by interference.")
+    add("    (da = 0 - V/V_ref < 0) that suppresses the competitor odors; the reward-only")
+    add("    rule never depresses an unrewarded odor and is limited by interference.")
     add("  * Capacity rises as the KC code gets sparser (sparsity 0.02 -> 10 associations,")
     add("    0.05 -> 7, 0.10 -> 4, 0.20 -> 2), the sparse-coding prediction.")
     add("  * Two manipulations do change the outcome and are reported as such, both of them")
-    add("    changing *where the teaching signal can act* rather than what the odours look")
+    add("    changing *where the teaching signal can act* rather than what the odors look")
     add("    like:")
     add(f"    - broadcasting dopamine to every MBON instead of routing it through the measured")
     add(f"      DAN wiring gives final AUC "
@@ -915,10 +915,10 @@ def write_summary(out: dict, path: Path) -> None:
         f"{A['trials_to_auc90']:.0f} trials to criterion, capacity "
         f"{gc['uniform_gate_plastic']['capacity_auc90']:.0f} vs "
         f"{gc['real_plastic']['capacity_auc90']:.0f}), unlike which KCs an MBON listens to or")
-    add("      how the odour code is built.")
+    add("      how the odor code is built.")
     add(f"    - flipping only the sign of the teaching signal (aversive_sign_plastic, "
         f"identical")
-    add(f"      gate and readout) drives the punished odour's readout down: final AUC "
+    add(f"      gate and readout) drives the punished odor's readout down: final AUC "
         f"{a['aversive_sign_plastic']['auc_final']:.3f}")
     add(f"      (chance 0.5), where every appetitive condition sits at "
         f"{A['auc_final']:.3f}. The learned")
@@ -929,7 +929,7 @@ def write_summary(out: dict, path: Path) -> None:
     add("      innervate largely different MBON sets, so with the appetitive readout fixed")
     add("      this is a wiring comparison and not a clean sign control — reported as such.")
     add("  * This is a benchmark, not a model of the fly: no spiking, no KC->KC collaterals,")
-    add("    no MBON->DAN feedback, single-compartment MBONs, a synthetic odour input over")
+    add("    no MBON->DAN feedback, single-compartment MBONs, a synthetic odor input over")
     add("    glomeruli and a uniform-mean readout over the PAM-gated MBON pool.")
     add("  * Absolute capacity depends on the readout, criterion and protocol; the frozen")
     add("    and shuffled controls are therefore reported on exactly the same protocol.")

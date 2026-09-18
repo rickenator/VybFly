@@ -5,7 +5,7 @@ a Python/C++ reference implementation for validation and requires production exe
 Vyb + CUDA/NVPTX with no Python in the loop. This document is the bridge, and it now carries
 verified findings from the first working Vyb loader.
 
-## Division of labour
+## Division of labor
 
 | Layer | Reference (Python) | Production (Vyb) |
 |---|---|---|
@@ -155,11 +155,44 @@ VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb src/vyb/probes/probe_a
 VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb src/vyb/probes/probe_c_module_buffer_boundary.vyb --module-path src/vyb/probes
 ```
 
+## Status on the current upstream build (re-checked 2026-09-17)
+
+Every constraint above was re-run against a fresh build of `main@51ced31` (Vyb 0.7.5, Debug) in a
+scratch checkout, and the ones that still reproduce are now filed on the Vyb tracker. Three probes had
+gone stale and were replaced (`probe_m3_*`), so the table below reflects what actually happens today,
+not what happened on the 2026-09-12 build:
+
+| constraint | probe | on main@51ced31 | filed |
+|---|---|---|---|
+| 1 module-boundary `Vec<UInt8>` | `probe_c_module_buffer_boundary.vyb` | **reproduces** (right length, garbage contents) | #281 |
+| 2 optional `Vec` return | `probe_m3_vec_return_shapes.vyb` (new) | **reproduces** (cast error, then core dump) | #282 |
+| 3 non-mutating `Vec` parameter | `probe_m3_vec_param_copy.vyb` (new) | **reproduces** (silent no-op) | #283 |
+| 4 decode throughput | `probe_e_throughput.vyb` | not re-measured (see below) | pending |
+| 5 `Vec<Vec<T>>` | `probe_m2_b1/b4/b6/b7` | **reproduces** (LLVM assert, double free, silent garbage, SIGSEGV) | #284 |
+| 6 caller state via `their<T>` | `probe_m2_a`, `probe_m2_e*` | still correct (no defect) | - |
+| 7 re-borrowing a `their<T>` | `probe_m2_i_nested_borrow.vyb` | **reproduces** (segfault, rc=139) | #285 |
+| 8 `ptr` as a field name | `probe_m2_h_struct_field_ptr.vyb` | **reproduces** (message names no token) | #286 |
+| 9 `String.to_int`/`to_float` | `probe_m2_c_struct_vec_parse.vyb` | **reproduces** (documented, not implemented) | #287 |
+| 10 timing/io surface, `while (a && b)` | `probe_m2_d`, `probe_m2_j` | still correct (no defect) | - |
+
+Also re-checked: the parenthesised-operand front-end bug (`X + Y * (Z)` mis-typing the left operand,
+`src/vyb_kernels/probes/paren_operand_bug.vyb`) **no longer reproduces** on main@51ced31 — the probe now
+compiles and runs on the same shape matrix that used to fail, so it is recorded as fixed upstream.
+
 ## Open items to raise upstream (Vyb repo)
 
-* element-wise byte decode throughput (constraint 4) - needs a bulk byte->int view for
-  GPU/array workloads, which the CUDA path will otherwise be built on top of;
-* the module-boundary `Vec<UInt8>` corruption (constraint 1) - silent data corruption is the
-  worst failure mode for a compiler that advertises a binary io surface (#213);
-* optional-return limitation (constraint 2) and non-mutating `Vec` parameters (constraint 3)
-  are narrower but each one is a trap for a first-time data-loading consumer.
+Filed 2026-09-17, each with a minimal probe and the observed output:
+
+* #281 - module-boundary `Vec<UInt8>` returns garbage contents (silent data corruption);
+* #282 - an optional `Vec` return type cannot return a `Vec` (internal cast error, then a core dump);
+* #283 - mutating a plain `Vec` parameter is a silent no-op for the caller;
+* #284 - `Vec<Vec<T>>` is unusable (silent garbage on a chained get, SIGSEGV, heap corruption);
+* #285 - re-borrowing an existing `their<T>` (`f(borrow(v), x)`) segfaults;
+* #286 - `ptr` is rejected as a struct field name without naming the offending token;
+* #287 - refman documents `String.to_int`/`to_float`, which the build does not implement.
+
+Still unfiled, deliberately: the element-wise decode throughput (constraint 4). The 2026-09-12
+measurement (~29 us/element, ~34k elements/s) is what makes a full 15.1M-element pass cost ~7 minutes,
+but upstream `main` is moving fast right now and the number should be re-measured on the next build
+before it is filed as an issue — an out-of-date performance claim is worse than none.
+

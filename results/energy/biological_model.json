@@ -156,24 +156,24 @@
     "per_action_potential": {
       "atp_per_neuron_per_spike": 710000000.0,
       "joules": 5.893e-11,
-      "citation_title": "An energy budget for signaling in the grey matter of the brain",
+      "citation_title": "An energy budget for signaling in the gray matter of the brain",
       "authors": "Attwell D, Laughlin SB",
       "year": 2001,
       "doi": "10.1097/00004647-200110000-00001",
       "url": "https://doi.org/10.1097/00004647-200110000-00001",
       "not_a_drosophila_measurement": true,
-      "caveats": "mammalian cortical grey matter; 'total ATP consumption when a neuron fires an action potential ... 7.1e8 ATP/neuron/spike', i.e. axon + presynaptic + postsynaptic ion fluxes, not the axonal spike alone"
+      "caveats": "mammalian cortical gray matter; 'total ATP consumption when a neuron fires an action potential ... 7.1e8 ATP/neuron/spike', i.e. axon + presynaptic + postsynaptic ion fluxes, not the axonal spike alone"
     },
     "per_vesicle_release": {
       "atp_per_vesicle_released": 164000.0,
       "joules": 1.3612e-14,
-      "citation_title": "An energy budget for signaling in the grey matter of the brain",
+      "citation_title": "An energy budget for signaling in the gray matter of the brain",
       "authors": "Attwell D, Laughlin SB",
       "year": 2001,
       "doi": "10.1097/00004647-200110000-00001",
       "url": "https://doi.org/10.1097/00004647-200110000-00001",
       "not_a_drosophila_measurement": true,
-      "caveats": "mammalian cortical grey matter; energy per glutamate vesicle actually released (presynaptic Ca2+ entry, vesicle cycling, postsynaptic actions, glutamate recycling), 84% of it postsynaptic ion pumping. This is a release event, not one anatomical synapse of the connectome"
+      "caveats": "mammalian cortical gray matter; energy per glutamate vesicle actually released (presynaptic Ca2+ entry, vesicle cycling, postsynaptic actions, glutamate recycling), 84% of it postsynaptic ion pumping. This is a release event, not one anatomical synapse of the connectome"
     }
   },
   "derived_fly_per_spike": {

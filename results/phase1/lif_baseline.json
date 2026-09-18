@@ -389,7 +389,7 @@
     }
   },
   "notes": [
-    "Weights: w_anat = syn_count**alpha normalised so the mean edge weight is 1; the input per spike is g_syn * sign(transmitter) * modulatory_scale. 'alpha' and 'g_syn' are model parameters, not measured quantities.",
+    "Weights: w_anat = syn_count**alpha normalized so the mean edge weight is 1; the input per spike is g_syn * sign(transmitter) * modulatory_scale. 'alpha' and 'g_syn' are model parameters, not measured quantities.",
     "Signs: ach excitatory, gaba and glut inhibitory (most adult-fly glutamatergic neurons are inhibitory), and oct/ser/da modulatory (weak excitatory, scaled). The mapping is recorded in graph.weight_rule.sign_map.",
     "Delays: per-edge integer timesteps from the soma-to-soma distance with a specified conduction speed. The connectome contains no measured delays, so the delay rule is a model, and its measured histogram is included under graph.delay_rule.",
     "The dense engines iterate all 139,255 neurons and all 2.7M edges on every step; the sparse engine only expands and updates active neurons, so its state-update count is the quantity that should fall as activity sparsens (\u00a79).",
@@ -431,7 +431,7 @@
         "0.5": 114486002.0
       }
     },
-    "purpose": "documents the g_syn operating point: the same Level-1 stimulus at several synaptic gains, 0.5 s each, dense engine only. The default g_syn = 0.15 is an intermediate point of the ladder - sparse enough to keep the event-driven engine cheap, but with clear recurrent recruitment beyond the driven sensory neurons. The ladder is recorded so the choice can be re-derived rather than trusted; it is a recorded operating point, not an optimised one.",
+    "purpose": "documents the g_syn operating point: the same Level-1 stimulus at several synaptic gains, 0.5 s each, dense engine only. The default g_syn = 0.15 is an intermediate point of the ladder - sparse enough to keep the event-driven engine cheap, but with clear recurrent recruitment beyond the driven sensory neurons. The ladder is recorded so the choice can be re-derived rather than trusted; it is a recorded operating point, not an optimized one.",
     "runs": {
       "0.05": {
         "fraction_neurons_active": 0.086252,
@@ -811,7 +811,7 @@
           "kind": "combined",
           "n_events": 133927
         },
-        "description": "\u00a720 Level 1: Poisson light pulse on photoreceptors (R1-6/R7/R8) during 100-600 ms, Poisson odour pulse on olfactory receptor neurons (ORN_*) during 400-900 ms",
+        "description": "\u00a720 Level 1: Poisson light pulse on photoreceptors (R1-6/R7/R8) during 100-600 ms, Poisson odor pulse on olfactory receptor neurons (ORN_*) during 400-900 ms",
         "drive_seed": 20260917,
         "external_events": 133927
       },

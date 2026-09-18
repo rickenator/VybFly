@@ -59,7 +59,7 @@ def simulate(n: int = 512, ticks: int = 30, n_seed: int = 10, g: float = 0.02,
         if bucket.size:
             src = np.concatenate([np.arange(indptr[s], indptr[s + 1]) for s in bucket]) \
                 if bucket.size < 50000 else None
-            # vectorised equivalent of "for each fired neuron, walk its edges"
+            # vectorized equivalent of "for each fired neuron, walk its edges"
             rep = np.repeat(bucket, np.diff(indptr)[bucket])
             counts_per = np.diff(indptr)[bucket]
             starts = indptr[bucket]

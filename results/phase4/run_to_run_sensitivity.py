@@ -1,7 +1,7 @@
 """Run-to-run sensitivity of the hyperbolic embedding (Phase 4 companion).
 
 Two fits with the *same* configuration (dim=2, lr=0.05, batch=65536, 150 epochs, seed=0,
-degree-ranked initialisation) were run on protocol variants that differ by 14 neurons
+degree-ranked initialization) were run on protocol variants that differ by 14 neurons
 (0.01% of the connectome, the neurons without an annotation row, which were removed from
 the analysis graph after the first run). That tiny change shifts the sampled non-edges and
 therefore the SGD trajectory. This script evaluates both embeddings on the *identical*

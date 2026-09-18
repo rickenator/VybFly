@@ -2680,7 +2680,7 @@
   },
   "workload": {
     "config": {
-      "neuron_model": "LIF, synapse-count-normalised E/I weights, dense leak, hard refractory",
+      "neuron_model": "LIF, synapse-count-normalized E/I weights, dense leak, hard refractory",
       "dt_ms": 0.5,
       "steps_per_epoch": 1000,
       "vth": 1.0,

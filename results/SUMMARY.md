@@ -29,7 +29,7 @@ exist on disk. Anything not measured is reported as missing, never as a pass.
 
 ## §25 success criteria
 
-### SUPPORTED - Minimum success - 2x synthetic connectome preserving statistics, renormalising back toward the real graph, executing stably, retaining baseline circuit behaviour
+### SUPPORTED - Minimum success - 2x synthetic connectome preserving statistics, renormalising back toward the real graph, executing stably, retaining baseline circuit behavior
 * 2x closure composite=0.018407118 degree_wasserstein_normalised=0.007422
 * downscaled dynamics jaccard>0.5: True
 * LIF baseline artifact present (executes stably under its own gate)

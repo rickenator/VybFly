@@ -127,7 +127,7 @@ def dataset_hash() -> str:
 
 # --------------------------------------------------------------------------- geometry
 def anatomical_coords(scale: bool = True) -> np.ndarray:
-    """Annotation coordinates (xyz, standardised). The Phase 4 embedding directory is empty, so the
+    """Annotation coordinates (xyz, standardized). The Phase 4 embedding directory is empty, so the
     verified anatomical geometry is the only geometry law available; the choice is recorded."""
     import pandas as pd
     ann = pd.read_parquet(CANON / "neurons.parquet",
@@ -160,7 +160,7 @@ def load_geometry(g: GraphView, seed: int = 0, refit: bool = False) -> GeometryL
                        "fit": {k: v for k, v in fit.items() if k != "confusion"},
                        "seconds": round(time.time() - t0, 2),
                        "note": ("P(connect)=1/(1+exp((d-R)/T)) fitted by flyscale.renorm."
-                                "fit_connection_law on standardised anatomical xyz; no Phase 4 "
+                                "fit_connection_law on standardized anatomical xyz; no Phase 4 "
                                 "embedding exists in results/phase4/artifacts")})
     return law
 
@@ -1009,7 +1009,7 @@ def write_summary(payload: dict) -> None:
     add("")
     add("WHAT WAS RUN AT EVERY SCALE")
     add("  graphs:      canonical v783 thresholded at 5 synapses (1x), then renorm.upscale to")
-    add("               2x/5x/10x with the recorded geometry (standardised anatomical xyz,")
+    add("               2x/5x/10x with the recorded geometry (standardized anatomical xyz,")
     add("               P(connect)=1/(1+exp((d-R)/T)) fit on the graph itself)")
     for k in keys:
         if k in met:
@@ -1089,7 +1089,7 @@ def write_summary(payload: dict) -> None:
         ("  complexity: distinct-pattern ratio", "distinct_pattern_ratio"),
         ("  complexity: readout unit coverage", "readout_unit_coverage"),
         ("  complexity: stimulus-response MI (bits)", "stimulus_response_mi_bits"),
-        ("  complexity: normalised MI", "stimulus_response_normalised_mi"),
+        ("  complexity: normalized MI", "stimulus_response_normalised_mi"),
         ("  complexity: MI at the class ceiling", "stimulus_response_mi_at_ceiling"),
         ("  complexity: avalanche size exponent", "avalanche_size_exponent"),
         ("  complexity: avalanche exponent R^2", "avalanche_size_exponent_r2"),
@@ -1217,7 +1217,7 @@ def write_summary(payload: dict) -> None:
     for s in grew_clear or ["    (none)"]:
         add(f"    - {s}")
     add("  grew, but the evidence is marginal (small exponent, weak fit, or a grid/ceiling")
-    add("  artefact - do not quote these as scaling laws without the caveat):")
+    add("  artifact - do not quote these as scaling laws without the caveat):")
     for s in grew_marginal or ["    (none)"]:
         add(f"    - {s}")
     add("  did NOT grow with scale (real negatives, headroom existed):")
@@ -1481,7 +1481,7 @@ def verify(args) -> dict:
         "capability_module_sha256_16_this_run": module_hash(),
         "note": ("a DIFFERENT verdict can come from two very different causes and the field list "
                  "distinguishes them: fields 'only in the rerun' mean the module gained fields "
-                 "after the stored run (a version artefact, not irreproducibility), whereas a "
+                 "after the stored run (a version artifact, not irreproducibility), whereas a "
                  "field in 'differing_fields' whose value also appears in the stored run is a real "
                  "reproducibility failure"),
     }

@@ -1,0 +1,28 @@
+// QUESTION: does mutating a plain `Vec` parameter reach the caller? FlyScale's VYB-PORT.md
+// constraint 3 said no on vyb 0.7.5 (2026-09-12): the callee mutated a copy and the caller saw an
+// empty Vec, silently.
+//
+// RUN: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//          src/vyb/probes/probe_m3_vec_param_copy.vyb
+
+fill(out<Vec<Int>>, n<Int>)<Int> -> {
+    for (i in 0..n) {
+        out.push(i * 10)
+    }
+
+    return out.len()
+}
+
+main()<Int> -> {
+    acc<Vec<Int>> = Vec::new()
+    reported<Int> = fill(acc, 5)
+    println("callee_saw_len=" + reported.to_string() + " caller_len=" + acc.len().to_string())
+
+    if (acc.len() == 5) {
+        println("RESULT: out-parameter works (mutation reached the caller)")
+    } else {
+        println("RESULT: out-parameter is a silent no-op (caller_len != 5)")
+    }
+
+    return 0
+}

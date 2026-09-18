@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
 
   // Weights: either supplied by the harness (float32, n_edges, already carrying the
   // excitatory/inhibitory sign from the published transmitter annotation) or built here as
-  // synapse-count-normalised excitatory weights scaled by --syn-gain. Every neuron's total
+  // synapse-count-normalized excitatory weights scaled by --syn-gain. Every neuron's total
   // synaptic input sums to 1 in the built-in path, so a single firing presynaptic partner
   // can never drive a target over threshold on its own.
   std::vector<float> w_h;

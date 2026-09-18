@@ -179,7 +179,7 @@ def compact_pairs(pre: np.ndarray, post: np.ndarray, syn: np.ndarray,
     """Aggregate duplicate (pre, post) pairs produced by a scaling operation.
 
     Sums synapse counts over duplicates and keeps the transmitter of the largest
-    contributing connection as the merged pair's transmitter (vectorised: sort by
+    contributing connection as the merged pair's transmitter (vectorized: sort by
     (pair, syn) and take the last row of each segment).
     """
     if pre.size == 0:

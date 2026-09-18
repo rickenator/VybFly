@@ -40,10 +40,10 @@ Sensitivity to the hyperbolic training budget (init = initial radius rule)
   init=degree   lr=0.05 epochs=15   -> held-out AUC 0.8108, AP 0.7957, in-sample AUC 0.8877
   init=uniform  lr=0.05 epochs=150  -> held-out AUC 0.8921, AP 0.8616, in-sample AUC 0.9467
 
-  The uniform-radius initialisation puts no degree information into the
-  starting point; the degree-ranked initialisation starts the hubs near the
+  The uniform-radius initialization puts no degree information into the
+  starting point; the degree-ranked initialization starts the hubs near the
   origin. Comparing the two at the same budget separates 'the latent geometry
-  captures connectivity' from 'the initialisation handed the model the degree
+  captures connectivity' from 'the initialization handed the model the degree
   ranking, which the degree-only baseline already scores well'.
 
 Headline (fair statement of what the numbers show)
@@ -60,7 +60,7 @@ Caveats that must travel with these numbers
   * positives and negatives are compared at a 1:1 ratio, so log-likelihood values are those of a balanced sample; the density-matched law is reported separately as R_density_matched
   * hyperbolic training budget: 150 epochs of Adam SGD over 2430462 pairs (fit on the fit edges only); see geometry.json for the full training history
   * the hyperbolic embedding is a single SGD draw: the objective is non-convex and its optimum moves with the sampled non-edges, so the delivered embedding is one sample from that distribution (run_to_run_sensitivity.json quantifies it)
-  * the hyperbolic fit is initialised by total-degree rank (hubs near the origin); the budget study shows a uniform-radius initialisation (no degree information) reaches a comparable optimum at the same budget, so the advantage over the anatomical coordinates does not depend on that initialisation
+  * the hyperbolic fit is initialized by total-degree rank (hubs near the origin); the budget study shows a uniform-radius initialization (no degree information) reaches a comparable optimum at the same budget, so the advantage over the anatomical coordinates does not depend on that initialization
   * the fitted (R, T) are in each geometry's own distance units (nanometres for the anatomical coordinates, eigenmap units for the spectral ones), so only within-geometry readings are meaningful: e.g. for anatomy R = 3.9e4 nm against a median positive-pair distance of 1.8e4 nm
   * adding the summed log degrees as a second feature lifts every geometry (anatomical_pca2: 0.9491, anatomical_xy: 0.9505, anatomical_xyz: 0.9492, anatomical_xyz_zscored: 0.9337, hyperbolic_2d: 0.9036, spectral_16: 0.9635, spectral_32: 0.9774); even the weakest geometry (hyperbolic_2d) then scores 0.9036 against 0.8739 for degrees alone, so all 7 geometries carry connection information that is not in the degrees
   * runtime: 1352.8s total on 20 CPUs; numpy 2.5.3, scipy 1.18.1

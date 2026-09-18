@@ -7,7 +7,7 @@ behaves like a brain.
 
 ---
 
-## What is this, in plain words
+## What is this
 
 A fruit fly has about **139,000 neurons** and roughly **500 million synapses** — the tiny
 connection points where one neuron talks to another. In 2024 a large collaboration called
@@ -51,7 +51,7 @@ degree-distribution difference of 0 and community structure agreeing perfectly (
 
 **Smaller brains still behave like the big one.** Compress the brain to half, a quarter, a tenth of
 its neurons, send the same signal through, and the pattern of activity overlaps the original by
-85–95% — the replicas reproduce the *behaviour*, not just the shape.
+85–95% — the replicas reproduce the *behavior*, not just the shape.
 
 **Bigger brains get more able — up to a point.** Stimulus information rises in proportion to size,
 and memory capacity goes from 8 associations to at least 96. But nothing we built does *time*: tests
@@ -59,8 +59,8 @@ about delayed or ordered stimuli never beat chance, at any scale. Some curves ha
 "censored" — our test grid ran out before the system did, so we cannot honestly say how far capacity
 grows.
 
-**A result that goes the other way.** We trained a model of the fly's learning centre (the mushroom
-body) on odour–reward association. It learns well — from chance to perfect in 58 trials. But replace
+**A result that goes the other way.** We trained a model of the fly's learning center (the mushroom
+body) on odor–reward association. It learns well — from chance to perfect in 58 trials. But replace
 the brain's actual wiring with a randomly shuffled version that has the same statistics, and **it
 learns exactly as well** (+0.000 ± 0.000). What mattered was the *anatomy of the dopamine gating*,
 not the specific wiring. A negative result, and a useful one.
@@ -83,11 +83,11 @@ together, and the paper says so on every page where they appear.
 
 The project runs the same thing twice: a **Python reference** (the oracle every number is checked
 against) and a **Vyb-native production path** — a loader, a discrete-event simulation engine, and GPU
-kernels written in [Vyb](https://github.com/rickenator/Vyb), Rick Goldberg's own language.
+kernels written in [Vyb](https://github.com/rickenator/Vyb).
 
 Building the second one turned out to be the most informative part of the work: it surfaced **twelve
 compiler defects**, including a blocking one where a kernel-mode store wrote eight bytes into a
-four-byte slot and silently zeroed a neighbour. That one is
+four-byte slot and silently zeroed a neighbor. That one is
 [filed, fixed upstream, and re-verified](https://github.com/rickenator/Vyb/issues/270) by this
 project.
 

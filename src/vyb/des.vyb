@@ -454,7 +454,7 @@ ent_new(n<Int>)<EntityState> -> {
     return st
 }
 
-// Initialise one entity (its record in the State table). vm starts at rest, last_update at tick 0,
+// Initialize one entity (its record in the State table). vm starts at rest, last_update at tick 0,
 // refractory_until at tick 0 (so an arrival at tick 0 can fire).
 share(all)
 ent_init(st<their<EntityState>>, i<Int>, etype<Int>, tau_ticks<Int>, decay_k<Int>, refr_ticks<Int>,

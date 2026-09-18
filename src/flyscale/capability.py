@@ -1123,10 +1123,10 @@ def avalanche_statistics(newly: np.ndarray) -> dict:
         if hi - lo > 0.5:
             bins = np.linspace(lo, hi, 13)
             hist, edges = np.histogram(np.log10(sizes), bins=bins)
-            centres = 0.5 * (edges[1:] + edges[:-1])
+            centers = 0.5 * (edges[1:] + edges[:-1])
             keep = hist > 0
             if keep.sum() >= 3:
-                x, yl = centres[keep], np.log10(hist[keep])
+                x, yl = centers[keep], np.log10(hist[keep])
                 slope, intercept = np.polyfit(x, yl, 1)
                 pred = slope * x + intercept
                 ss_res = float(((yl - pred) ** 2).sum())

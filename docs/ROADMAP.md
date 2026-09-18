@@ -25,7 +25,7 @@ listed; anything unverified is stated as such.
 | M6 | Downscaling 0.5x/0.25x replicas | **done** - 0.5x composite 0.179, 0.25x 0.267, 0.1x 0.276 |
 | M7 | Renormalization validation (downscaled dynamics) | **done** - jaccard 0.909/0.950/0.853, final-fraction ratio 0.993/1.092/1.007, `results/phase5/dynamics.json` |
 | M8 | 2x inverse scaling | **done** - N=278,510, E=5.19M (1.92x), synapses 2.00x, mean deg 18.62, strength 13.19 |
-| M9 | Closure: R(G2) ~ G1 | **done - strong** - composite 0.0184, normalised degree Wasserstein 0.0074, community ARI 0.912 (`results/phase7/closure.json`) |
+| M9 | Closure: R(G2) ~ G1 | **done - strong** - composite 0.0184, normalized degree Wasserstein 0.0074, community ARI 0.912 (`results/phase7/closure.json`) |
 | M10 | 10x graph (~1.4M neurons) | **done** - N=1,392,550, E=27.84M, synapses 346.9M, mean deg 19.99, strength 12.46; 5x closure 0.236 |
 | M11 | Plasticity (associative learning) | **done** - MB subgraph (5177 KC/96 MBON/331 DAN/56 glomeruli); AUC 0.51->1.00, 58 trials to 0.9, capacity 8; geometry gives +0.000 vs shuffled (real finding), the DAN gate does matter |
 | M12 | Scaling benchmarks (capability vs size) | **done** - 4 scales, identical protocol fingerprint; PR ~ N^0.318, MI@delta=0.1 alpha=1.014, capacity 8->96 (censored); temporal/sequence depth 0 at every scale |
@@ -74,7 +74,7 @@ listed; anything unverified is stated as such.
 
 ## Infrastructure built for the scaling phases (verified)
 
-* `src/flyscale/renorm.py` - geometric coarse-graining (latent nearest-neighbour grouping plus a
+* `src/flyscale/renorm.py` - geometric coarse-graining (latent nearest-neighbor grouping plus a
   sparsity-preserving edge-threshold calibration that reports the unreachable degree range
   instead of silently missing the target), node subdivision for 2x-100x, lineage coarse-graining
   for closure, and `fit_connection_law` (logistic fit of P(connect|distance) -> R, T, AUC).

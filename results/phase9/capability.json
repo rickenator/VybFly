@@ -4434,7 +4434,7 @@
     "n_differing_fields": 0,
     "n_trials_with_different_activation": 0,
     "n_trials_with_different_recruitment": 0,
-    "note": "a DIFFERENT verdict can come from two very different causes and the field list distinguishes them: fields 'only in the rerun' mean the module gained fields after the stored run (a version artefact, not irreproducibility), whereas a field in 'differing_fields' whose value also appears in the stored run is a real reproducibility failure",
+    "note": "a DIFFERENT verdict can come from two very different causes and the field list distinguishes them: fields 'only in the rerun' mean the module gained fields after the stored run (a version artifact, not irreproducibility), whereas a field in 'differing_fields' whose value also appears in the stored run is a real reproducibility failure",
     "per_trial_activation_fractions_identical": true,
     "per_trial_recruitment_identical": true,
     "protocol_fingerprints_match": true,

@@ -353,7 +353,7 @@ def evaluate_minimum(p7, p6, p5d, p1) -> dict:
         verdicts.append(True)
     return _verdict(
         "Minimum success - 2x synthetic connectome preserving statistics, renormalising back "
-        "toward the real graph, executing stably, retaining baseline circuit behaviour",
+        "toward the real graph, executing stably, retaining baseline circuit behavior",
         verdicts, evidence,
         "results/phase7/closure.json (2.0), results/phase5/dynamics.json, results/phase1/lif_baseline.json")
 
@@ -374,7 +374,7 @@ def _connection_exponent(p6) -> float | None:
 
 
 def _is_capability_metric(m: str) -> bool:
-    """True only for names that describe measured behaviour, not cost or protocol bookkeeping.
+    """True only for names that describe measured behavior, not cost or protocol bookkeeping.
 
     Guards a real failure mode: a first version of this scan accepted any numeric field, so it
     fitted an exponent to `scale_total_seconds` (wall-clock cost, which grows with N) and

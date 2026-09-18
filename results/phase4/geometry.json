@@ -148,7 +148,7 @@
     },
     "n_tied_scores": 494893,
     "name": "degree_only",
-    "note": "scores are integer-valued (degree products) so ties are frequent; AUC uses exact midpoint tie credit and AP is the exact expectation over random tie-breaking, so the ties do not favour the baseline",
+    "note": "scores are integer-valued (degree products) so ties are frequent; AUC uses exact midpoint tie credit and AP is the exact expectation over random tie-breaking, so the ties do not favor the baseline",
     "score": "log(total_degree_i) + log(total_degree_j)",
     "seconds": 6.6
   },
@@ -2357,7 +2357,7 @@
       "train_nll_mean": 0.33129002260416923
     },
     "spectral_16": {
-      "definition": "normalised-Laplacian eigenmaps: psi_j(i) = u_j(i)/sqrt(deg_i), u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
+      "definition": "normalized-Laplacian eigenmaps: psi_j(i) = u_j(i)/sqrt(deg_i), u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
       "eigenvalues_1_minus_lambda_desc": [
         0.007327887549060996,
         0.01453305899645474,
@@ -2388,7 +2388,7 @@
       "tol": 1e-05
     },
     "spectral_32": {
-      "definition": "normalised-Laplacian eigenmaps: psi_j(i) = u_j(i)/sqrt(deg_i), u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
+      "definition": "normalized-Laplacian eigenmaps: psi_j(i) = u_j(i)/sqrt(deg_i), u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
       "eigenvalues_1_minus_lambda_desc": [
         0.007327887549065992,
         0.014533058996455073,
@@ -2521,13 +2521,13 @@
       "train_log_likelihood": -0.2879198654602361
     }
   ],
-  "hyperbolic_budget_sensitivity_note": "exploratory: each configuration is scored on the same held-out pairs, so these numbers are reported for transparency about the training budget. The uniform-radius initialisation carries no degree information, so comparing it with the degree-ranked initialisation at the same budget separates 'the latent geometry captures connectivity' from 'the starting point handed the model the degree ranking'.",
+  "hyperbolic_budget_sensitivity_note": "exploratory: each configuration is scored on the same held-out pairs, so these numbers are reported for transparency about the training budget. The uniform-radius initialization carries no degree information, so comparing it with the degree-ranked initialization at the same budget separates 'the latent geometry captures connectivity' from 'the starting point handed the model the degree ranking'.",
   "phase": 4,
   "protocol": {
     "analysis_graph": "undirected, autapse-free, unweighted projection of Connectome.thresholded(5)",
     "analysis_node_fraction": 0.9492011058848875,
     "analysis_nodes": 132181,
-    "analysis_nodes_reason": "normalised-Laplacian eigenmaps are undefined on a disconnected graph (each component contributes a trivial eigenvalue 1), so the analysis is restricted to the giant weakly-connected component; every geometry is fit and scored on that same node set",
+    "analysis_nodes_reason": "normalized-Laplacian eigenmaps are undefined on a disconnected graph (each component contributes a trivial eigenvalue 1), so the analysis is restricted to the giant weakly-connected component; every geometry is fit and scored on that same node set",
     "build_seconds": 2.6,
     "connection_law": "P(connect|d) = 1/(1+exp((d-R)/T)) fitted by maximum likelihood on the fit pairs (balanced 1:1) for each geometry and for the degree baseline (logistic in the summed log degrees)",
     "degrees": {
@@ -2560,7 +2560,7 @@
     "prevalence_definition": "undirected connections of the thresholded graph / (analysis_nodes choose 2)",
     "prevalence_pi_used_for_density_matching": 0.0003091302372859114,
     "seed": 0,
-    "spectral_definition": "normalised-Laplacian eigenmaps psi_j(i) = u_j(i)/sqrt(deg_i), u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
+    "spectral_definition": "normalized-Laplacian eigenmaps psi_j(i) = u_j(i)/sqrt(deg_i), u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
     "test_edges_inside_giant": 269478,
     "test_frac": 0.1,
     "threshold": 5

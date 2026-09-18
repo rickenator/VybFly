@@ -8,7 +8,7 @@
 # resident as bytes as well as decoded.
 #
 # Three Vyb constraints verified on 2026-09-17 (build Vyb 0.7.5, probes /tmp/probe_{a..d}.vyb)
-# shape this module. They cost real debugging time, so they are recorded rather than re-learnt:
+# shape this module. They cost real debugging time, so they are recorded rather than re-learned:
 #
 #  1. A function declared to return `Vec<UInt8>?` cannot `return` a `Vec<UInt8>` value: the
 #     compiler emits "Unsupported or invalid cast from type { ptr, i64, i64 } to

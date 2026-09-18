@@ -41,7 +41,7 @@ Connectivity and weight conventions (all configurable, all recorded in the outpu
 * graph: the canonical FlyWire v783 pair graph, by default thresholded at >= 5 synapses
   per connection, which is the published convention (Lin et al. 2024; Dorkenwald et al.
   2024).  Autapse count is verified to be zero in v783 and asserted.
-* weight from anatomy: ``w_anat = syn_count**alpha`` normalised so that the **mean edge
+* weight from anatomy: ``w_anat = syn_count**alpha`` normalized so that the **mean edge
   weight is 1** (``alpha`` defaults to 1.0, i.e. weight proportional to synapse count).
 * sign: ``ach`` excitatory, ``gaba`` inhibitory, ``glut`` inhibitory (documented choice:
   most glutamatergic neurons in the adult fly brain are inhibitory), and
@@ -68,7 +68,7 @@ from .connectome import Connectome
 from .io import NT_TYPES
 
 #: Transmitter -> sign of the synaptic current.  Documented model choice (PROJECT-VYBFLY.md
-#: §7 "configurable excitatory/inhibitory behaviour"): acetylcholine is the fast excitatory
+#: §7 "configurable excitatory/inhibitory behavior"): acetylcholine is the fast excitatory
 #: transmitter of the fly brain, GABA the fast inhibitory one, and glutamate is treated as
 #: inhibitory because most glutamatergic neurons in the adult fly brain are inhibitory.
 NT_SIGN = {"gaba": -1.0, "ach": +1.0, "glut": -1.0, "oct": +1.0, "ser": +1.0, "da": +1.0}
@@ -277,7 +277,7 @@ class ConstantDrive(Drive):
 
 
 class CombinedDrive(Drive):
-    """Sum of several drives (e.g. a light pulse plus an odour pulse)."""
+    """Sum of several drives (e.g. a light pulse plus an odor pulse)."""
 
     def __init__(self, drives: list[Drive]):
         self.drives = list(drives)
@@ -418,7 +418,7 @@ class LIFNetwork:
         return indptr
 
     def _edge_weights(self) -> np.ndarray:
-        """``syn_count**alpha``, normalised so the mean edge weight is 1."""
+        """``syn_count**alpha``, normalized so the mean edge weight is 1."""
         raw = np.power(self.syn_count.astype(np.float64), self.syn.alpha)
         if self.syn.normalize_mean_weight:
             raw = raw / raw.mean()

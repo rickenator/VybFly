@@ -53,7 +53,7 @@ from flyscale.energy import (  # noqa: E402
 #: Workload configuration. Fixed so a rerun is the same experiment (seed + schedule file
 #: hashes are recorded in the report). See README.md for why this regime.
 WORKLOAD = {
-    "neuron_model": "LIF, synapse-count-normalised E/I weights, dense leak, hard refractory",
+    "neuron_model": "LIF, synapse-count-normalized E/I weights, dense leak, hard refractory",
     "dt_ms": 0.5,
     "steps_per_epoch": 1000,          # 0.5 s of simulated biological time per epoch
     "vth": 1.0,
@@ -218,7 +218,7 @@ def wait_for_gpu_idle(sampler: PowerSampler, device: str, threshold_w: float = 3
     """Block until the GPU has been back at its idle draw for a few samples.
 
     The GPU does not return to its idle power immediately after the kernels stop: the
-    reading decays from ~150 W towards ~21 W over several seconds. Starting the idle
+    reading decays from ~150 W toward ~21 W over several seconds. Starting the idle
     baseline inside that decay would inflate the baseline and under-attribute the
     workload, so the harness waits for it explicitly and records how long it took.
     """
@@ -773,7 +773,7 @@ def main() -> int:
         "joules_per_simulated_bio_second": BiologicalEnergyModel().power_w(
             FLYWIRE_V783_NEURONS),
     }
-    # cross-track comparison (explicitly *not* a conflation: two ratios, both labelled)
+    # cross-track comparison (explicitly *not* a conflation: two ratios, both labeled)
     comparison = {}
     for name, entry in metrics["per_phase"].items():
         hwj = entry.get("joules_per_synaptic_event_gpu_device_only")

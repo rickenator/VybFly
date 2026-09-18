@@ -13,6 +13,7 @@
             urlcolor=blue!50!black]{hyperref}
 \usepackage{lmodern}
 \usepackage[expansion=false,final]{microtype}
+\usepackage{placeins}   % \FloatBarrier keeps floats inside their section
 \usepackage{titlesec}
 \usepackage{fancyhdr}
 \usepackage{enumitem}
@@ -79,7 +80,7 @@ degree-distribution distance of 0 and community ARI 1.0). Capability grows on so
 (stimulus-discrimination information $\propto N^{1.014}$, participation ratio $\propto
 N^{0.318}$, memory capacity $\geq 96$ associations versus 8 at $1\times$) and is flat on others
 (temporal depth and sequence depth never rise above chance at any scale). An associative-learning
-benchmark on the real mushroom body acquires odour--reward associations (AUC $0.51\to1.00$ in 58
+benchmark on the real mushroom body acquires odor--reward associations (AUC $0.51\to1.00$ in 58
 trials) but the connectome's specific wiring contributes \emph{nothing} beyond shuffled controls
 ($+0.000\pm0.000$): what matters is the dopamine-gating anatomy, not the geometry. Energy is
 measured on two tracks that are never summed: hardware (438/500/946/2022 GPU joules across the
@@ -137,9 +138,9 @@ contributes nothing measurable --- a negative result we regard as one of the mor
 findings here, because it constrains what "the connectome is special" can mean.
 
 \paragraph{Concept.} The hypothesis under test is geometric, following the renormalization
-programme for complex networks~\cite{geom-renorm}: real networks embedded in a hidden metric
+program for complex networks~\cite{geom-renorm}: real networks embedded in a hidden metric
 space can be renormalized by rescaling distances, and networks with scale-free degree
-distributions show geometric scaling under that transformation. The programme suggests a
+distributions show geometric scaling under that transformation. The program suggests a
 concrete recipe: (i) fit a latent geometry to the graph; (ii) fit the connection law that
 relates distance to connection probability; (iii) \emph{coarse-grain} by grouping nodes that are
 close in that geometry (downscaling); (iv) \emph{subdivide} nodes and rewire by the same law
@@ -147,7 +148,7 @@ close in that geometry (downscaling); (iv) \emph{subdivide} nodes and rewire by 
 original. Step (v) is the crux, and we treat it as the primary acceptance criterion rather than a
 sanity check.
 
-Figure~\ref{fig:concept} lays out the object of study: one biological graph at the centre, a
+Figure~\ref{fig:concept} lays out the object of study: one biological graph at the center, a
 downscaling branch to the left, an upscaling ladder to the right, and the closure loop that
 decides whether the right-hand branch is legitimate. Every number on that diagram is a measured
 value from this project.
@@ -282,9 +283,9 @@ documented, explained failures is more useful than one with loosened tolerances.
 \subsection{Metrics, and the criterion that decides}
 Two families of measurement appear throughout. \emph{Structural} metrics compare a generated
 graph to \gaa: Wasserstein distance between degree distributions (and weighted-degree
-distributions), a triad-census divergence, the spectral distance between normalised Laplacian
+distributions), a triad-census divergence, the spectral distance between normalized Laplacian
 spectra, a rich-club distance, a connectivity-matrix divergence over cell classes and neuropils,
-community agreement (adjusted Rand index and normalised mutual information between Leiden
+community agreement (adjusted Rand index and normalized mutual information between Leiden
 partitions mapped through a node correspondence), and the distribution of latent distances across
 connected pairs. We keep the raw metric vector for every scale and compute a composite score only
 for ordering scales internally --- the brief is explicit that a composite must not substitute for
@@ -351,7 +352,7 @@ re-derivation, and the loader is then validated against the oracle by 26 invaria
 
 \subsection{The renormalization core}
 Coarse-graining (\code{renorm.coarse\_grain}) groups nodes by proximity in the chosen geometry
---- nearest-neighbour agglomeration with distances evaluated in the ambient Poincaré coordinates
+--- nearest-neighbor agglomeration with distances evaluated in the ambient Poincaré coordinates
 for the hyperbolic case --- then aggregates edges and synapses between groups. Because merging
 nodes raises the effective degree, the coarse graph is thresholded with a threshold chosen by
 calibration to match the source graph's mean degree as closely as achievable; the calibration
@@ -360,7 +361,7 @@ degree, so a failure to hit the target is visible instead of silent.
 
 Subdivision (\code{renorm.upscale}) is the inverse operator and the heart of the scaling result.
 Each neuron becomes $c$ children placed near the parent in the latent geometry, at a
-perturbation scale tied to the local nearest-neighbour distance; each child inherits the parent's
+perturbation scale tied to the local nearest-neighbor distance; each child inherits the parent's
 partner set with the parent's synapse weights, and the concrete target child is drawn by the
 fitted connection law; a fraction of each child's edges is redrawn to diversify the partner set
 without changing its size; and sibling edges are added by the same law at a damped rate. The
@@ -467,8 +468,8 @@ purpose-built probe showed descriptor loads were not corrupted per lane; and com
 failing and a passing kernel showed the mechanism. The compiler stored the operand's own LLVM
 type rather than the intrinsic's element type, so \code{st\_i32(ptr, i64\_value)} emitted an
 eight-byte store: the low word at the address and the high word at address$+4$, i.e. into the
-\emph{neighbouring} four-byte slot. A computed value with a zero high word therefore zeroed its
-neighbour's cell --- producing exactly the \code{1818 0 0 0 0 0 0 0} pattern we observed. We filed
+\emph{neighboring} four-byte slot. A computed value with a zero high word therefore zeroed its
+neighbor's cell --- producing exactly the \code{1818 0 0 0 0 0 0 0} pattern we observed. We filed
 it with the sources, the measured outputs and, unusually, the three hypotheses we had already
 refuted~\cite{vyb-issue270}. The fix landed as \code{st\_*} using the intrinsic's element
 type~\cite{vyb-pr273}, and the same probe now reads \code{1818} on all eight lanes.
@@ -513,14 +514,15 @@ useful direction.
 \input{tables/tab\_defects.tex}
 
 % ===================================================================== 5
+\FloatBarrier
 \section{Geometric scaling: experiments}
 \label{sec:scaling}
 
 \subsection{Which space predicts connectivity?}
 \label{sec:geometry}
 We fit five candidate geometries to the $\geq$5-synapse graph --- anatomical soma coordinates
-(2-D and 3-D, raw and axis-standardised), a 2-D hyperbolic (Poincaré) embedding learned by
-stochastic gradient descent on the connection law, and normalised-Laplacian spectral embeddings
+(2-D and 3-D, raw and axis-standardized), a 2-D hyperbolic (Poincaré) embedding learned by
+stochastic gradient descent on the connection law, and normalized-Laplacian spectral embeddings
 at 16 and 32 dimensions --- and score each by its ability to predict held-out connections on
 \emph{identical} positive/negative pairs (269{,}478 of each, a 90/10 split, giant component of
 132{,}181 nodes). A degree-only baseline is scored on the same pairs, and every fit is
@@ -541,7 +543,7 @@ and combining distance with log-degree lifts every geometry (anatomy 0.851$\to$0
 hyperbolic 0.865$\to$0.904, spectral-32 0.952$\to$0.977), which says the geometry carries
 information the degrees do not but that the two are complementary. Hyperbolic 2-D beats
 anatomical 3-D in every realization we measured (0.8646/0.8921/0.9012 vs 0.8514), including one
-initialised without degree information --- so the direction of the published geometry result
+initialized without degree information --- so the direction of the published geometry result
 reproduces. But hyperbolic-versus-degree-only is \emph{unresolved}: the delivered run scores
 below the baseline (0.865 $<$ 0.874) while a second identical-configuration run scores above it
 (0.901), a spread of 0.037 on identical held-out pairs. A margin smaller than the run's own
@@ -577,7 +579,7 @@ community structure at every factor --- so it does not rescue renormalization.}
 The result cuts against a naive expectation. The hyperbolic embedding is the better
 \emph{law} --- it predicts connectivity better and yields a cleaner degree distribution at
 $0.5\times$ (Wasserstein 0.104 vs 0.129) --- yet the coarse graphs it produces are worse where
-it matters for behaviour: community agreement falls to ARI 0.33/0.20/0.24 versus
+it matters for behavior: community agreement falls to ARI 0.33/0.20/0.24 versus
 0.52/0.56/0.52 for anatomical coordinates, and the composite score is worse at every factor.
 The hyperbolic grouping also drifts further from the target mean degree (at $0.25\times$ it lands
 at 13.6 against 25.0 for anatomical), which is the calibration signal that the grouping is
@@ -588,7 +590,7 @@ latent space.
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.98\textwidth]{figs/fig\_downscale.pdf}
-\caption{Coarse-graining under both geometries. Lower is better for the left and centre panels;
+\caption{Coarse-graining under both geometries. Lower is better for the left and center panels;
 higher is better for community ARI. The learned geometry wins one panel, loses the other two.}
 \label{fig:downscale}
 \end{figure}
@@ -599,7 +601,7 @@ Subdivision doubles, quintuples and tenfolds the neuron count. The results
 (Table~\ref{tab:upscale}, Figure~\ref{fig:scaling}) satisfy the three invariants the brief
 requires. First, connections scale linearly with neurons: a fit across all four scales gives
 $E \propto N^{1.0175}$ with $R^2 = 0.9995$, and synapses $\propto N^{1.0067}$ with
-$R^2 = 0.999996$ --- the aggregate is emphatically not drifting towards an all-to-all regime.
+$R^2 = 0.999996$ --- the aggregate is emphatically not drifting toward an all-to-all regime.
 Second, mean out-degree stays in a narrow band around the source value (18.62, 19.39, 19.99
 versus 19.39), and mean connection strength likewise (13.19, 12.74, 12.46 versus 12.65), so the
 generated graphs are not becoming denser or stronger as they grow. Third, the per-scale
@@ -671,7 +673,7 @@ mean connection strength) into \gaa{} and into each replica, and compare activat
 \caption{Identical normalized stimuli through the biological graph and its coarse-grained
 replicas. The final active fraction tracks the reference closely (ratios 0.99--1.09), the active
 \emph{sets} overlap strongly (Jaccard 0.85--0.95, precision $>$0.99), and latency changes by at
-most two steps --- the replicas reproduce the reference's propagation behaviour, not merely its
+most two steps --- the replicas reproduce the reference's propagation behavior, not merely its
 degree sequence.}
 \label{tab:dynamics}
 \input{tables/tab\_dynamics.tex}
@@ -683,7 +685,7 @@ the reference's 0.826; against a mapped reference the active-set Jaccard is 0.90
 reference counterpart, with slight over-recruitment); latency to half activation falls by one or
 two steps out of an eleven-step cascade. Under the hyperbolic geometry the same comparison gives
 Jaccard 0.916, 0.821 and 0.902 --- comparable, with the $0.25\times$ replica the weakest of the
-six. This is the strongest evidence we have that coarse-graining preserves \emph{behaviour} and
+six. This is the strongest evidence we have that coarse-graining preserves \emph{behavior} and
 not just topology.
 
 \begin{figure}[t]
@@ -697,6 +699,7 @@ in Table~\ref{tab:dynamics}.}
 \end{figure}
 
 % ===================================================================== 6
+\FloatBarrier
 \section{Dynamics, capability and learning}
 \label{sec:capability}
 
@@ -715,7 +718,7 @@ point is recorded so the choice can be re-derived.}
 The two engines agree exactly --- zero spike difference, identical (step, neuron) trains,
 per-neuron rate correlation 1.0 --- and a subthreshold probe run bounds the float disagreement at
 $4.4\times10^{-16}$ in membrane potential. One simulated second takes 120~s wall on 20 cores. On
-a light-odour protocol the network produces 366{,}872 spikes (2.64~Hz mean rate over 14.5\% of
+a light-odor protocol the network produces 366{,}872 spikes (2.64~Hz mean rate over 14.5\% of
 neurons) with 87.6\% of spikes coming from neurons that were not driven by the
 stimulus, i.e. the response is stimulus-locked and recurrent rather than feed-forward. A
 Poisson-driven protocol gives 479{,}259 spikes at 3.44~Hz. An operating-point scan over synaptic
@@ -772,7 +775,7 @@ gather-plus-scatter on a growing edge set.
 \centering
 \includegraphics[width=0.99\textwidth]{figs/fig\_capability.pdf}
 \caption{Capability versus size. Left: discrimination information grows proportionally to $N$.
-Centre: effective dimensionality grows sublinearly. Right: associative capacity saturates at the
+Center: effective dimensionality grows sublinearly. Right: associative capacity saturates at the
 test grid's ceiling (triangles mark censored points), so the curve is a lower bound rather than a
 measurement --- the single most important limitation on any claim of super-linear capability.}
 \label{fig:capability}
@@ -793,7 +796,7 @@ The network acquires the association: readout AUC rises $0.51 \to 1.00$, reachin
 criterion in 58 trials, and holding 8 associations above 0.9 (16 above 0.75) before interference
 collapses the curve (accuracy 0.94 at 8 associations, 0.77 at 16, 0.52 at 32). A frozen network
 sits at 0.31 with capacity 0, so plasticity is necessary. Valence is real: flipping only the
-teaching signal's sign drives the punished odour to AUC 0.000, symmetric with the rewarded one.
+teaching signal's sign drives the punished odor to AUC 0.000, symmetric with the rewarded one.
 Architecture is preserved: across 60 plastic runs, zero synapses are created or deleted, weight
 budgets are conserved to $10^{-16}$, and initial-to-final weight rank correlation stays at
 0.54--0.93.
@@ -801,13 +804,13 @@ budgets are conserved to $10^{-16}$, and initial-to-final weight rank correlatio
 The controls are where this becomes interesting, and they are negative. Replacing the connectome's
 KC$\to$MBON wiring with a shuffled version of the same degree sequence changes acquisition by
 $+0.000 \pm 0.000$ and leaves capacity identical; so does shuffling the weights, shuffling the
-dopamine gate, and replacing the glomerular odour code with a degree-matched random projection.
+dopamine gate, and replacing the glomerular odor code with a degree-matched random projection.
 Under this benchmark, connectome geometry contributes \emph{nothing} over its degree statistics ---
 training dominates architecture, in the strong form. What \emph{does} matter is the anatomical
 gating: broadcasting dopamine to all MBONs instead of using the measured DAN wiring drops
 performance to 0.971 (trials-to-criterion 106 vs 58, capacity 0 vs 8). Two further results are
 reported as confounded rather than clean: a readout over all 96 MBONs is flat \emph{by
-conservation} (per-KC row normalisation makes the summed readout invariant), and the punishment
+conservation} (per-KC row normalization makes the summed readout invariant), and the punishment
 pathway test is a wiring comparison rather than a sign control because PAM and PPL1/PPL2
 innervate largely different MBON sets.
 
@@ -817,6 +820,7 @@ One annotation defect surfaced and was worked around rather than hidden: the dat
 We used the latter and recorded the conflict.
 
 % ===================================================================== 7
+\FloatBarrier
 \section{Energy}
 \label{sec:energy}
 
@@ -882,7 +886,7 @@ capacity as the numerator, which is censored from $2\times$ up, so those values 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.99\textwidth]{figs/fig\_energy.pdf}
-\caption{Energy across scales. Left: measured GPU joules grow sublinearly. Centre: cost per
+\caption{Energy across scales. Left: measured GPU joules grow sublinearly. Center: cost per
 spike falls by a factor of two --- a device-utilisation effect, not biological efficiency.
 Right: the biological-equivalent track is linear in $N$ \emph{by construction}; it is a model
 identity, reported separately precisely so that it cannot be mistaken for a measurement.}
@@ -890,6 +894,7 @@ identity, reported separately precisely so that it cannot be mistaken for a meas
 \end{figure}
 
 % ===================================================================== 8
+\FloatBarrier
 \section{Discussion and limitations}
 \label{sec:limits}
 
@@ -924,7 +929,7 @@ graphs "do" anything beyond instantaneous pattern separation.
 
 \paragraph{The learning benchmark says something uncomfortable.}
 The connectome's specific wiring contributes nothing over shuffled controls in the mushroom-body
-task, while the dopamine-gating anatomy does. If that holds under better odour codes and multiple
+task, while the dopamine-gating anatomy does. If that holds under better odor codes and multiple
 task families, the implication is that for this class of associative task the informative
 structure is the gating circuitry rather than the KC$\to$MBON weight matrix --- a narrower claim
 than "the connectome is special", and one that fits the degree-matched random-projection control
@@ -946,12 +951,13 @@ claim was wrong and is retracted in place. These are recorded in Appendix~\ref{a
 because the failure modes of this kind of project are more instructive than its successes.
 
 % ===================================================================== 9
+\FloatBarrier
 \section{Conclusion}
 \label{sec:conclusion}
 
 A whole-brain connectome can be enlarged by geometric subdivision: the $10\times$ graph preserves
 sparsity ($E \propto N^{1.0175}$), keeps mean degree and connection strength bounded, reproduces
-the source's propagation behaviour under identical normalized stimuli (active-set Jaccard
+the source's propagation behavior under identical normalized stimuli (active-set Jaccard
 0.85--0.95), and renormalizes back to the biological graph's connection count exactly. On the
 capability side, size buys information and dimensionality in proportion and sublinearity
 respectively, and buys associative capacity that is at least an order of magnitude larger --- but
@@ -1110,7 +1116,7 @@ budget per neuron: implications for neuronal activity, plasticity and evolution.
 ONE} \textbf{6}, e17514 (2011). \code{doi:10.1371/journal.pone.0017514}. (Cross-check only;
 explicitly not a \textit{Drosophila} measurement.)
 \bibitem{attwell-laughlin} Attwell, D. \& Laughlin, S.~B. An energy budget for signaling in the
-grey matter of the brain. \textit{J. Cereb. Blood Flow Metab.} \textbf{21}, 1133--1145 (2001).
+gray matter of the brain. \textit{J. Cereb. Blood Flow Metab.} \textbf{21}, 1133--1145 (2001).
 \code{doi:10.1097/00004647-200110000-00001}. (Per-spike and per-vesicle cost estimates used in
 the biological track.)
 \bibitem{scheffer-design} Scheffer, L.~K. \textit{et al.} The physical design of biological

@@ -16,7 +16,7 @@ DATASET AND ENVIRONMENT
 
 WHAT WAS RUN AT EVERY SCALE
   graphs:      canonical v783 thresholded at 5 synapses (1x), then renorm.upscale to
-               2x/5x/10x with the recorded geometry (standardised anatomical xyz,
+               2x/5x/10x with the recorded geometry (standardized anatomical xyz,
                P(connect)=1/(1+exp((d-R)/T)) fit on the graph itself)
        1x: N=139,255  connections=2,700,513  synapses=34,153,566
        2x: N=278,510  connections=5,187,641  synapses=68,433,997
@@ -65,7 +65,7 @@ CAPABILITY TABLE (one row per scale)
     complexity: distinct-pattern ratio              1.0000      1.0000      1.0000      1.0000
     complexity: readout unit coverage               0.7505      0.7264      0.7337      0.7368
     complexity: stimulus-response MI (bits)         6.1433      6.5172      6.5850      6.5850
-    complexity: normalised MI                       0.9329      0.9897      1.0000      1.0000
+    complexity: normalized MI                       0.9329      0.9897      1.0000      1.0000
     complexity: MI at the class ceiling                  -           -           -           -
     complexity: avalanche size exponent             0.3448      0.4964      0.0312      0.0964
     complexity: avalanche exponent R^2              0.3171      0.2656      0.0005      0.0037

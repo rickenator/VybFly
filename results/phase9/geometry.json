@@ -13,7 +13,7 @@
     "n_positive": 400000
   },
   "kind": "euclidean",
-  "note": "P(connect)=1/(1+exp((d-R)/T)) fitted by flyscale.renorm.fit_connection_law on standardised anatomical xyz; no Phase 4 embedding exists in results/phase4/artifacts",
+  "note": "P(connect)=1/(1+exp((d-R)/T)) fitted by flyscale.renorm.fit_connection_law on standardized anatomical xyz; no Phase 4 embedding exists in results/phase4/artifacts",
   "seconds": 16.09,
   "source": "annotation_xyz+law_fit"
 }

@@ -1,5 +1,5 @@
 {
-  "caveat": "the CUDA payload (scripts/cuda/sparse_prop.cu) is a bounded, counter-rich sparse workload, not the project's biological baseline model; the numbers characterise the *machine* at each scale",
+  "caveat": "the CUDA payload (scripts/cuda/sparse_prop.cu) is a bounded, counter-rich sparse workload, not the project's biological baseline model; the numbers characterize the *machine* at each scale",
   "milestone": "M13/M14",
   "per_scale": {
     "1": {

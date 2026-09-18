@@ -1,6 +1,6 @@
 # M4 — Energy instrumentation (PROJECT-VYBFLY.md §17, §18)
 
-Two energy tracks, measured and modelled **separately**, never conflated:
+Two energy tracks, measured and modeled **separately**, never conflated:
 
 | track | file | what it is |
 |---|---|---|
@@ -25,7 +25,7 @@ cd ~/Projects/VybFly
 That single command: loads the canonical FlyWire CSR, builds signed E/I weights, writes a
 deterministic stimulus schedule, compiles `scripts/cuda/sparse_prop.cu` with `nvcc`, runs three
 probe/timing runs, then samples power through nine phases and writes both JSONs plus
-`results/energy/build/` artefacts.
+`results/energy/build/` artifacts.
 
 Useful switches: `--cpu-seconds`, `--gpu-seconds`, `--idle-seconds`, `--idle-post-seconds`,
 `--cooldown-seconds`, `--interval` (sampling period, default 0.2 s = 5 Hz), `--skip-cuda`,
@@ -121,7 +121,7 @@ Cross-checks that the measurement is real, all inside `instrumentation_verificat
 * **Signs from published transmitter calls**: `bin/pairs.nt.i8 == 0` (gaba, per `meta.json`
   `nt_order`) marks the 3 233 367 inhibitory edges (21.42 %).
 * **Model** (mirrored exactly in `NumpySparseLIF` and in `sparse_prop.cu`): LIF with a dense leak
-  `V *= 0.9`, sparse scatter of `synapse-count-normalised` weights into the fired neurons' targets,
+  `V *= 0.9`, sparse scatter of `synapse-count-normalized` weights into the fired neurons' targets,
   fire when `V >= 1.0` and the 20-step (10 ms) refractory has expired. Epoch = 1000 steps ×
   0.5 ms = 0.5 s of simulated biological time. Synaptic events are counted as *edges walked*
   (fan-out of every active neuron), spikes as threshold crossings plus 500 Poisson-driven
@@ -151,7 +151,7 @@ buffer-perfused**, one genotype (`y sc v`), one sex (female), one age (10 days);
 slow/steady-state metabolic rate; pairing the measured organ with the FlyWire count is an
 assumption; and the figure is total tissue metabolism (neurons + glia + housekeeping), not a
 measure of spiking computation. The mammalian anchor is 158× larger per neuron than the measured
-fly value, which is exactly why §17 insists the two be labelled differently.
+fly value, which is exactly why §17 insists the two be labeled differently.
 
 Secondary, clearly-derived per-event biology (`mammalian_cortex_per_event`, all
 `not_a_drosophila_measurement: true`, Attwell & Laughlin 2001, DOI
@@ -220,7 +220,7 @@ src/flyscale/energy.py                     PowerSampler (NVML / nvidia-smi / RAP
                                            MetabolicAnchor + BiologicalEnergyModel
 scripts/phase_energy_demo.py               the runnable phase: probes, workloads, sampling, report
 scripts/cuda/sparse_prop.cu                the instrumented sparse-propagation workload (sm_86)
-scripts/cuda/nvml_power.c                  standalone NVML power probe used to characterise the sensor
+scripts/cuda/nvml_power.c                  standalone NVML power probe used to characterize the sensor
 results/energy/hardware_energy.json        track B + verification + reproducibility  (this run)
 results/energy/biological_model.json       track A (constants, citations, flags, scaling table)
 results/energy/README.md                   this file

@@ -113,7 +113,7 @@ def fit_summary(law: GeometryLaw) -> dict:
 
 
 def strip_arrays(obj):
-    """Remove numpy/private keys so a measurement dict can be JSON-serialised."""
+    """Remove numpy/private keys so a measurement dict can be JSON-serialized."""
     if isinstance(obj, dict):
         return {k: strip_arrays(v) for k, v in obj.items()
                 if not (isinstance(k, str) and k.startswith("_"))}

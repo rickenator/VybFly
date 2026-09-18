@@ -7,7 +7,7 @@ The tests use the *real* canonical builder on a synthetic release file with the 
 schema, so the network under test is built through exactly the production code path
 (Connectome -> thresholded view -> LIFNetwork -> both engines).  What is checked:
 
-  * the weight rule (syn_count**alpha normalised to mean edge weight 1) and its
+  * the weight rule (syn_count**alpha normalized to mean edge weight 1) and its
     configurability,
   * the transmitter sign rule (ach +, gaba -, glut -, modulatory scaled) and that it moves
     the postsynaptic membrane potential in the documented direction,

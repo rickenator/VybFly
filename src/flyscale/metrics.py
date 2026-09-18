@@ -368,7 +368,7 @@ def spectral_block(c, variants, k: int = 50) -> dict:
         deg = np.asarray(U.sum(axis=1)).ravel()
         dinv = np.divide(1.0, np.sqrt(deg), out=np.zeros_like(deg, dtype=float), where=deg > 0)
         D = sparse.diags(dinv)
-        L = sparse.eye(c.n) - D @ U @ D                     # symmetric normalised Laplacian
+        L = sparse.eye(c.n) - D @ U @ D                     # symmetric normalized Laplacian
         kk = min(k, c.n - 2)
         vals = splinalg.eigsh(L.tocsc(), k=kk, which="LA", return_eigenvectors=False)
         vals = np.sort(vals)[::-1]

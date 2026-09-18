@@ -1,0 +1,29 @@
+// QUESTION: can a function declared `Vec<UInt8>?` return a `Vec<UInt8>` from a normal (non-intrinsic)
+// expression? FlyScale's VYB-PORT.md constraint 2 said no on vyb 0.7.5 (2026-09-12), with
+//   "Unsupported or invalid cast from type { ptr, i64, i64 } to { { ptr, i64, i64 }, i1 }".
+//
+// RUN: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//          src/vyb/probes/probe_m3_optional_vec_return.vyb
+
+import io::{open_read, close, read_bytes_at}
+
+maybe_bytes(n<Int>)<Vec<UInt8>?> -> {
+    buf<Vec<UInt8>> = Vec::new()
+
+    for (i in 0..n) {
+        buf.push(7)
+    }
+
+    return buf
+}
+
+main()<Int> -> {
+    got<Vec<UInt8>?> = maybe_bytes(4)
+
+    match (got) {
+        v -> { println("present len=" + v.len().to_string() + " v0=" + v.get(0).to_string()) }
+        ? -> { println("absent") }
+    }
+
+    return 0
+}

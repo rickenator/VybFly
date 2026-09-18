@@ -4,7 +4,7 @@ Two operations, both driven by the latent geometry rather than by node index or 
 
   coarse_grain(g, geometry, factor)  -> 0.5x / 0.25x / 0.1x replicas
       Groups neurons that are close in the latent space (exact hyperbolic / Euclidean
-      nearest-neighbour agglomeration over the geometry), collapses each group into one
+      nearest-neighbor agglomeration over the geometry), collapses each group into one
       supernode, and re-establishes connections between groups. The coarse-edge threshold is
       calibrated so the replica keeps the source graph's mean degree - i.e. the reduction
       preserves biological sparsity instead of drifting dense.
@@ -105,7 +105,7 @@ class GeometryLaw:
 
 def typical_neighbour_distance(law: GeometryLaw, sample: int = 4000, k: int = 2,
                                seed: int = 0) -> float:
-    """Median distance to the k-th nearest latent neighbour - the natural sub-division scale."""
+    """Median distance to the k-th nearest latent neighbor - the natural sub-division scale."""
     rng = np.random.default_rng(seed)
     idx = rng.choice(law.n, size=min(sample, law.n), replace=False)
     d = law.distance_block(idx, idx)                       # (m, m) among the sample
@@ -116,7 +116,7 @@ def typical_neighbour_distance(law: GeometryLaw, sample: int = 4000, k: int = 2,
 
 # --------------------------------------------------------------------------- grouping
 def _candidate_neighbours(coords: np.ndarray, k: int) -> np.ndarray:
-    """Indices of the k nearest neighbours in the ambient Euclidean space (approximate)."""
+    """Indices of the k nearest neighbors in the ambient Euclidean space (approximate)."""
     from scipy.spatial import cKDTree
     tree = cKDTree(coords)
     kk = min(k + 1, coords.shape[0])

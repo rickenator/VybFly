@@ -425,7 +425,7 @@ class PowerSampler:
         return self
 
     def mark(self, label: str) -> None:
-        """Open a new phase: later samples are labelled ``label``."""
+        """Open a new phase: later samples are labeled ``label``."""
         self._phase = label
         t = time.perf_counter() - self._t0
         self.marks.append({"label": label, "t_rel_s": round(t, 6), "wall_utc": _utcnow()})
@@ -642,7 +642,7 @@ class PowerSampler:
 
 @dataclass(frozen=True)
 class MetabolicAnchor:
-    """A published metabolic measurement (or clearly-labelled derived estimate)."""
+    """A published metabolic measurement (or clearly-labeled derived estimate)."""
     key: str
     label: str
     p_watts: float
@@ -781,32 +781,32 @@ ANCHORS: dict[str, MetabolicAnchor] = {
     ),
 }
 
-#: Mammalian cortical grey-matter cost per spike and per synaptic release event.
+#: Mammalian cortical gray-matter cost per spike and per synaptic release event.
 #: Both are mammalian-cortex derived (Attwell & Laughlin 2001) -- flagged as such.
 MAMMALIAN_CORTEX_EVENTS: dict[str, dict[str, Any]] = {
     "per_action_potential": {
         "atp_per_neuron_per_spike": 7.1e8,
         "joules": 7.1e8 * ATP_HYDROLYSIS_J,
-        "citation_title": "An energy budget for signaling in the grey matter of the brain",
+        "citation_title": "An energy budget for signaling in the gray matter of the brain",
         "authors": "Attwell D, Laughlin SB",
         "year": 2001,
         "doi": "10.1097/00004647-200110000-00001",
         "url": "https://doi.org/10.1097/00004647-200110000-00001",
         "not_a_drosophila_measurement": True,
-        "caveats": ("mammalian cortical grey matter; 'total ATP consumption when a neuron "
+        "caveats": ("mammalian cortical gray matter; 'total ATP consumption when a neuron "
                     "fires an action potential ... 7.1e8 ATP/neuron/spike', i.e. axon + "
                     "presynaptic + postsynaptic ion fluxes, not the axonal spike alone"),
     },
     "per_vesicle_release": {
         "atp_per_vesicle_released": 1.64e5,
         "joules": 1.64e5 * ATP_HYDROLYSIS_J,
-        "citation_title": "An energy budget for signaling in the grey matter of the brain",
+        "citation_title": "An energy budget for signaling in the gray matter of the brain",
         "authors": "Attwell D, Laughlin SB",
         "year": 2001,
         "doi": "10.1097/00004647-200110000-00001",
         "url": "https://doi.org/10.1097/00004647-200110000-00001",
         "not_a_drosophila_measurement": True,
-        "caveats": ("mammalian cortical grey matter; energy per glutamate vesicle actually "
+        "caveats": ("mammalian cortical gray matter; energy per glutamate vesicle actually "
                     "released (presynaptic Ca2+ entry, vesicle cycling, postsynaptic actions, "
                     "glutamate recycling), 84% of it postsynaptic ion pumping. This is a "
                     "release event, not one anatomical synapse of the connectome"),
