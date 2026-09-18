@@ -1,0 +1,50 @@
+// probe_m2_c_struct_vec_parse - Vec<Struct> element field mutation, and the text-parsing
+// surface the tiny-network loader needs (split / trim / to_int / to_float).
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_c_struct_vec_parse.vyb
+
+struct Syn {
+    pre<Int>,
+    post<Int>,
+    delay<Float>,
+    weight<Float>
+}
+
+main()<Int> -> {
+    ss<Vec<Syn>> = Vec()
+    ss.push(Syn { pre = 1, post = 2, delay = 1.5, weight = 0.25 })
+    ss.push(Syn { pre = 3, post = 4, delay = 2.5, weight = -0.5 })
+
+    // (a) mutate a field of an element obtained by index, write it back
+    e<Syn> = ss.get(1)
+    e.weight = -0.75
+    ss.set(1, e)
+    e2<Syn> = ss.get(1)
+    println("a_w=" + e2.weight.to_string())
+
+    e3<Syn> = ss.get(0)
+    println("b_delay=" + e3.delay.to_string() + " pre=" + e3.pre.to_string())
+
+    // (c) text parsing: "3,4,1.5,0.25"
+    line<String> = "3,4,1.5,0.25"
+    parts<Vec<String>> = line.split(",")
+    println("c_nparts=" + parts.len().to_string())
+    println("c_p0=" + parts.get(0))
+    println("c_p3=" + parts.get(3))
+    println("c_to_int=" + parts.get(0).to_int().to_string())
+    println("c_to_float=" + parts.get(3).to_float().to_string())
+
+    // (d) trim + presence
+    h<String> = "  pre post  "
+    println("d_trim=[" + h.trim() + "]")
+    println("d_has=" + h.contains("pre").to_string())
+
+    // (e) split a multi-line body into lines
+    body<String> = "h1,h2\n1,2\n3,4\n"
+    lines<Vec<String>> = body.split("\n")
+    println("e_nlines=" + lines.len().to_string())
+    println("e_l0=" + lines.get(0))
+    println("probe-c-done")
+    return 0
+}

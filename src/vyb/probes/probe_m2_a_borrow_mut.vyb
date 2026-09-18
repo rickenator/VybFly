@@ -1,0 +1,52 @@
+// probe_m2_a_borrow_mut - can a helper mutate the caller's Vec / struct fields through
+// a their<> mutable borrow?  This is the load-bearing question for the DES: the Scheduler
+// state lives in the caller and must be pushed into by scheduler functions.
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_a_borrow_mut.vyb
+//
+// NOTE (verified on this build): struct fields are comma-separated.
+
+struct Box {
+    xs<Vec<Int>>,
+    n<Int>
+}
+
+bump(b<their<Box>>, v<Int>) -> {
+    b.xs.push(v)
+    b.n = b.n + 1
+}
+
+poke(b<their<Box>>, i<Int>, v<Int>) -> {
+    b.xs.set(i, v)
+}
+
+push_vec(v<their<Vec<Int>>>, x<Int>) -> {
+    v.push(x)
+}
+
+set_vec(v<their<Vec<Int>>>, i<Int>, x<Int>) -> {
+    v.set(i, x)
+}
+
+main()<Int> -> {
+    x<Box> = Box { xs = Vec(), n = 0 }
+    bump(borrow(x), 7)
+    bump(borrow(x), 9)
+    l<Int> = x.xs.len()
+    println("box_len=" + l.to_string())
+    println("box_n=" + x.n.to_string())
+    poke(borrow(x), 0, 42)
+    println("box_x0=" + x.xs.get(0).to_string())
+
+    v<Vec<Int>> = Vec()
+    v.push(1)
+    push_vec(borrow(v), 5)
+    set_vec(borrow(v), 0, 77)
+    vl<Int> = v.len()
+    println("vec_len=" + vl.to_string())
+    println("vec_0=" + v.get(0).to_string())
+    println("vec_1=" + v.get(1).to_string())
+    println("probe-a-done")
+    return 0
+}

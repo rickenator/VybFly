@@ -1,0 +1,137 @@
+// M3 isolation experiment 2: exercise update_and_fire ALONE with a known membrane state.
+//
+// Bypasses the bucket-accumulation kernel entirely, so a wrong result here means the LIF update
+// / leak / threshold path is at fault, while a correct result here points the earlier pipeline
+// mismatch at the accumulation or bucket bookkeeping instead.
+//
+// Build the kernel first:
+//   VYB_STDLIB=~/Projects/Vyb/stdlib \
+//   ~/Projects/Vyb/build/vyb --kernel src/vyb_kernels/spike_bucket.vyb --ptx results/phase3/spike_bucket.ptx
+// Run:
+//   VYB_STDLIB=~/Projects/Vyb/stdlib \
+//   ~/Projects/Vyb/build/vyb src/vyb_kernels/phase3_selftest.vyb \
+//       --module-path ~/Projects/Vyb/bindings --module-path ~/Projects/Vyb/bindings/cuda
+//
+// Expected, from v_new = v_reset? no: v_new = v_rest + leak*(v - v_rest) + accum, with
+// v_rest = 0, leak = 0.9, accum = 0:
+//   v = [1.0, 0.5, 0.2, 0.0, 0.9, 0.35, 0.0, 0.0] -> [0.9, 0.45, 0.18, 0.0, 0.81, 0.315, 0.0, 0.0]
+//   fires (v_new >= 0.3): neurons 0, 1, 4, 5 -> 4 spikes, v reset to 0 at those, refr = 2
+import cuda::{cuda_init, cuda_device_count, cuda_device, cuda_ctx_retain, cuda_module_load,
+              cuda_module_func, cuda_mem_alloc, cuda_mem_free, cuda_write_i32, cuda_read_i32,
+              cuda_write_f64, cuda_read_f64, cuda_launch, cuda_sync}
+import io::{open_read, read_all}
+
+desc_word(dst<Int>, off<Int>, value<Int>)<Int> -> {
+    low<Int> = value % 4294967296
+    high<Int> = value / 4294967296
+    cuda_write_i32(dst + off, low as CInt)
+    cuda_write_i32(dst + off + 4, high as CInt)
+    return 0
+}
+
+main()<Int> -> {
+    n<Int> = 8
+    v_rest_micro<Int> = 0
+    v_reset_micro<Int> = 0
+    v_thresh_micro<Int> = 300000
+    leak_micro<Int> = 900000
+    refr_ticks<Int> = 2
+
+    cuda_init()
+    if (cuda_device_count() < 1) { println("ERROR no device"); return 8 }
+    println("devices>=1")
+    dev<Int> = cuda_device(0) as Int
+    cuda_ctx_retain(dev)
+
+    ptx<String> = ""
+    match (open_read("results/phase3/spike_bucket.ptx")) {
+        f -> {
+            match (read_all(f)) {
+                s -> { ptx = s }
+                ? -> { println("ERROR read ptx"); return 13 }
+            }
+        }
+        ? -> { println("ERROR open ptx"); return 13 }
+    }
+    hmod<Int> = cuda_module_load(ptx)
+    if (hmod == 0) { println("ERROR module load failed"); return 2 }
+    hf<Int> = cuda_module_func(hmod, "update_and_fire")
+    if (hf == 0) { println("ERROR missing update_and_fire"); return 3 }
+
+    d_accum<Int> = cuda_mem_alloc(n * 8)
+    d_v<Int> = cuda_mem_alloc(n * 8)
+    d_refr<Int> = cuda_mem_alloc(n * 4)
+    d_fired<Int> = cuda_mem_alloc(n * 4)
+    d_next_ids<Int> = cuda_mem_alloc(n * 4)
+    d_next_count<Int> = cuda_mem_alloc(4)
+    d_dsc<Int> = cuda_mem_alloc(128)
+
+    i<Int> = 0
+    while (i < n) {
+        cuda_write_f64(d_v + i * 8, 0.0)
+        cuda_write_i32(d_refr + i * 4, 0)
+        cuda_write_i32(d_fired + i * 4, 0)
+        cuda_write_i32(d_next_ids + i * 4, 0)
+        i = i + 1
+    }
+    // the known state
+    cuda_write_f64(d_accum + 0, 0.0)
+    cuda_write_f64(d_accum + 8, 0.0)
+    v0<Vec<Float>> = Vec()
+    v0.push(1.0)
+    v0.push(0.5)
+    v0.push(0.2)
+    v0.push(0.0)
+    v0.push(0.9)
+    v0.push(0.35)
+    v0.push(0.0)
+    v0.push(0.0)
+    i = 0
+    while (i < n) {
+        cuda_write_f64(d_v + i * 8, v0.get(i))
+        i = i + 1
+    }
+    cuda_write_i32(d_next_count, 0)
+
+    desc_word(d_dsc, 0, d_accum)
+    desc_word(d_dsc, 8, d_v)
+    desc_word(d_dsc, 16, d_refr)
+    desc_word(d_dsc, 24, d_fired)
+    desc_word(d_dsc, 32, d_next_ids)
+    desc_word(d_dsc, 40, d_next_count)
+    desc_word(d_dsc, 48, v_rest_micro)
+    desc_word(d_dsc, 56, v_reset_micro)
+    desc_word(d_dsc, 64, v_thresh_micro)
+    desc_word(d_dsc, 72, leak_micro)
+    desc_word(d_dsc, 80, refr_ticks)
+    desc_word(d_dsc, 88, n)
+    desc_word(d_dsc, 96, 0)
+
+    blk<Int> = 64
+    r<CInt> = cuda_launch(hf, 1, 1, 1, blk as CInt, 1, 1, d_dsc)
+    if (cuda_sync() != 0) { println("ERROR sync"); return 4 }
+    ri<Int> = r as Int
+    println("launch_rc=" + ri.to_string())
+
+    vs<String> = ""
+    fs<String> = ""
+    i = 0
+    while (i < n) {
+        vv<Float> = cuda_read_f64(d_v + i * 8)
+        vmilli<Int> = (vv * 1000.0) as Int
+        ff<Int> = cuda_read_i32(d_fired + i * 4) as Int
+        rf<Int> = cuda_read_i32(d_refr + i * 4) as Int
+        vs = vs + vmilli.to_string() + " "
+        fs = fs + ff.to_string() + ":" + rf.to_string() + " "
+        i = i + 1
+    }
+    nf<Int> = cuda_read_i32(d_next_count) as Int
+    println("v_milli_after=" + vs)
+    println("fired:refr_after=" + fs)
+    println("next_count_after=" + nf.to_string())
+    println("expect v_milli_after=900 450 180 0 810 315 0 0")
+    println("expect fired:refr_after=1:2 1:2 0:0 0:0 1:2 1:2 0:0 0:0")
+    println("expect next_count_after=4")
+    println("phase3-selftest-done")
+    return 0
+}

@@ -1,0 +1,68 @@
+FlyScale Phase 4 - Latent geometry discovery (FlyWire v783)
+============================================================
+
+Which geometry predicts connectivity best?
+
+  Held-out AUC winner among the fitted geometries: spectral_32 (AUC 0.9519, AP 0.9452)
+  Degree-only baseline: AUC 0.8739, AP 0.8784
+  Best AUC overall: spectral_32 (0.9519)
+
+geometry                    AUC       AP   log-lik           R           T
+--------------------------------------------------------------------------
+anatomical_pca2          0.8512   0.8293   -0.4671   38607.177   18330.863
+anatomical_xy            0.8512   0.8293   -0.4671   38603.312   18329.550
+anatomical_xyz           0.8514   0.8307   -0.4669   38674.487   18297.171
+anatomical_xyz_zscored   0.7981   0.8026   -0.5470       1.738       0.766
+hyperbolic_2d            0.8646   0.8375   -0.4597       3.451       0.978
+spectral_16              0.8844   0.8445   -0.3866       0.000       0.000
+spectral_32              0.9519   0.9452   -0.2868       0.001       0.000
+degree_only (baseline)   0.8739   0.8784   -0.4445         nan         nan
+
+Protocol (identical fit and held-out pair sets for every geometry)
+  analysis graph: >= 5 synapses per connection, undirected, autapse-free (Lin et al. 2024 convention)
+  nodes: giant weakly-connected component, 132181 neurons (94.9% of 139255); 99.90% of undirected connections
+  split: 90% fit / 10% held out (2430462 fit, 270051 held-out connections, seed 0)
+  negatives: 269478 uniformly sampled non-edges, matched 1:1 to the held-out connections
+  scoring: ROC AUC, average precision, and the mean Bernoulli log-likelihood under P = 1/(1+exp((d-R)/T)) fitted on the fit pairs
+
+Geometric connection law
+  anatomical_pca2    R = 3.861e+04 (balanced fit sample), T = 1.833e+04, R_density_matched = -1.095e+05
+  anatomical_xy      R = 3.86e+04 (balanced fit sample), T = 1.833e+04, R_density_matched = -1.095e+05
+  anatomical_xyz     R = 3.867e+04 (balanced fit sample), T = 1.83e+04, R_density_matched = -1.092e+05
+  anatomical_xyz_zscored R = 1.738 (balanced fit sample), T = 0.7662, R_density_matched = -4.454
+  hyperbolic_2d      R = 3.451 (balanced fit sample), T = 0.9779, R_density_matched = -4.452
+  spectral_16        R = 0.0003991 (balanced fit sample), T = 0.0002151, R_density_matched = -0.001339
+  spectral_32        R = 0.0009148 (balanced fit sample), T = 0.000253, R_density_matched = -0.00113
+
+Sensitivity to the hyperbolic training budget (init = initial radius rule)
+
+  init=uniform  lr=0.05 epochs=15   -> held-out AUC 0.8272, AP 0.8088, in-sample AUC 0.8956
+  init=degree   lr=0.05 epochs=15   -> held-out AUC 0.8108, AP 0.7957, in-sample AUC 0.8877
+  init=uniform  lr=0.05 epochs=150  -> held-out AUC 0.8921, AP 0.8616, in-sample AUC 0.9467
+
+  The uniform-radius initialisation puts no degree information into the
+  starting point; the degree-ranked initialisation starts the hubs near the
+  origin. Comparing the two at the same budget separates 'the latent geometry
+  captures connectivity' from 'the initialisation handed the model the degree
+  ranking, which the degree-only baseline already scores well'.
+
+Headline (fair statement of what the numbers show)
+
+  * 2-D hyperbolic vs 3-D anatomical: AUC 0.8646 vs 0.8514 (+0.0132). The hyperbolic embedding wins.
+  * mechanism check (same budget, different initialization): uniform-radius init -> AUC 0.8921, degree-ranked init -> AUC 0.8646. Both exceed the 3-D anatomical coordinates (0.8514), so the anatomical result does not hinge on the initialization. The degree-only baseline (0.8739) sits inside the spread between these two initializations, so the comparison against the degree-only baseline is unresolved by this protocol while the comparison against physical coordinates is not.
+  * 2-D projection of anatomy vs 3-D anatomy: 0.8512 vs 0.8514 (2-D minus 3-D = -0.0002 AUC) - removing the dorso-ventral axis barely changes the ranking.
+  * best spectral embedding (spectral_32): AUC 0.9519 / AP 0.9452 ('higher-dimensional Euclidean embeddings improve further').
+  * degree-only baseline: AUC 0.8739 / AP 0.8784 (-0.4445 mean log-likelihood). spectral_32 beats it by +0.0780 AUC.
+  * run-to-run spread (measured, not assumed): a second fit with the SAME configuration on a protocol variant differing by 14 neurons reaches held-out AUC 0.9012 against 0.8646 for the delivered run, on identical held-out pairs (spread 0.0366). Both runs beat the 3-D anatomical coordinates (0.8514) and the 2-D projection of them, so 'the latent geometry beats physical coordinates' is reproduced; but the margin over the degree-only baseline (0.8739) is inside this spread, so 'the latent geometry beats the degree baseline' is NOT resolved by this protocol.
+
+Caveats that must travel with these numbers
+  * the number is rank quality on held-out *pairs*, not a mechanistic claim; a geometry can win on AUC while its fitted (R, T) law is a poor generative model
+  * positives and negatives are compared at a 1:1 ratio, so log-likelihood values are those of a balanced sample; the density-matched law is reported separately as R_density_matched
+  * hyperbolic training budget: 150 epochs of Adam SGD over 2430462 pairs (fit on the fit edges only); see geometry.json for the full training history
+  * the hyperbolic embedding is a single SGD draw: the objective is non-convex and its optimum moves with the sampled non-edges, so the delivered embedding is one sample from that distribution (run_to_run_sensitivity.json quantifies it)
+  * the hyperbolic fit is initialised by total-degree rank (hubs near the origin); the budget study shows a uniform-radius initialisation (no degree information) reaches a comparable optimum at the same budget, so the advantage over the anatomical coordinates does not depend on that initialisation
+  * the fitted (R, T) are in each geometry's own distance units (nanometres for the anatomical coordinates, eigenmap units for the spectral ones), so only within-geometry readings are meaningful: e.g. for anatomy R = 3.9e4 nm against a median positive-pair distance of 1.8e4 nm
+  * adding the summed log degrees as a second feature lifts every geometry (anatomical_pca2: 0.9491, anatomical_xy: 0.9505, anatomical_xyz: 0.9492, anatomical_xyz_zscored: 0.9337, hyperbolic_2d: 0.9036, spectral_16: 0.9635, spectral_32: 0.9774); even the weakest geometry (hyperbolic_2d) then scores 0.9036 against 0.8739 for degrees alone, so all 7 geometries carry connection information that is not in the degrees
+  * runtime: 1352.8s total on 20 CPUs; numpy 2.5.3, scipy 1.18.1
+
+Generated 2026-09-17T23:28:17Z by scripts/phase4_geometry.py; all numbers and provenance in results/phase4/geometry.json

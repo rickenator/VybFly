@@ -1,0 +1,262 @@
+{
+  "activity_target": 0.4,
+  "chosen": 3.0,
+  "chosen_row": {
+    "absolute_threshold": 37.94119783907725,
+    "between_pool_hamming": 0.08237988095808,
+    "hamming_contrast": 0.011232387061770946,
+    "mean_final_active_fraction": 0.39705097250000004,
+    "mean_readout_activity": 0.3983914979175643,
+    "relative_threshold": 3.0,
+    "within_pool_hamming": 0.07114749389630906
+  },
+  "discrimination_at_1x_for_reference": {
+    "curve": {
+      "0.0000": {
+        "accuracy": 0.4375,
+        "accuracy_per_pair": [
+          0.5,
+          0.375
+        ],
+        "delta": 0.0,
+        "mutual_information_bits": 0.02439747034769925,
+        "n_test": 16,
+        "overlap": 1.0,
+        "significance_vs_chance": {
+          "chance": 0.5,
+          "n_correct": 7,
+          "n_test": 16,
+          "p_value": 0.7727508544921875,
+          "significant_at_0.05": false
+        }
+      },
+      "0.0500": {
+        "accuracy": 0.5,
+        "accuracy_per_pair": [
+          0.5,
+          0.5
+        ],
+        "delta": 0.05,
+        "mutual_information_bits": 0.0,
+        "n_test": 16,
+        "overlap": 0.95,
+        "significance_vs_chance": {
+          "chance": 0.5,
+          "n_correct": 8,
+          "n_test": 16,
+          "p_value": 0.5981903076171875,
+          "significant_at_0.05": false
+        }
+      },
+      "0.1000": {
+        "accuracy": 0.5,
+        "accuracy_per_pair": [
+          0.5,
+          0.5
+        ],
+        "delta": 0.1,
+        "mutual_information_bits": 0.0,
+        "n_test": 16,
+        "overlap": 0.9,
+        "significance_vs_chance": {
+          "chance": 0.5,
+          "n_correct": 8,
+          "n_test": 16,
+          "p_value": 0.5981903076171875,
+          "significant_at_0.05": false
+        }
+      },
+      "0.2000": {
+        "accuracy": 0.6875,
+        "accuracy_per_pair": [
+          0.75,
+          0.625
+        ],
+        "delta": 0.2,
+        "mutual_information_bits": 0.16332362825544855,
+        "n_test": 16,
+        "overlap": 0.8,
+        "significance_vs_chance": {
+          "chance": 0.5,
+          "n_correct": 11,
+          "n_test": 16,
+          "p_value": 0.1050567626953125,
+          "significant_at_0.05": false
+        }
+      },
+      "0.4000": {
+        "accuracy": 0.9375,
+        "accuracy_per_pair": [
+          0.875,
+          1.0
+        ],
+        "delta": 0.4,
+        "mutual_information_bits": 0.7743974703476992,
+        "n_test": 16,
+        "overlap": 0.6,
+        "significance_vs_chance": {
+          "chance": 0.5,
+          "n_correct": 15,
+          "n_test": 16,
+          "p_value": 0.0002593994140625,
+          "significant_at_0.05": true
+        }
+      },
+      "0.6000": {
+        "accuracy": 0.9375,
+        "accuracy_per_pair": [
+          0.875,
+          1.0
+        ],
+        "delta": 0.6,
+        "mutual_information_bits": 0.7743974703476992,
+        "n_test": 16,
+        "overlap": 0.4,
+        "significance_vs_chance": {
+          "chance": 0.5,
+          "n_correct": 15,
+          "n_test": 16,
+          "p_value": 0.0002593994140625,
+          "significant_at_0.05": true
+        }
+      },
+      "0.8000": {
+        "accuracy": 0.875,
+        "accuracy_per_pair": [
+          1.0,
+          0.75
+        ],
+        "delta": 0.8,
+        "mutual_information_bits": 0.6556390622295665,
+        "n_test": 16,
+        "overlap": 0.2,
+        "significance_vs_chance": {
+          "chance": 0.5,
+          "n_correct": 14,
+          "n_test": 16,
+          "p_value": 0.0020904541015625,
+          "significant_at_0.05": true
+        }
+      },
+      "1.0000": {
+        "accuracy": 1.0,
+        "accuracy_per_pair": [
+          1.0,
+          1.0
+        ],
+        "delta": 1.0,
+        "mutual_information_bits": 1.0,
+        "n_test": 16,
+        "overlap": 0.0,
+        "significance_vs_chance": {
+          "chance": 0.5,
+          "n_correct": 16,
+          "n_test": 16,
+          "p_value": 1.52587890625e-05,
+          "significant_at_0.05": true
+        }
+      }
+    },
+    "min_separable_delta": 0.4,
+    "seconds": 8.1
+  },
+  "graph": {
+    "edges": 2700513,
+    "n": 139255,
+    "source": "cache"
+  },
+  "grid": [
+    {
+      "absolute_threshold": 12.647065946359081,
+      "between_pool_hamming": 0.015757894904814333,
+      "hamming_contrast": 0.0040435955127898215,
+      "mean_final_active_fraction": 0.8140431825,
+      "mean_readout_activity": 0.8126406242519986,
+      "relative_threshold": 1.0,
+      "within_pool_hamming": 0.011714299392024511
+    },
+    {
+      "absolute_threshold": 25.294131892718163,
+      "between_pool_hamming": 0.07124962101265418,
+      "hamming_contrast": 0.017101504779229892,
+      "mean_final_active_fraction": 0.62965423,
+      "mean_readout_activity": 0.6285245823160515,
+      "relative_threshold": 2.0,
+      "within_pool_hamming": 0.05414811623342429
+    },
+    {
+      "absolute_threshold": 37.94119783907725,
+      "between_pool_hamming": 0.08237988095808,
+      "hamming_contrast": 0.011232387061770946,
+      "mean_final_active_fraction": 0.39705097250000004,
+      "mean_readout_activity": 0.3983914979175643,
+      "relative_threshold": 3.0,
+      "within_pool_hamming": 0.07114749389630906
+    },
+    {
+      "absolute_threshold": 50.588263785436325,
+      "between_pool_hamming": 0.048813570140584364,
+      "hamming_contrast": 0.008495699490960164,
+      "mean_final_active_fraction": 0.25434454749999996,
+      "mean_readout_activity": 0.2579826703049452,
+      "relative_threshold": 4.0,
+      "within_pool_hamming": 0.0403178706496242
+    },
+    {
+      "absolute_threshold": 75.8823956781545,
+      "between_pool_hamming": 0.032696634592369184,
+      "hamming_contrast": 0.005246780602230834,
+      "mean_final_active_fraction": 0.15747310166666667,
+      "mean_readout_activity": 0.16087414428646654,
+      "relative_threshold": 6.0,
+      "within_pool_hamming": 0.02744985399013835
+    }
+  ],
+  "note": "calibration is done once on the 1x graph and the chosen value is applied unchanged at every scale; the calibration table is kept so the choice can be audited",
+  "protocol_before_calibration": {
+    "relative_threshold": 3.0
+  },
+  "reference_overlap_choice": {
+    "accuracy_at_1x": 0.9375,
+    "curve_at_1x": [
+      {
+        "accuracy": 0.4375,
+        "delta": 0.0
+      },
+      {
+        "accuracy": 0.5,
+        "delta": 0.05
+      },
+      {
+        "accuracy": 0.5,
+        "delta": 0.1
+      },
+      {
+        "accuracy": 0.6875,
+        "delta": 0.2
+      },
+      {
+        "accuracy": 0.9375,
+        "delta": 0.4
+      },
+      {
+        "accuracy": 0.9375,
+        "delta": 0.6
+      },
+      {
+        "accuracy": 0.875,
+        "delta": 0.8
+      },
+      {
+        "accuracy": 1.0,
+        "delta": 1.0
+      }
+    ],
+    "delta": 0.4,
+    "fallback": false,
+    "overlap": 0.6,
+    "rule": "smallest Delta with 1x accuracy >= 0.75"
+  },
+  "rule": "smallest relative threshold in [1.0, 2.0, 3.0, 4.0, 6.0] whose mean final active fraction on the 1x graph is <= 0.4; else the largest tested",
+  "seconds": 2.3
+}

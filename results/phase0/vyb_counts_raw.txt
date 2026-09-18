@@ -1,0 +1,12 @@
+n_neurons=139255
+root_ids=139255
+root_id_seen=139255
+root_id_max=720575940661339777
+root_id_min=720575940596125868
+root_id_sum=-6485149204353021866
+n_indptr_entries=139256
+indptr_head0=0
+indptr_tail=15091983
+out_degree_sum=15091983
+out_degree_max=9783
+out_degree_zero_neurons=1250

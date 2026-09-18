@@ -1,0 +1,5413 @@
+{
+  "calibration": {
+    "activity_target": 0.4,
+    "chosen": 3.0,
+    "chosen_row": {
+      "absolute_threshold": 37.94119783907725,
+      "between_pool_hamming": 0.08237988095808,
+      "hamming_contrast": 0.011232387061770946,
+      "mean_final_active_fraction": 0.39705097250000004,
+      "mean_readout_activity": 0.3983914979175643,
+      "relative_threshold": 3.0,
+      "within_pool_hamming": 0.07114749389630906
+    },
+    "discrimination_at_1x_for_reference": {
+      "curve": {
+        "0.0000": {
+          "accuracy": 0.4375,
+          "accuracy_per_pair": [
+            0.5,
+            0.375
+          ],
+          "delta": 0.0,
+          "mutual_information_bits": 0.02439747034769925,
+          "n_test": 16,
+          "overlap": 1.0,
+          "significance_vs_chance": {
+            "chance": 0.5,
+            "n_correct": 7,
+            "n_test": 16,
+            "p_value": 0.7727508544921875,
+            "significant_at_0.05": false
+          }
+        },
+        "0.0500": {
+          "accuracy": 0.5,
+          "accuracy_per_pair": [
+            0.5,
+            0.5
+          ],
+          "delta": 0.05,
+          "mutual_information_bits": 0.0,
+          "n_test": 16,
+          "overlap": 0.95,
+          "significance_vs_chance": {
+            "chance": 0.5,
+            "n_correct": 8,
+            "n_test": 16,
+            "p_value": 0.5981903076171875,
+            "significant_at_0.05": false
+          }
+        },
+        "0.1000": {
+          "accuracy": 0.5,
+          "accuracy_per_pair": [
+            0.5,
+            0.5
+          ],
+          "delta": 0.1,
+          "mutual_information_bits": 0.0,
+          "n_test": 16,
+          "overlap": 0.9,
+          "significance_vs_chance": {
+            "chance": 0.5,
+            "n_correct": 8,
+            "n_test": 16,
+            "p_value": 0.5981903076171875,
+            "significant_at_0.05": false
+          }
+        },
+        "0.2000": {
+          "accuracy": 0.6875,
+          "accuracy_per_pair": [
+            0.75,
+            0.625
+          ],
+          "delta": 0.2,
+          "mutual_information_bits": 0.16332362825544855,
+          "n_test": 16,
+          "overlap": 0.8,
+          "significance_vs_chance": {
+            "chance": 0.5,
+            "n_correct": 11,
+            "n_test": 16,
+            "p_value": 0.1050567626953125,
+            "significant_at_0.05": false
+          }
+        },
+        "0.4000": {
+          "accuracy": 0.9375,
+          "accuracy_per_pair": [
+            0.875,
+            1.0
+          ],
+          "delta": 0.4,
+          "mutual_information_bits": 0.7743974703476992,
+          "n_test": 16,
+          "overlap": 0.6,
+          "significance_vs_chance": {
+            "chance": 0.5,
+            "n_correct": 15,
+            "n_test": 16,
+            "p_value": 0.0002593994140625,
+            "significant_at_0.05": true
+          }
+        },
+        "0.6000": {
+          "accuracy": 0.9375,
+          "accuracy_per_pair": [
+            0.875,
+            1.0
+          ],
+          "delta": 0.6,
+          "mutual_information_bits": 0.7743974703476992,
+          "n_test": 16,
+          "overlap": 0.4,
+          "significance_vs_chance": {
+            "chance": 0.5,
+            "n_correct": 15,
+            "n_test": 16,
+            "p_value": 0.0002593994140625,
+            "significant_at_0.05": true
+          }
+        },
+        "0.8000": {
+          "accuracy": 0.875,
+          "accuracy_per_pair": [
+            1.0,
+            0.75
+          ],
+          "delta": 0.8,
+          "mutual_information_bits": 0.6556390622295665,
+          "n_test": 16,
+          "overlap": 0.2,
+          "significance_vs_chance": {
+            "chance": 0.5,
+            "n_correct": 14,
+            "n_test": 16,
+            "p_value": 0.0020904541015625,
+            "significant_at_0.05": true
+          }
+        },
+        "1.0000": {
+          "accuracy": 1.0,
+          "accuracy_per_pair": [
+            1.0,
+            1.0
+          ],
+          "delta": 1.0,
+          "mutual_information_bits": 1.0,
+          "n_test": 16,
+          "overlap": 0.0,
+          "significance_vs_chance": {
+            "chance": 0.5,
+            "n_correct": 16,
+            "n_test": 16,
+            "p_value": 1.52587890625e-05,
+            "significant_at_0.05": true
+          }
+        }
+      },
+      "min_separable_delta": 0.4,
+      "seconds": 8.1
+    },
+    "graph": {
+      "edges": 2700513,
+      "n": 139255,
+      "source": "cache"
+    },
+    "grid": [
+      {
+        "absolute_threshold": 12.647065946359081,
+        "between_pool_hamming": 0.015757894904814333,
+        "hamming_contrast": 0.0040435955127898215,
+        "mean_final_active_fraction": 0.8140431825,
+        "mean_readout_activity": 0.8126406242519986,
+        "relative_threshold": 1.0,
+        "within_pool_hamming": 0.011714299392024511
+      },
+      {
+        "absolute_threshold": 25.294131892718163,
+        "between_pool_hamming": 0.07124962101265418,
+        "hamming_contrast": 0.017101504779229892,
+        "mean_final_active_fraction": 0.62965423,
+        "mean_readout_activity": 0.6285245823160515,
+        "relative_threshold": 2.0,
+        "within_pool_hamming": 0.05414811623342429
+      },
+      {
+        "absolute_threshold": 37.94119783907725,
+        "between_pool_hamming": 0.08237988095808,
+        "hamming_contrast": 0.011232387061770946,
+        "mean_final_active_fraction": 0.39705097250000004,
+        "mean_readout_activity": 0.3983914979175643,
+        "relative_threshold": 3.0,
+        "within_pool_hamming": 0.07114749389630906
+      },
+      {
+        "absolute_threshold": 50.588263785436325,
+        "between_pool_hamming": 0.048813570140584364,
+        "hamming_contrast": 0.008495699490960164,
+        "mean_final_active_fraction": 0.25434454749999996,
+        "mean_readout_activity": 0.2579826703049452,
+        "relative_threshold": 4.0,
+        "within_pool_hamming": 0.0403178706496242
+      },
+      {
+        "absolute_threshold": 75.8823956781545,
+        "between_pool_hamming": 0.032696634592369184,
+        "hamming_contrast": 0.005246780602230834,
+        "mean_final_active_fraction": 0.15747310166666667,
+        "mean_readout_activity": 0.16087414428646654,
+        "relative_threshold": 6.0,
+        "within_pool_hamming": 0.02744985399013835
+      }
+    ],
+    "note": "calibration is done once on the 1x graph and the chosen value is applied unchanged at every scale; the calibration table is kept so the choice can be audited",
+    "protocol_before_calibration": {
+      "relative_threshold": 3.0
+    },
+    "reference_overlap_choice": {
+      "accuracy_at_1x": 0.9375,
+      "curve_at_1x": [
+        {
+          "accuracy": 0.4375,
+          "delta": 0.0
+        },
+        {
+          "accuracy": 0.5,
+          "delta": 0.05
+        },
+        {
+          "accuracy": 0.5,
+          "delta": 0.1
+        },
+        {
+          "accuracy": 0.6875,
+          "delta": 0.2
+        },
+        {
+          "accuracy": 0.9375,
+          "delta": 0.4
+        },
+        {
+          "accuracy": 0.9375,
+          "delta": 0.6
+        },
+        {
+          "accuracy": 0.875,
+          "delta": 0.8
+        },
+        {
+          "accuracy": 1.0,
+          "delta": 1.0
+        }
+      ],
+      "delta": 0.4,
+      "fallback": false,
+      "overlap": 0.6,
+      "rule": "smallest Delta with 1x accuracy >= 0.75"
+    },
+    "rule": "smallest relative threshold in [1.0, 2.0, 3.0, 4.0, 6.0] whose mean final active fraction on the 1x graph is <= 0.4; else the largest tested",
+    "seconds": 2.3
+  },
+  "capability_module_sha256_16": "954ac84213e6559f",
+  "capability_per_watt": {
+    "biological_track": {
+      "anchor": "drosophila_brain_heat_panda2026",
+      "available": true,
+      "caveat": "P_bio(N) is linear in N by construction, so per-watt exponents below are (alpha_C - 1) by construction; the useful independent number remains alpha_C vs N",
+      "fits_per_neuron_watt": {
+        "components_for_90pct_variance": {
+          "alpha": -0.9035436651611368,
+          "intercept": 31.667569512945917,
+          "label": "components_for_90pct_variance per biological watt",
+          "log_log_residual_rms": 0.02964070642551621,
+          "n_points": 4,
+          "r2": 0.9992995760628139,
+          "sizes": [
+            139255.0,
+            278510.0,
+            696275.0,
+            1392550.0
+          ],
+          "values": [
+            1246093750.0,
+            699218750.0,
+            302343750.0,
+            156250000.0
+          ]
+        },
+        "discrimination_bits_at_overlap_0.9": {
+          "alpha": 0.014148553929073585,
+          "intercept": 12.533272807791867,
+          "label": "discrimination_bits_at_overlap_0.9 per biological watt",
+          "log_log_residual_rms": 0.24514857488394828,
+          "n_points": 3,
+          "r2": 0.004322910728129625,
+          "sizes": [
+            278510.0,
+            696275.0,
+            1392550.0
+          ],
+          "values": [
+            303982.54341712187,
+            409685.52370914,
+            302499.01185457
+          ]
+        },
+        "generalization_novel_accuracy": {
+          "alpha": -1.0000000000000004,
+          "intercept": 27.022150456254487,
+          "label": "generalization_novel_accuracy per biological watt",
+          "log_log_residual_rms": 1.7763568394002505e-15,
+          "n_points": 4,
+          "r2": 1.0,
+          "sizes": [
+            139255.0,
+            278510.0,
+            696275.0,
+            1392550.0
+          ],
+          "values": [
+            3906249.9999999995,
+            1953124.9999999998,
+            781250.0,
+            390625.0
+          ]
+        },
+        "memory_capacity": {
+          "alpha": -0.06835116953007703,
+          "intercept": 18.858165061061694,
+          "label": "memory_capacity per biological watt",
+          "log_log_residual_rms": 0.9914028041684931,
+          "n_points": 4,
+          "r2": 0.007245146401933855,
+          "sizes": [
+            139255.0,
+            278510.0,
+            696275.0,
+            1392550.0
+          ],
+          "values": [
+            31249999.999999996,
+            187500000.0,
+            75000000.0,
+            37500000.0
+          ]
+        },
+        "participation_ratio": {
+          "alpha": -0.6820455362505163,
+          "intercept": 28.5376033604562,
+          "label": "participation_ratio per biological watt",
+          "log_log_residual_rms": 0.09376315464617944,
+          "n_points": 4,
+          "r2": 0.987840631167593,
+          "sizes": [
+            139255.0,
+            278510.0,
+            696275.0,
+            1392550.0
+          ],
+          "values": [
+            713267284.2833093,
+            524577269.53571457,
+            265028436.61218613,
+            151773716.70365
+          ]
+        },
+        "stimulus_response_mi_bits": {
+          "alpha": -0.9823716346143042,
+          "intercept": 28.66514216558251,
+          "label": "stimulus_response_mi_bits per biological watt",
+          "log_log_residual_rms": 0.014481740571131748,
+          "n_points": 4,
+          "r2": 0.9998584809513045,
+          "sizes": [
+            139255.0,
+            278510.0,
+            696275.0,
+            1392550.0
+          ],
+          "values": [
+            24603134.15791439,
+            12779874.675887674,
+            5144501.953688403,
+            2572250.9768442013
+          ]
+        }
+      },
+      "per_neuron_watts": 1.838354098596101e-12,
+      "per_scale": {
+        "1": {
+          "components_for_90pct_variance_per_bio_nanowatt": 1.24609375,
+          "components_for_90pct_variance_per_bio_watt": 1246093750.0,
+          "discrimination_bits_at_overlap_0.9_per_bio_nanowatt": 0.0,
+          "discrimination_bits_at_overlap_0.9_per_bio_watt": 0.0,
+          "generalization_novel_accuracy_per_bio_nanowatt": 0.00390625,
+          "generalization_novel_accuracy_per_bio_watt": 3906249.9999999995,
+          "memory_capacity_per_bio_nanowatt": 0.03125,
+          "memory_capacity_per_bio_watt": 31249999.999999996,
+          "n_neurons": 139255.0,
+          "p_bio_w": 2.56e-07,
+          "participation_ratio_per_bio_nanowatt": 0.7132672842833094,
+          "participation_ratio_per_bio_watt": 713267284.2833093,
+          "stimulus_response_mi_bits_per_bio_nanowatt": 0.02460313415791439,
+          "stimulus_response_mi_bits_per_bio_watt": 24603134.15791439
+        },
+        "10": {
+          "components_for_90pct_variance_per_bio_nanowatt": 0.15625,
+          "components_for_90pct_variance_per_bio_watt": 156250000.0,
+          "discrimination_bits_at_overlap_0.9_per_bio_nanowatt": 0.00030249901185457,
+          "discrimination_bits_at_overlap_0.9_per_bio_watt": 302499.01185457,
+          "generalization_novel_accuracy_per_bio_nanowatt": 0.000390625,
+          "generalization_novel_accuracy_per_bio_watt": 390625.0,
+          "memory_capacity_per_bio_nanowatt": 0.0375,
+          "memory_capacity_per_bio_watt": 37500000.0,
+          "n_neurons": 1392550.0,
+          "p_bio_w": 2.56e-06,
+          "participation_ratio_per_bio_nanowatt": 0.15177371670365,
+          "participation_ratio_per_bio_watt": 151773716.70365,
+          "stimulus_response_mi_bits_per_bio_nanowatt": 0.0025722509768442018,
+          "stimulus_response_mi_bits_per_bio_watt": 2572250.9768442013
+        },
+        "2": {
+          "components_for_90pct_variance_per_bio_nanowatt": 0.69921875,
+          "components_for_90pct_variance_per_bio_watt": 699218750.0,
+          "discrimination_bits_at_overlap_0.9_per_bio_nanowatt": 0.0003039825434171219,
+          "discrimination_bits_at_overlap_0.9_per_bio_watt": 303982.54341712187,
+          "generalization_novel_accuracy_per_bio_nanowatt": 0.001953125,
+          "generalization_novel_accuracy_per_bio_watt": 1953124.9999999998,
+          "memory_capacity_per_bio_nanowatt": 0.1875,
+          "memory_capacity_per_bio_watt": 187500000.0,
+          "n_neurons": 278510.0,
+          "p_bio_w": 5.12e-07,
+          "participation_ratio_per_bio_nanowatt": 0.5245772695357146,
+          "participation_ratio_per_bio_watt": 524577269.53571457,
+          "stimulus_response_mi_bits_per_bio_nanowatt": 0.012779874675887674,
+          "stimulus_response_mi_bits_per_bio_watt": 12779874.675887674
+        },
+        "5": {
+          "components_for_90pct_variance_per_bio_nanowatt": 0.30234375,
+          "components_for_90pct_variance_per_bio_watt": 302343750.0,
+          "discrimination_bits_at_overlap_0.9_per_bio_nanowatt": 0.00040968552370914004,
+          "discrimination_bits_at_overlap_0.9_per_bio_watt": 409685.52370914,
+          "generalization_novel_accuracy_per_bio_nanowatt": 0.00078125,
+          "generalization_novel_accuracy_per_bio_watt": 781250.0,
+          "memory_capacity_per_bio_nanowatt": 0.075,
+          "memory_capacity_per_bio_watt": 75000000.0,
+          "n_neurons": 696275.0,
+          "p_bio_w": 1.28e-06,
+          "participation_ratio_per_bio_nanowatt": 0.2650284366121861,
+          "participation_ratio_per_bio_watt": 265028436.61218613,
+          "stimulus_response_mi_bits_per_bio_nanowatt": 0.0051445019536884035,
+          "stimulus_response_mi_bits_per_bio_watt": 5144501.953688403
+        }
+      },
+      "source": "results/energy/biological_model.json"
+    },
+    "hardware_track": {
+      "available_metrics": [
+        "gpu:0"
+      ],
+      "baseline_power_w": null,
+      "capability_numbers_the_energy_stream_read": {
+        "file": "results/energy/curves.json",
+        "note": "the energy stream copies capability values out of results/phase9/capability.json; entries listed above were computed from an earlier protocol revision and must be re-read from the current file for \u00a719/M14",
+        "stale_against_this_run": {
+          "1": [
+            "memory_capacity",
+            "participation_ratio",
+            "stimulus_response_mi_bits"
+          ]
+        }
+      },
+      "measured_power_w": 89.94102956521739,
+      "note": "hardware power was sampled by the energy work-stream for its own GPU/CUDA workload, not for this CPU cascade, so no hardware energy is attributed to the capability runs here; the \u00a719/M14 combination over measured watts lives in results/energy/curves.json",
+      "per_scale": {
+        "1": {
+          "capability_per_watt_computed_by_energy_stream": {
+            "memory_capacity_per_watt": 0.13953355,
+            "note": "capability unit per measured GPU watt at this scale"
+          },
+          "hardware": {
+            "cpu_joules": null,
+            "cpu_mean_watts": null,
+            "gpu_joules": 464.20894194949994,
+            "gpu_mean_watts": 114.66776190476189,
+            "gpu_median_watts": 152.248,
+            "joules_per_spike": 9.435428e-06,
+            "joules_per_synaptic_event": 4.41005474e-07,
+            "track_note": "measured watts on this machine; GPU joules only (the payload is a CUDA kernel), CPU joules reported separately and never summed in"
+          },
+          "wall_seconds": 4.095319
+        },
+        "10": {
+          "capability_per_watt_computed_by_energy_stream": null,
+          "hardware": null,
+          "wall_seconds": null
+        },
+        "2": {
+          "capability_per_watt_computed_by_energy_stream": null,
+          "hardware": null,
+          "wall_seconds": null
+        },
+        "5": {
+          "capability_per_watt_computed_by_energy_stream": null,
+          "hardware": null,
+          "wall_seconds": null
+        }
+      },
+      "per_scale_source": "results/energy/curves.json",
+      "source": "results/energy/hardware_energy.json",
+      "unavailable": {
+        "cpu_joules_per_spike": "requires CPU package power (RAPL), which is unreadable here",
+        "cpu_rapl": "/sys/class/powercap/intel-rapl:0/energy_uj unreadable for uid 1000: PermissionError: Permission denied; mode 0o400 owner uid 0; /sys/class/powercap/intel-rapl:0:0/energy_uj unreadable for uid 1000: PermissionError: Permission denied; mode 0o400 owner uid 0; /sys/class/powercap/intel-rapl:0:1/energy_uj unreadable for uid 1000: PermissionError: Permission denied; mode 0o400 owner uid 0",
+        "dram_joules": "RAPL dram domain (intel-rapl:0:1) is unreadable here",
+        "joules_per_trained_task_and_per_inference": "not in scope of M4: no training or inference task was run; \u00a717 lists these metrics for later phases",
+        "wall": "no PSU/wall sensor exposed: no /sys/class/hwmon/hwmon*/power*_input read-only power sensor and no /sys/class/power_supply/*/power_now on this desktop board; no external meter/PDU is attached to this harness. powerstat absent, turbostat present but needs root (CAP_SYS_RAWIO) and `sudo -n true` fails (password required), so neither can be used.",
+        "whole_machine_joules": "wall/PSU power is not instrumented on this box (no hwmon power input, no power_supply power_now, no external meter, and powerstat/turbostat need root), so total system energy per spike cannot be reported -- only the GPU device contribution, which is a lower bound."
+      }
+    }
+  },
+  "cost": {
+    "per_scale": {
+      "1": {
+        "battery_seconds": {
+          "classes": 14.5,
+          "discrimination": 6.1,
+          "robustness": 2.2,
+          "sequence": 1.4,
+          "temporal": 1.7
+        },
+        "cascades_total": 1068,
+        "energy": {
+          "available": true,
+          "caveat": "produced by another work-stream; not used to derive any capability number here",
+          "data": {
+            "1": {
+              "biological": {
+                "anchor": {
+                  "authors": "Panda K, Mittapally R, Chen Q, Bhaskaran A, Reddy P, Meyhofer E, Yadlapalli S",
+                  "caveats": [
+                    "ex vivo: the brain is explanted and buffer-perfused, not in a behaving fly",
+                    "one genotype (y sc v), one sex (female), one age (10 days) -- sex/age/genotype differences of 10-15% are reported within the same study",
+                    "calorimeter time constant ~40 s and resolution ~7.6 nW: fast (sub-second) metabolic transients such as spike-driven ATP flux are smoothed away, so this is a slow/steady-state figure",
+                    "pairing the measured organ with N0 = 139,255 is an assumption: the neuron count is the FlyWire FAFB v783 whole-brain count, not a count of the measured animal",
+                    "metabolic heat output is total tissue metabolism (neurons + glia + housekeeping), not a measure of spiking computation"
+                  ],
+                  "citation_title": "Direct quantification of the metabolic heat output of individual Drosophila brains",
+                  "doi": "10.1016/j.crmeth.2026.101501",
+                  "is_drosophila_measurement": true,
+                  "key": "drosophila_brain_heat_panda2026",
+                  "label": "Drosophila whole-brain metabolic heat output (direct calorimetry)",
+                  "method": "nanowatt-resolution biocalorimeter, live explanted brain perfused with Schneider's medium at 4 uL/min; Q = G_th * dT; ~1 h per measurement",
+                  "n_neurons": 139255,
+                  "not_a_drosophila_measurement": false,
+                  "p_watts": 2.56e-07,
+                  "per_neuron_picowatts": 1.8383540985961009,
+                  "per_neuron_watts": 1.838354098596101e-12,
+                  "provenance_extra": {
+                    "buffer_flow_sensitivity": "2 uL/min -> ~62 nW and unstable; 4 uL/min -> ~256 nW; 6 uL/min -> ~247 nW (oxygen supply limited at 2)",
+                    "dry_mass": "~6.6 ug per female brain; ~38.7 nW/ug",
+                    "preprint": "bioRxiv 2025.08.08.669302 (DOI 10.1101/2025.08.08.669302)"
+                  },
+                  "reported_value": "~256 nW per brain (female, 10-day-old, y sc v)",
+                  "species": "Drosophila melanogaster",
+                  "url": "https://doi.org/10.1016/j.crmeth.2026.101501",
+                  "year": 2026
+                },
+                "joules_over_simulated_time": 1.28e-07,
+                "per_neuron_watts": 1.838354098596101e-12,
+                "power_watts": 2.56e-07,
+                "track_note": "P_bio depends on N only - a property of the scale, not of this run"
+              },
+              "capability": {
+                "available": true,
+                "metrics": {
+                  "discrimination_bits_at_zero_overlap": 0.13628933528331,
+                  "memory_capacity": 16,
+                  "participation_ratio": 194.1194266891139,
+                  "stimulus_response_mi_bits": 6.143258042451281
+                },
+                "source": "results/phase9/capability.json"
+              },
+              "capability_per_watt": {
+                "memory_capacity_per_watt": 0.13953355,
+                "note": "capability unit per measured GPU watt at this scale"
+              },
+              "dt_ms": 0.5,
+              "epochs": 8,
+              "hardware": {
+                "cpu_joules": null,
+                "cpu_mean_watts": null,
+                "gpu_joules": 464.20894194949994,
+                "gpu_mean_watts": 114.66776190476189,
+                "gpu_median_watts": 152.248,
+                "joules_per_spike": 9.435428e-06,
+                "joules_per_synaptic_event": 4.41005474e-07,
+                "track_note": "measured watts on this machine; GPU joules only (the payload is a CUDA kernel), CPU joules reported separately and never summed in"
+              },
+              "harness": {
+                "epochs_identical": 1,
+                "kernel_s": 3.820875,
+                "max_active": 300000,
+                "spikes": 49198504,
+                "stimulus_spikes": 9992,
+                "synaptic_events": 1052614920
+              },
+              "indices_bytes": 10802052,
+              "indptr_bytes": 1114048,
+              "n_edges": 2700513,
+              "n_neurons": 139255,
+              "n_synapses": 34153566,
+              "simulated_biological_seconds": 0.5,
+              "steps": 1000,
+              "syn_bytes": 10802052,
+              "wall_seconds": 4.095319,
+              "wall_seconds_per_bio_second": 8.190638
+            }
+          },
+          "field": "per_scale",
+          "source": "results/energy/curves.json"
+        },
+        "errors": {},
+        "n_neurons": 139255,
+        "n_synapses": 34153566,
+        "readout_dim": 6963,
+        "seconds_per_1000_stimuli": 26.311,
+        "seconds_per_cascade": 0.0243,
+        "total_seconds": 28.1,
+        "truncated_by_budget": false
+      },
+      "10": {
+        "battery_seconds": {
+          "classes": 321.1,
+          "discrimination": 169.3,
+          "robustness": 61.6,
+          "sequence": 43.5,
+          "temporal": 53.0
+        },
+        "cascades_total": 1068,
+        "energy": {
+          "available": true,
+          "caveat": "produced by another work-stream; not used to derive any capability number here",
+          "data": {
+            "1": {
+              "biological": {
+                "anchor": {
+                  "authors": "Panda K, Mittapally R, Chen Q, Bhaskaran A, Reddy P, Meyhofer E, Yadlapalli S",
+                  "caveats": [
+                    "ex vivo: the brain is explanted and buffer-perfused, not in a behaving fly",
+                    "one genotype (y sc v), one sex (female), one age (10 days) -- sex/age/genotype differences of 10-15% are reported within the same study",
+                    "calorimeter time constant ~40 s and resolution ~7.6 nW: fast (sub-second) metabolic transients such as spike-driven ATP flux are smoothed away, so this is a slow/steady-state figure",
+                    "pairing the measured organ with N0 = 139,255 is an assumption: the neuron count is the FlyWire FAFB v783 whole-brain count, not a count of the measured animal",
+                    "metabolic heat output is total tissue metabolism (neurons + glia + housekeeping), not a measure of spiking computation"
+                  ],
+                  "citation_title": "Direct quantification of the metabolic heat output of individual Drosophila brains",
+                  "doi": "10.1016/j.crmeth.2026.101501",
+                  "is_drosophila_measurement": true,
+                  "key": "drosophila_brain_heat_panda2026",
+                  "label": "Drosophila whole-brain metabolic heat output (direct calorimetry)",
+                  "method": "nanowatt-resolution biocalorimeter, live explanted brain perfused with Schneider's medium at 4 uL/min; Q = G_th * dT; ~1 h per measurement",
+                  "n_neurons": 139255,
+                  "not_a_drosophila_measurement": false,
+                  "p_watts": 2.56e-07,
+                  "per_neuron_picowatts": 1.8383540985961009,
+                  "per_neuron_watts": 1.838354098596101e-12,
+                  "provenance_extra": {
+                    "buffer_flow_sensitivity": "2 uL/min -> ~62 nW and unstable; 4 uL/min -> ~256 nW; 6 uL/min -> ~247 nW (oxygen supply limited at 2)",
+                    "dry_mass": "~6.6 ug per female brain; ~38.7 nW/ug",
+                    "preprint": "bioRxiv 2025.08.08.669302 (DOI 10.1101/2025.08.08.669302)"
+                  },
+                  "reported_value": "~256 nW per brain (female, 10-day-old, y sc v)",
+                  "species": "Drosophila melanogaster",
+                  "url": "https://doi.org/10.1016/j.crmeth.2026.101501",
+                  "year": 2026
+                },
+                "joules_over_simulated_time": 1.28e-07,
+                "per_neuron_watts": 1.838354098596101e-12,
+                "power_watts": 2.56e-07,
+                "track_note": "P_bio depends on N only - a property of the scale, not of this run"
+              },
+              "capability": {
+                "available": true,
+                "metrics": {
+                  "discrimination_bits_at_zero_overlap": 0.13628933528331,
+                  "memory_capacity": 16,
+                  "participation_ratio": 194.1194266891139,
+                  "stimulus_response_mi_bits": 6.143258042451281
+                },
+                "source": "results/phase9/capability.json"
+              },
+              "capability_per_watt": {
+                "memory_capacity_per_watt": 0.13953355,
+                "note": "capability unit per measured GPU watt at this scale"
+              },
+              "dt_ms": 0.5,
+              "epochs": 8,
+              "hardware": {
+                "cpu_joules": null,
+                "cpu_mean_watts": null,
+                "gpu_joules": 464.20894194949994,
+                "gpu_mean_watts": 114.66776190476189,
+                "gpu_median_watts": 152.248,
+                "joules_per_spike": 9.435428e-06,
+                "joules_per_synaptic_event": 4.41005474e-07,
+                "track_note": "measured watts on this machine; GPU joules only (the payload is a CUDA kernel), CPU joules reported separately and never summed in"
+              },
+              "harness": {
+                "epochs_identical": 1,
+                "kernel_s": 3.820875,
+                "max_active": 300000,
+                "spikes": 49198504,
+                "stimulus_spikes": 9992,
+                "synaptic_events": 1052614920
+              },
+              "indices_bytes": 10802052,
+              "indptr_bytes": 1114048,
+              "n_edges": 2700513,
+              "n_neurons": 139255,
+              "n_synapses": 34153566,
+              "simulated_biological_seconds": 0.5,
+              "steps": 1000,
+              "syn_bytes": 10802052,
+              "wall_seconds": 4.095319,
+              "wall_seconds_per_bio_second": 8.190638
+            }
+          },
+          "field": "per_scale",
+          "source": "results/energy/curves.json"
+        },
+        "errors": {},
+        "n_neurons": 1392550,
+        "n_synapses": 347182855,
+        "readout_dim": 69628,
+        "seconds_per_1000_stimuli": 629.026,
+        "seconds_per_cascade": 0.6072,
+        "total_seconds": 671.8,
+        "truncated_by_budget": false
+      },
+      "2": {
+        "battery_seconds": {
+          "classes": 62.5,
+          "discrimination": 30.7,
+          "robustness": 10.7,
+          "sequence": 6.3,
+          "temporal": 9.4
+        },
+        "cascades_total": 1068,
+        "energy": {
+          "available": true,
+          "caveat": "produced by another work-stream; not used to derive any capability number here",
+          "data": {
+            "1": {
+              "biological": {
+                "anchor": {
+                  "authors": "Panda K, Mittapally R, Chen Q, Bhaskaran A, Reddy P, Meyhofer E, Yadlapalli S",
+                  "caveats": [
+                    "ex vivo: the brain is explanted and buffer-perfused, not in a behaving fly",
+                    "one genotype (y sc v), one sex (female), one age (10 days) -- sex/age/genotype differences of 10-15% are reported within the same study",
+                    "calorimeter time constant ~40 s and resolution ~7.6 nW: fast (sub-second) metabolic transients such as spike-driven ATP flux are smoothed away, so this is a slow/steady-state figure",
+                    "pairing the measured organ with N0 = 139,255 is an assumption: the neuron count is the FlyWire FAFB v783 whole-brain count, not a count of the measured animal",
+                    "metabolic heat output is total tissue metabolism (neurons + glia + housekeeping), not a measure of spiking computation"
+                  ],
+                  "citation_title": "Direct quantification of the metabolic heat output of individual Drosophila brains",
+                  "doi": "10.1016/j.crmeth.2026.101501",
+                  "is_drosophila_measurement": true,
+                  "key": "drosophila_brain_heat_panda2026",
+                  "label": "Drosophila whole-brain metabolic heat output (direct calorimetry)",
+                  "method": "nanowatt-resolution biocalorimeter, live explanted brain perfused with Schneider's medium at 4 uL/min; Q = G_th * dT; ~1 h per measurement",
+                  "n_neurons": 139255,
+                  "not_a_drosophila_measurement": false,
+                  "p_watts": 2.56e-07,
+                  "per_neuron_picowatts": 1.8383540985961009,
+                  "per_neuron_watts": 1.838354098596101e-12,
+                  "provenance_extra": {
+                    "buffer_flow_sensitivity": "2 uL/min -> ~62 nW and unstable; 4 uL/min -> ~256 nW; 6 uL/min -> ~247 nW (oxygen supply limited at 2)",
+                    "dry_mass": "~6.6 ug per female brain; ~38.7 nW/ug",
+                    "preprint": "bioRxiv 2025.08.08.669302 (DOI 10.1101/2025.08.08.669302)"
+                  },
+                  "reported_value": "~256 nW per brain (female, 10-day-old, y sc v)",
+                  "species": "Drosophila melanogaster",
+                  "url": "https://doi.org/10.1016/j.crmeth.2026.101501",
+                  "year": 2026
+                },
+                "joules_over_simulated_time": 1.28e-07,
+                "per_neuron_watts": 1.838354098596101e-12,
+                "power_watts": 2.56e-07,
+                "track_note": "P_bio depends on N only - a property of the scale, not of this run"
+              },
+              "capability": {
+                "available": true,
+                "metrics": {
+                  "discrimination_bits_at_zero_overlap": 0.13628933528331,
+                  "memory_capacity": 16,
+                  "participation_ratio": 194.1194266891139,
+                  "stimulus_response_mi_bits": 6.143258042451281
+                },
+                "source": "results/phase9/capability.json"
+              },
+              "capability_per_watt": {
+                "memory_capacity_per_watt": 0.13953355,
+                "note": "capability unit per measured GPU watt at this scale"
+              },
+              "dt_ms": 0.5,
+              "epochs": 8,
+              "hardware": {
+                "cpu_joules": null,
+                "cpu_mean_watts": null,
+                "gpu_joules": 464.20894194949994,
+                "gpu_mean_watts": 114.66776190476189,
+                "gpu_median_watts": 152.248,
+                "joules_per_spike": 9.435428e-06,
+                "joules_per_synaptic_event": 4.41005474e-07,
+                "track_note": "measured watts on this machine; GPU joules only (the payload is a CUDA kernel), CPU joules reported separately and never summed in"
+              },
+              "harness": {
+                "epochs_identical": 1,
+                "kernel_s": 3.820875,
+                "max_active": 300000,
+                "spikes": 49198504,
+                "stimulus_spikes": 9992,
+                "synaptic_events": 1052614920
+              },
+              "indices_bytes": 10802052,
+              "indptr_bytes": 1114048,
+              "n_edges": 2700513,
+              "n_neurons": 139255,
+              "n_synapses": 34153566,
+              "simulated_biological_seconds": 0.5,
+              "steps": 1000,
+              "syn_bytes": 10802052,
+              "wall_seconds": 4.095319,
+              "wall_seconds_per_bio_second": 8.190638
+            }
+          },
+          "field": "per_scale",
+          "source": "results/energy/curves.json"
+        },
+        "errors": {},
+        "n_neurons": 278510,
+        "n_synapses": 68433997,
+        "readout_dim": 13926,
+        "seconds_per_1000_stimuli": 119.382,
+        "seconds_per_cascade": 0.112,
+        "total_seconds": 127.5,
+        "truncated_by_budget": false
+      },
+      "5": {
+        "battery_seconds": {
+          "classes": 139.8,
+          "discrimination": 76.7,
+          "robustness": 29.2,
+          "sequence": 19.8,
+          "temporal": 20.4
+        },
+        "cascades_total": 1068,
+        "energy": {
+          "available": true,
+          "caveat": "produced by another work-stream; not used to derive any capability number here",
+          "data": {
+            "1": {
+              "biological": {
+                "anchor": {
+                  "authors": "Panda K, Mittapally R, Chen Q, Bhaskaran A, Reddy P, Meyhofer E, Yadlapalli S",
+                  "caveats": [
+                    "ex vivo: the brain is explanted and buffer-perfused, not in a behaving fly",
+                    "one genotype (y sc v), one sex (female), one age (10 days) -- sex/age/genotype differences of 10-15% are reported within the same study",
+                    "calorimeter time constant ~40 s and resolution ~7.6 nW: fast (sub-second) metabolic transients such as spike-driven ATP flux are smoothed away, so this is a slow/steady-state figure",
+                    "pairing the measured organ with N0 = 139,255 is an assumption: the neuron count is the FlyWire FAFB v783 whole-brain count, not a count of the measured animal",
+                    "metabolic heat output is total tissue metabolism (neurons + glia + housekeeping), not a measure of spiking computation"
+                  ],
+                  "citation_title": "Direct quantification of the metabolic heat output of individual Drosophila brains",
+                  "doi": "10.1016/j.crmeth.2026.101501",
+                  "is_drosophila_measurement": true,
+                  "key": "drosophila_brain_heat_panda2026",
+                  "label": "Drosophila whole-brain metabolic heat output (direct calorimetry)",
+                  "method": "nanowatt-resolution biocalorimeter, live explanted brain perfused with Schneider's medium at 4 uL/min; Q = G_th * dT; ~1 h per measurement",
+                  "n_neurons": 139255,
+                  "not_a_drosophila_measurement": false,
+                  "p_watts": 2.56e-07,
+                  "per_neuron_picowatts": 1.8383540985961009,
+                  "per_neuron_watts": 1.838354098596101e-12,
+                  "provenance_extra": {
+                    "buffer_flow_sensitivity": "2 uL/min -> ~62 nW and unstable; 4 uL/min -> ~256 nW; 6 uL/min -> ~247 nW (oxygen supply limited at 2)",
+                    "dry_mass": "~6.6 ug per female brain; ~38.7 nW/ug",
+                    "preprint": "bioRxiv 2025.08.08.669302 (DOI 10.1101/2025.08.08.669302)"
+                  },
+                  "reported_value": "~256 nW per brain (female, 10-day-old, y sc v)",
+                  "species": "Drosophila melanogaster",
+                  "url": "https://doi.org/10.1016/j.crmeth.2026.101501",
+                  "year": 2026
+                },
+                "joules_over_simulated_time": 1.28e-07,
+                "per_neuron_watts": 1.838354098596101e-12,
+                "power_watts": 2.56e-07,
+                "track_note": "P_bio depends on N only - a property of the scale, not of this run"
+              },
+              "capability": {
+                "available": true,
+                "metrics": {
+                  "discrimination_bits_at_zero_overlap": 0.13628933528331,
+                  "memory_capacity": 16,
+                  "participation_ratio": 194.1194266891139,
+                  "stimulus_response_mi_bits": 6.143258042451281
+                },
+                "source": "results/phase9/capability.json"
+              },
+              "capability_per_watt": {
+                "memory_capacity_per_watt": 0.13953355,
+                "note": "capability unit per measured GPU watt at this scale"
+              },
+              "dt_ms": 0.5,
+              "epochs": 8,
+              "hardware": {
+                "cpu_joules": null,
+                "cpu_mean_watts": null,
+                "gpu_joules": 464.20894194949994,
+                "gpu_mean_watts": 114.66776190476189,
+                "gpu_median_watts": 152.248,
+                "joules_per_spike": 9.435428e-06,
+                "joules_per_synaptic_event": 4.41005474e-07,
+                "track_note": "measured watts on this machine; GPU joules only (the payload is a CUDA kernel), CPU joules reported separately and never summed in"
+              },
+              "harness": {
+                "epochs_identical": 1,
+                "kernel_s": 3.820875,
+                "max_active": 300000,
+                "spikes": 49198504,
+                "stimulus_spikes": 9992,
+                "synaptic_events": 1052614920
+              },
+              "indices_bytes": 10802052,
+              "indptr_bytes": 1114048,
+              "n_edges": 2700513,
+              "n_neurons": 139255,
+              "n_synapses": 34153566,
+              "simulated_biological_seconds": 0.5,
+              "steps": 1000,
+              "syn_bytes": 10802052,
+              "wall_seconds": 4.095319,
+              "wall_seconds_per_bio_second": 8.190638
+            }
+          },
+          "field": "per_scale",
+          "source": "results/energy/curves.json"
+        },
+        "errors": {},
+        "n_neurons": 696275,
+        "n_synapses": 172021005,
+        "readout_dim": 34814,
+        "seconds_per_1000_stimuli": 280.993,
+        "seconds_per_cascade": 0.2677,
+        "total_seconds": 300.1,
+        "truncated_by_budget": false
+      }
+    },
+    "shared_machine_note": "wall seconds were measured while other phase jobs of this project were running on the same 20-core host, so they are an upper bound on an idle machine's cost; cascades_total and seconds_per_cascade are given so the cost can be re-derived from work done rather than from a contended clock",
+    "total_seconds_vs_neurons": {
+      "alpha": 1.3177899195131435,
+      "intercept": -12.025656713291102,
+      "label": "scale_total_seconds",
+      "log_log_residual_rms": 0.31331817223482644,
+      "n_points": 4,
+      "r2": 0.9644890275514655,
+      "sizes": [
+        139255.0,
+        278510.0,
+        696275.0,
+        1392550.0
+      ],
+      "values": [
+        28.1,
+        127.5,
+        300.1,
+        671.8
+      ]
+    }
+  },
+  "dataset_hash": "ed6ecbd438b5fe6e",
+  "deliverable": "results/phase9/capability.json",
+  "environment": {
+    "dataset": "data/processed/canonical_v783",
+    "dataset_version": "flywire-v783-canon-1",
+    "git_commit": "(repository has no commits yet - working tree only)",
+    "git_working_tree_dirty": true,
+    "n_dataset_neurons": 139255,
+    "numpy": "2.5.3",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "fits": {
+    "accuracy_at_full_stimulus_difference": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.9999999999999996,
+        "label": "accuracy_at_full_stimulus_difference",
+        "n_points": 4,
+        "r2": null,
+        "slope": 3.078766175898003e-22
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.0,
+        "label": "accuracy_at_full_stimulus_difference",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.0,
+        "label": "accuracy_at_full_stimulus_difference",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 1.0,
+        "10": 1.0,
+        "2": 1.0,
+        "5": 1.0
+      },
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 1 across every measured scale"
+      }
+    },
+    "avalanche_size_exponent": {
+      "bounded_like_probability": false,
+      "direction": "descriptive",
+      "linear_vs_neurons": {
+        "intercept": 0.423133818248176,
+        "label": "avalanche_size_exponent",
+        "n_points": 4,
+        "r2": 0.5194785997743976,
+        "slope": -2.8709856004571266e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": -0.9402131554270953,
+        "intercept": 10.27227978465502,
+        "label": "avalanche_size_exponent",
+        "log_log_residual_rms": 1.192313000558936,
+        "n_points": 4,
+        "r2": 0.488423301943532,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.3466020082460739,
+          0.5079205007474664,
+          0.025433284461438853,
+          0.09294109991274241
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": -0.9328110014389354,
+        "intercept": 15.314668829563976,
+        "label": "avalanche_size_exponent",
+        "log_log_residual_rms": 1.1934080815857224,
+        "n_points": 4,
+        "r2": 0.48748315417717025,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.3466020082460739,
+          0.5079205007474664,
+          0.025433284461438853,
+          0.09294109991274241
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.3466020082460739,
+        "10": 0.09294109991274241,
+        "2": 0.5079205007474664,
+        "5": 0.025433284461438853
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 0.0254333..0.507921)"
+      }
+    },
+    "avalanche_size_exponent_r2": {
+      "bounded_like_probability": true,
+      "direction": "descriptive",
+      "linear_vs_neurons": {
+        "intercept": 0.30697190658341456,
+        "label": "avalanche_size_exponent_r2",
+        "n_points": 4,
+        "r2": 0.7377608113207286,
+        "slope": -2.5621832888221554e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": -2.6862610016168134,
+        "intercept": 30.855382785654864,
+        "label": "avalanche_size_exponent_r2",
+        "log_log_residual_rms": 2.5204564380902235,
+        "n_points": 4,
+        "r2": 0.6355712195956413,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.314209862905829,
+          0.2675032324413008,
+          0.0002966299455217092,
+          0.0036436000481343545
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": -2.665379252951937,
+        "intercept": 45.266810884046606,
+        "label": "avalanche_size_exponent_r2",
+        "log_log_residual_rms": 2.524244998200573,
+        "n_points": 4,
+        "r2": 0.634474832471553,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.314209862905829,
+          0.2675032324413008,
+          0.0002966299455217092,
+          0.0036436000481343545
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.314209862905829,
+        "10": 0.0036436000481343545,
+        "2": 0.2675032324413008,
+        "5": 0.0002966299455217092
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 0.00029663..0.31421)"
+      }
+    },
+    "branching_ratio_ratio_of_sums": {
+      "bounded_like_probability": false,
+      "direction": "descriptive",
+      "linear_vs_neurons": {
+        "intercept": 1.0044090096825982,
+        "label": "branching_ratio_ratio_of_sums",
+        "n_points": 4,
+        "r2": 0.2953129695535621,
+        "slope": -9.244715490502977e-10
+      },
+      "power_law_vs_neurons": {
+        "alpha": -0.000701014249778232,
+        "intercept": 0.012931965145602662,
+        "label": "branching_ratio_ratio_of_sums",
+        "log_log_residual_rms": 0.0007802060240015523,
+        "n_points": 4,
+        "r2": 0.5534729494404034,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          1.0052586778189776,
+          1.003389979269588,
+          1.0032226828423025,
+          1.0034474276593912
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": -0.000695035265920272,
+        "intercept": 0.016683011889630735,
+        "label": "branching_ratio_ratio_of_sums",
+        "log_log_residual_rms": 0.0007817733737597709,
+        "n_points": 4,
+        "r2": 0.5516770980398902,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          1.0052586778189776,
+          1.003389979269588,
+          1.0032226828423025,
+          1.0034474276593912
+        ]
+      },
+      "values_by_scale": {
+        "1": 1.0052586778189776,
+        "10": 1.0034474276593912,
+        "2": 1.003389979269588,
+        "5": 1.0032226828423025
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 1.00322..1.00526)"
+      }
+    },
+    "components_for_90pct_variance": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 330.9183673469386,
+        "label": "components_for_90pct_variance",
+        "n_points": 4,
+        "r2": 0.7695195907820493,
+        "slope": 5.598304094895663e-05
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.09645633483886257,
+        "intercept": 4.645419056691453,
+        "label": "components_for_90pct_variance",
+        "log_log_residual_rms": 0.029640706425518307,
+        "n_points": 4,
+        "r2": 0.9420597323673412,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          319.0,
+          358.0,
+          387.0,
+          400.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.09574298556122514,
+        "intercept": 4.127269211554958,
+        "label": "components_for_90pct_variance",
+        "log_log_residual_rms": 0.02987217842446956,
+        "n_points": 4,
+        "r2": 0.9411512576152349,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          319.0,
+          358.0,
+          387.0,
+          400.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 319,
+        "10": 400,
+        "2": 358,
+        "5": 387
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.09645633483886257,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.9420597323673412,
+        "reason": "alpha=0.096 with R^2=0.942",
+        "weak_fit_warning": false
+      }
+    },
+    "discrimination_accuracy_at_finest_delta": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.5911989795918365,
+        "label": "discrimination_accuracy_at_finest_delta",
+        "n_points": 4,
+        "r2": 0.526115530958146,
+        "slope": 1.7861081454591834e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.18202808093238404,
+        "intercept": -2.7345571333063625,
+        "label": "discrimination_accuracy_at_finest_delta",
+        "log_log_residual_rms": 0.1459231985070494,
+        "n_points": 4,
+        "r2": 0.704939912116754,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.5,
+          0.75,
+          0.75,
+          0.8125
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.18060835611032228,
+        "intercept": -3.7110258538008507,
+        "label": "discrimination_accuracy_at_finest_delta",
+        "log_log_residual_rms": 0.14623267238929952,
+        "n_points": 4,
+        "r2": 0.7036870582794259,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.5,
+          0.75,
+          0.75,
+          0.8125
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.5,
+        "10": 0.8125,
+        "2": 0.75,
+        "5": 0.75
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.18202808093238404,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.704939912116754,
+        "reason": "alpha=0.182 with R^2=0.705; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "discrimination_bits_at_finest_delta": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.04870943057536431,
+        "label": "discrimination_bits_at_finest_delta",
+        "n_points": 4,
+        "r2": 0.7278990827848436,
+        "slope": 2.6885956052512605e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.303349804380735,
+        "intercept": -5.357773195560896,
+        "label": "discrimination_bits_at_finest_delta",
+        "log_log_residual_rms": 0.4801911473025355,
+        "n_points": 3,
+        "r2": 0.34218206345838353,
+        "sizes": [
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.25,
+          0.18872187554086717,
+          0.4300365325772657
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.30151184591615904,
+        "intercept": -6.9947657906717655,
+        "label": "discrimination_bits_at_finest_delta",
+        "log_log_residual_rms": 0.47949907519146445,
+        "n_points": 3,
+        "r2": 0.34407684799284255,
+        "sizes": [
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.25,
+          0.18872187554086717,
+          0.4300365325772657
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.0,
+        "10": 0.4300365325772657,
+        "2": 0.25,
+        "5": 0.18872187554086717
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.303349804380735,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.34218206345838353,
+        "reason": "alpha=0.303 with R^2=0.342; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "discrimination_bits_at_overlap_0.6": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.762887137202173,
+        "label": "discrimination_bits_at_overlap_0.6",
+        "n_points": 4,
+        "r2": 0.7346938775510204,
+        "slope": 1.983756385714074e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.13400175524237498,
+        "intercept": -1.8692353325860174,
+        "label": "discrimination_bits_at_overlap_0.6",
+        "log_log_residual_rms": 0.07151028137718568,
+        "n_points": 4,
+        "r2": 0.843538534453123,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.7743974703476992,
+          0.7743974703476992,
+          1.0,
+          1.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.13305179662071254,
+        "intercept": -2.5898336707396803,
+        "label": "discrimination_bits_at_overlap_0.6",
+        "log_log_residual_rms": 0.07157722763209684,
+        "n_points": 4,
+        "r2": 0.8432454461880554,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.7743974703476992,
+          0.7743974703476992,
+          1.0,
+          1.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.7743974703476992,
+        "10": 1.0,
+        "2": 0.7743974703476992,
+        "5": 1.0
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.13400175524237498,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.843538534453123,
+        "reason": "alpha=0.134 with R^2=0.844",
+        "weak_fit_warning": false
+      }
+    },
+    "discrimination_bits_at_overlap_0.9": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": -0.01588725945866192,
+        "label": "discrimination_bits_at_overlap_0.9",
+        "n_points": 4,
+        "r2": 0.9416925334875358,
+        "slope": 6.055968629730481e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": 1.0141485539290718,
+        "intercept": -14.488877648462589,
+        "label": "discrimination_bits_at_overlap_0.9",
+        "log_log_residual_rms": 0.24514857488394862,
+        "n_points": 3,
+        "r2": 0.9570940217707754,
+        "sizes": [
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.15563906222956642,
+          0.5243974703476992,
+          0.7743974703476992
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 1.004797928268519,
+        "intercept": -19.901052861849404,
+        "label": "discrimination_bits_at_overlap_0.9",
+        "log_log_residual_rms": 0.247458601843433,
+        "n_points": 3,
+        "r2": 0.9562816088060835,
+        "sizes": [
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.15563906222956642,
+          0.5243974703476992,
+          0.7743974703476992
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.0,
+        "10": 0.7743974703476992,
+        "2": 0.15563906222956642,
+        "5": 0.5243974703476992
+      },
+      "verdict": {
+        "alpha_vs_neurons": 1.0141485539290718,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.9570940217707754,
+        "reason": "alpha=1.014 with R^2=0.957",
+        "weak_fit_warning": false
+      }
+    },
+    "discrimination_bits_at_overlap_0.95": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.04870943057536431,
+        "label": "discrimination_bits_at_overlap_0.95",
+        "n_points": 4,
+        "r2": 0.7278990827848436,
+        "slope": 2.6885956052512605e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.303349804380735,
+        "intercept": -5.357773195560896,
+        "label": "discrimination_bits_at_overlap_0.95",
+        "log_log_residual_rms": 0.4801911473025355,
+        "n_points": 3,
+        "r2": 0.34218206345838353,
+        "sizes": [
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.25,
+          0.18872187554086717,
+          0.4300365325772657
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.30151184591615904,
+        "intercept": -6.9947657906717655,
+        "label": "discrimination_bits_at_overlap_0.95",
+        "log_log_residual_rms": 0.47949907519146445,
+        "n_points": 3,
+        "r2": 0.34407684799284255,
+        "sizes": [
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.25,
+          0.18872187554086717,
+          0.4300365325772657
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.0,
+        "10": 0.4300365325772657,
+        "2": 0.25,
+        "5": 0.18872187554086717
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.303349804380735,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.34218206345838353,
+        "reason": "alpha=0.303 with R^2=0.342; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "discrimination_bits_identical_pools_control": {
+      "bounded_like_probability": true,
+      "direction": "descriptive",
+      "linear_vs_neurons": {
+        "intercept": 0.10308009088938291,
+        "label": "discrimination_bits_identical_pools_control",
+        "n_points": 4,
+        "r2": 0.04394797515299287,
+        "slope": 3.9333575131439046e-08
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.6280916040358414,
+        "intercept": -10.539375129691514,
+        "label": "discrimination_bits_identical_pools_control",
+        "log_log_residual_rms": 0.9512130785285616,
+        "n_points": 4,
+        "r2": 0.4009924408723058,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.02439747034769925,
+          0.11875840811813283,
+          0.2743974703476993,
+          0.0933601608327142
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.6221559190559831,
+        "intercept": -13.889513576676656,
+        "label": "discrimination_bits_identical_pools_control",
+        "log_log_residual_rms": 0.9528342661490368,
+        "n_points": 4,
+        "r2": 0.39894887943420665,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.02439747034769925,
+          0.11875840811813283,
+          0.2743974703476993,
+          0.0933601608327142
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.02439747034769925,
+        "10": 0.0933601608327142,
+        "2": 0.11875840811813283,
+        "5": 0.2743974703476993
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 0.0243975..0.274397)"
+      }
+    },
+    "discrimination_finest_delta_tested": {
+      "bounded_like_probability": false,
+      "direction": "descriptive",
+      "linear_vs_neurons": {
+        "intercept": 0.049999999999999996,
+        "label": "discrimination_finest_delta_tested",
+        "n_points": 4,
+        "r2": null,
+        "slope": 5.11727566994413e-24
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.0,
+        "label": "discrimination_finest_delta_tested",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.05,
+          0.05,
+          0.05,
+          0.05
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.0,
+        "label": "discrimination_finest_delta_tested",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.05,
+          0.05,
+          0.05,
+          0.05
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.05,
+        "10": 0.05,
+        "2": 0.05,
+        "5": 0.05
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 0.05..0.05)"
+      }
+    },
+    "distinct_pattern_ratio": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.9999999999999996,
+        "label": "distinct_pattern_ratio",
+        "n_points": 4,
+        "r2": null,
+        "slope": 3.078766175898003e-22
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.0,
+        "label": "distinct_pattern_ratio",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.0,
+        "label": "distinct_pattern_ratio",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 1.0,
+        "10": 1.0,
+        "2": 1.0,
+        "5": 1.0
+      },
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 1 across every measured scale"
+      }
+    },
+    "generalization_gap": {
+      "bounded_like_probability": true,
+      "direction": "lower_is_better",
+      "linear_vs_neurons": {
+        "intercept": -0.07142857142857141,
+        "label": "generalization_gap",
+        "n_points": 4,
+        "r2": 0.33333333333333337,
+        "slope": 6.411670265750908e-08
+      },
+      "power_law_vs_neurons": {
+        "alpha": null,
+        "label": "generalization_gap",
+        "n_points": 0,
+        "note": "fewer than 3 usable positive points - not fitted",
+        "r2": null,
+        "sizes": [],
+        "values": []
+      },
+      "power_law_vs_synapses": {
+        "alpha": null,
+        "label": "generalization_gap",
+        "n_points": 0,
+        "note": "fewer than 3 usable positive points - not fitted",
+        "r2": null,
+        "sizes": [],
+        "values": []
+      },
+      "values_by_scale": {
+        "1": -0.125,
+        "10": 0.0,
+        "2": 0.0,
+        "5": 0.0
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "fewer than 3 usable positive points - not fitted"
+      }
+    },
+    "generalization_matched_accuracy": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.9285714285714282,
+        "label": "generalization_matched_accuracy",
+        "n_points": 4,
+        "r2": 0.3333333333333326,
+        "slope": 6.411670265750939e-08
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.0500639997000573,
+        "intercept": -0.6839822774675599,
+        "label": "generalization_matched_accuracy",
+        "log_log_residual_rms": 0.05327499811864974,
+        "n_points": 4,
+        "r2": 0.5755281817470292,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.875,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.04964795928414797,
+        "intercept": -0.952071754493199,
+        "label": "generalization_matched_accuracy",
+        "log_log_residual_rms": 0.053376194251869874,
+        "n_points": 4,
+        "r2": 0.5739140773934055,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.875,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.875,
+        "10": 1.0,
+        "2": 1.0,
+        "5": 1.0
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.0500639997000573,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.5755281817470292,
+        "reason": "alpha=0.050 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "generalization_novel_accuracy": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.9999999999999996,
+        "label": "generalization_novel_accuracy",
+        "n_points": 4,
+        "r2": null,
+        "slope": 3.078766175898003e-22
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.0,
+        "label": "generalization_novel_accuracy",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.0,
+        "label": "generalization_novel_accuracy",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 1.0,
+        "10": 1.0,
+        "2": 1.0,
+        "5": 1.0
+      },
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 1 across every measured scale"
+      }
+    },
+    "mean_final_active_fraction": {
+      "bounded_like_probability": true,
+      "direction": "descriptive",
+      "linear_vs_neurons": {
+        "intercept": 0.39163010400168735,
+        "label": "mean_final_active_fraction",
+        "n_points": 4,
+        "r2": 0.5752243597001683,
+        "slope": 1.76331890625974e-08
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.01823970981188887,
+        "intercept": -1.147041027009315,
+        "label": "mean_final_active_fraction",
+        "log_log_residual_rms": 0.032781187121391074,
+        "n_points": 4,
+        "r2": 0.3221879599528863,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.40445929765701294,
+          0.38678237795829773,
+          0.40084901452064514,
+          0.41862890124320984
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.01816139956020089,
+        "intercept": -1.2460691896684275,
+        "label": "mean_final_active_fraction",
+        "log_log_residual_rms": 0.03273994700473086,
+        "n_points": 4,
+        "r2": 0.3238923194957597,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.40445929765701294,
+          0.38678237795829773,
+          0.40084901452064514,
+          0.41862890124320984
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.40445929765701294,
+        "10": 0.41862890124320984,
+        "2": 0.38678237795829773,
+        "5": 0.40084901452064514
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 0.386782..0.418629)"
+      }
+    },
+    "mean_recruits_per_step": {
+      "bounded_like_probability": false,
+      "direction": "descriptive",
+      "linear_vs_neurons": {
+        "intercept": -878.6427272297711,
+        "label": "mean_recruits_per_step",
+        "n_points": 4,
+        "r2": 0.999466571431247,
+        "slope": 0.0468870611998744
+      },
+      "power_law_vs_neurons": {
+        "alpha": 1.0182397175057085,
+        "intercept": -3.3442656666023236,
+        "label": "mean_recruits_per_step",
+        "log_log_residual_rms": 0.03278119344269246,
+        "n_points": 4,
+        "r2": 0.9993254054149749,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          6258.109027777778,
+          11969.196064814814,
+          31011.23912037037,
+          64773.52361111111
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 1.0112426313910203,
+        "intercept": -8.823975595195453,
+        "label": "mean_recruits_per_step",
+        "log_log_residual_rms": 0.030508527003220015,
+        "n_points": 4,
+        "r2": 0.9994157001038163,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          6258.109027777778,
+          11969.196064814814,
+          31011.23912037037,
+          64773.52361111111
+        ]
+      },
+      "values_by_scale": {
+        "1": 6258.109027777778,
+        "10": 64773.52361111111,
+        "2": 11969.196064814814,
+        "5": 31011.23912037037
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 6258.11..64773.5)"
+      }
+    },
+    "mean_unit_entropy_bits": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.18967838153756253,
+        "label": "mean_unit_entropy_bits",
+        "n_points": 4,
+        "r2": 0.8143881890169915,
+        "slope": -2.102743529635563e-08
+      },
+      "power_law_vs_neurons": {
+        "alpha": -0.07224061380162106,
+        "intercept": -0.7976814342376407,
+        "label": "mean_unit_entropy_bits",
+        "log_log_residual_rms": 0.011755462720929364,
+        "n_points": 4,
+        "r2": 0.9830458184226488,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.19292545008270437,
+          0.18075865577790728,
+          0.1688234643498159,
+          0.1634987969003307
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": -0.07172121688408403,
+        "intercept": -0.40933999898333,
+        "label": "mean_unit_entropy_bits",
+        "log_log_residual_rms": 0.011941483038563542,
+        "n_points": 4,
+        "r2": 0.9825050016788285,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.19292545008270437,
+          0.18075865577790728,
+          0.1688234643498159,
+          0.1634987969003307
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.19292545008270437,
+        "10": 0.1634987969003307,
+        "2": 0.18075865577790728,
+        "5": 0.1688234643498159
+      },
+      "verdict": {
+        "alpha_vs_neurons": -0.07224061380162106,
+        "grows_with_scale": false,
+        "r2_vs_neurons": 0.9830458184226488,
+        "reason": "alpha=-0.072 with R^2=0.983",
+        "weak_fit_warning": false
+      }
+    },
+    "memory_capacity": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 45.71428571428569,
+        "label": "memory_capacity",
+        "n_points": 4,
+        "r2": 0.33333333333333326,
+        "slope": 4.513815867088643e-05
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.9316488304699245,
+        "intercept": -8.163985395192803,
+        "label": "memory_capacity",
+        "log_log_residual_rms": 0.9914028041684944,
+        "n_points": 4,
+        "r2": 0.5755281817470294,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          8.0,
+          96.0,
+          96.0,
+          96.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.9239066690518932,
+        "intercept": -13.152904563230136,
+        "label": "memory_capacity",
+        "log_log_residual_rms": 0.9932859788993876,
+        "n_points": 4,
+        "r2": 0.5739140773934059,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          8.0,
+          96.0,
+          96.0,
+          96.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 8,
+        "10": 96,
+        "2": 96,
+        "5": 96
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.9316488304699245,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.5755281817470294,
+        "reason": "alpha=0.932 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "memory_capacity_above_chance_only": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 95.99999999999997,
+        "label": "memory_capacity_above_chance_only",
+        "n_points": 4,
+        "r2": null,
+        "slope": 1.929511105211382e-20
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.0,
+        "label": "memory_capacity_above_chance_only",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.0,
+        "label": "memory_capacity_above_chance_only",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          96.0,
+          96.0,
+          96.0,
+          96.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 96,
+        "10": 96,
+        "2": 96,
+        "5": 96
+      },
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 96 across every measured scale"
+      }
+    },
+    "memory_capacity_accuracy_at_grid_max": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.9066751700680268,
+        "label": "memory_capacity_accuracy_at_grid_max",
+        "n_points": 4,
+        "r2": 0.4375750300120054,
+        "slope": 8.243576055965488e-08
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.06223983089676161,
+        "intercept": -0.8534992617379222,
+        "label": "memory_capacity_accuracy_at_grid_max",
+        "log_log_residual_rms": 0.052023307352050796,
+        "n_points": 4,
+        "r2": 0.6872683079327986,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.8541666666666666,
+          0.9791666666666666,
+          1.0,
+          1.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.06173608060554262,
+        "intercept": -1.1870388385425001,
+        "label": "memory_capacity_accuracy_at_grid_max",
+        "log_log_residual_rms": 0.05215856215651123,
+        "n_points": 4,
+        "r2": 0.6856400589166485,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.8541666666666666,
+          0.9791666666666666,
+          1.0,
+          1.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.8541666666666666,
+        "10": 1.0,
+        "2": 0.9791666666666666,
+        "5": 1.0
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.06223983089676161,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.6872683079327986,
+        "reason": "alpha=0.062 with R^2=0.687; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "memory_capacity_at_0.95": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 45.71428571428569,
+        "label": "memory_capacity_at_0.95",
+        "n_points": 4,
+        "r2": 0.33333333333333326,
+        "slope": 4.513815867088643e-05
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.9316488304699245,
+        "intercept": -8.163985395192803,
+        "label": "memory_capacity_at_0.95",
+        "log_log_residual_rms": 0.9914028041684944,
+        "n_points": 4,
+        "r2": 0.5755281817470294,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          8.0,
+          96.0,
+          96.0,
+          96.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.9239066690518932,
+        "intercept": -13.152904563230136,
+        "label": "memory_capacity_at_0.95",
+        "log_log_residual_rms": 0.9932859788993876,
+        "n_points": 4,
+        "r2": 0.5739140773934059,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          8.0,
+          96.0,
+          96.0,
+          96.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 8,
+        "10": 96,
+        "2": 96,
+        "5": 96
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.9316488304699245,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.5755281817470294,
+        "reason": "alpha=0.932 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "memory_capacity_at_0.99": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 38.040816326530596,
+        "label": "memory_capacity_at_0.99",
+        "n_points": 4,
+        "r2": 0.46667488747764974,
+        "slope": 5.100025719957296e-05
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.9588506396932986,
+        "intercept": -8.563062941290351,
+        "label": "memory_capacity_at_0.99",
+        "log_log_residual_rms": 0.8961726620463694,
+        "n_points": 4,
+        "r2": 0.6373722277891607,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          8.0,
+          80.0,
+          96.0,
+          96.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.9509991053298996,
+        "intercept": -13.699805067356193,
+        "label": "memory_capacity_at_0.99",
+        "log_log_residual_rms": 0.8981864610348723,
+        "n_points": 4,
+        "r2": 0.63574066735741,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          8.0,
+          80.0,
+          96.0,
+          96.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 8,
+        "10": 96,
+        "2": 80,
+        "5": 96
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.9588506396932986,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.6373722277891607,
+        "reason": "alpha=0.959 with R^2=0.637; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "min_separable_delta": {
+      "bounded_like_probability": true,
+      "direction": "lower_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.24999999999999992,
+        "label": "min_separable_delta",
+        "n_points": 4,
+        "r2": 0.3333333333333335,
+        "slope": -1.7952676744102546e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": -0.7796306072511326,
+        "intercept": 7.655704318126,
+        "label": "min_separable_delta",
+        "log_log_residual_rms": 0.8296344555646501,
+        "n_points": 4,
+        "r2": 0.5755281817470292,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.4,
+          0.05,
+          0.05,
+          0.05
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": -0.7731517433161755,
+        "intercept": 11.830575743169142,
+        "label": "min_separable_delta",
+        "log_log_residual_rms": 0.8312103504844844,
+        "n_points": 4,
+        "r2": 0.5739140773934048,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.4,
+          0.05,
+          0.05,
+          0.05
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.4,
+        "10": 0.05,
+        "2": 0.05,
+        "5": 0.05
+      },
+      "verdict": {
+        "alpha_vs_neurons": -0.7796306072511326,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.5755281817470292,
+        "reason": "alpha=-0.780 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "min_separable_delta_at_grid_minimum": {
+      "bounded_like_probability": true,
+      "direction": "descriptive",
+      "linear_vs_neurons": {
+        "alpha": null,
+        "label": "min_separable_delta_at_grid_minimum",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_neurons": {
+        "alpha": null,
+        "label": "min_separable_delta_at_grid_minimum",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_synapses": {
+        "alpha": null,
+        "label": "min_separable_delta_at_grid_minimum",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "values_by_scale": {
+        "1": false,
+        "10": true,
+        "2": true,
+        "5": true
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    "neurons_recruited_fraction": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.7373012657003482,
+        "label": "neurons_recruited_fraction",
+        "n_points": 4,
+        "r2": 0.07507975632895514,
+        "slope": -5.235707906397338e-09
+      },
+      "power_law_vs_neurons": {
+        "alpha": -0.007376401880198422,
+        "intercept": -0.21343956015914456,
+        "label": "neurons_recruited_fraction",
+        "log_log_residual_rms": 0.015336634044537577,
+        "n_points": 4,
+        "r2": 0.26208799953012873,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.7492011058848874,
+          0.7257154141682525,
+          0.7271279307744785,
+          0.7340368388926789
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": -0.007302875433986939,
+        "intercept": -0.17416566006574538,
+        "label": "neurons_recruited_fraction",
+        "log_log_residual_rms": 0.015353335364960462,
+        "n_points": 4,
+        "r2": 0.26047997848811066,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.7492011058848874,
+          0.7257154141682525,
+          0.7271279307744785,
+          0.7340368388926789
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.7492011058848874,
+        "10": 0.7340368388926789,
+        "2": 0.7257154141682525,
+        "5": 0.7271279307744785
+      },
+      "verdict": {
+        "alpha_vs_neurons": -0.007376401880198422,
+        "grows_with_scale": false,
+        "r2_vs_neurons": 0.26208799953012873,
+        "reason": "alpha=-0.007 with R^2=0.262; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "participation_ratio": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 203.26568683501338,
+        "label": "participation_ratio",
+        "n_points": 4,
+        "r2": 0.8422652809655549,
+        "slope": 0.00014597295651211462
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.3179544637494848,
+        "intercept": 1.515452904201704,
+        "label": "participation_ratio",
+        "log_log_residual_rms": 0.09376315464618096,
+        "n_points": 4,
+        "r2": 0.9463963815565786,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          182.59642477652721,
+          268.5835620022859,
+          339.23639886359825,
+          388.540714761344
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.3156192608011783,
+        "intercept": -0.19285439340320834,
+        "label": "participation_ratio",
+        "log_log_residual_rms": 0.0944735119086018,
+        "n_points": 4,
+        "r2": 0.9455810941498489,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          182.59642477652721,
+          268.5835620022859,
+          339.23639886359825,
+          388.540714761344
+        ]
+      },
+      "values_by_scale": {
+        "1": 182.59642477652721,
+        "10": 388.540714761344,
+        "2": 268.5835620022859,
+        "5": 339.23639886359825
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.3179544637494848,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.9463963815565786,
+        "reason": "alpha=0.318 with R^2=0.946",
+        "weak_fit_warning": false
+      }
+    },
+    "readout_unit_coverage": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.7340985315238145,
+        "label": "readout_unit_coverage",
+        "n_points": 4,
+        "r2": 0.01663402393105229,
+        "slope": -2.1840827121767e-09
+      },
+      "power_law_vs_neurons": {
+        "alpha": -0.004409347702754541,
+        "intercept": -0.25374039553755917,
+        "label": "readout_unit_coverage",
+        "log_log_residual_rms": 0.01493070631698152,
+        "n_points": 4,
+        "r2": 0.11809303701134244,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.7452247594427689,
+          0.722389774522476,
+          0.7297638880909979,
+          0.7335411041535015
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": -0.004360209981439896,
+        "intercept": -0.23035983762132975,
+        "label": "readout_unit_coverage",
+        "log_log_residual_rms": 0.014939196525165269,
+        "n_points": 4,
+        "r2": 0.11708977535375331,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.7452247594427689,
+          0.722389774522476,
+          0.7297638880909979,
+          0.7335411041535015
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.7452247594427689,
+        "10": 0.7335411041535015,
+        "2": 0.722389774522476,
+        "5": 0.7297638880909979
+      },
+      "verdict": {
+        "alpha_vs_neurons": -0.004409347702754541,
+        "grows_with_scale": false,
+        "r2_vs_neurons": 0.11809303701134244,
+        "reason": "alpha=-0.004 with R^2=0.118; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "robustness_accuracy_at_max_neuron_lesion": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.9999999999999996,
+        "label": "robustness_accuracy_at_max_neuron_lesion",
+        "n_points": 4,
+        "r2": null,
+        "slope": 3.078766175898003e-22
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.0,
+        "label": "robustness_accuracy_at_max_neuron_lesion",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.0,
+        "label": "robustness_accuracy_at_max_neuron_lesion",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 1.0,
+        "10": 1.0,
+        "2": 1.0,
+        "5": 1.0
+      },
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 1 across every measured scale"
+      }
+    },
+    "robustness_accuracy_at_max_synapses_lesion": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.6846938775510198,
+        "label": "robustness_accuracy_at_max_synapses_lesion",
+        "n_points": 4,
+        "r2": 0.7346938775510203,
+        "slope": 2.637944337908949e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.18694045738688753,
+        "intercept": -2.6076950067207774,
+        "label": "robustness_accuracy_at_max_synapses_lesion",
+        "log_log_residual_rms": 0.09976111644460543,
+        "n_points": 4,
+        "r2": 0.8435385344531238,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.7,
+          0.7,
+          1.0,
+          1.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.18561520833391065,
+        "intercept": -3.612972756128033,
+        "label": "robustness_accuracy_at_max_synapses_lesion",
+        "log_log_residual_rms": 0.09985451047135412,
+        "n_points": 4,
+        "r2": 0.8432454461880551,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.7,
+          0.7,
+          1.0,
+          1.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.7,
+        "10": 1.0,
+        "2": 0.7,
+        "5": 1.0
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.18694045738688753,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.8435385344531238,
+        "reason": "alpha=0.187 with R^2=0.844",
+        "weak_fit_warning": false
+      }
+    },
+    "robustness_baseline_accuracy": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.9428571428571426,
+        "label": "robustness_baseline_accuracy",
+        "n_points": 4,
+        "r2": 0.3333333333333326,
+        "slope": 5.1293362126007584e-08
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.03950208801553832,
+        "intercept": -0.5396837705230527,
+        "label": "robustness_baseline_accuracy",
+        "log_log_residual_rms": 0.04203566789147555,
+        "n_points": 4,
+        "r2": 0.5755281817470295,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.9,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.03917381889549731,
+        "intercept": -0.7512148943036866,
+        "label": "robustness_baseline_accuracy",
+        "log_log_residual_rms": 0.042115514859061884,
+        "n_points": 4,
+        "r2": 0.5739140773934059,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.9,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.9,
+        "10": 1.0,
+        "2": 1.0,
+        "5": 1.0
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.03950208801553832,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.5755281817470295,
+        "reason": "alpha=0.040 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "robustness_half_degradation_rate_neurons": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "alpha": null,
+        "label": "robustness_half_degradation_rate_neurons",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_neurons": {
+        "alpha": null,
+        "label": "robustness_half_degradation_rate_neurons",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_synapses": {
+        "alpha": null,
+        "label": "robustness_half_degradation_rate_neurons",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "values_by_scale": {
+        "1": null,
+        "10": null,
+        "2": null,
+        "5": null
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    "robustness_half_degradation_rate_synapses": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "label": "robustness_half_degradation_rate_synapses",
+        "n_points": 2,
+        "r2": null,
+        "slope": null
+      },
+      "power_law_vs_neurons": {
+        "alpha": null,
+        "label": "robustness_half_degradation_rate_synapses",
+        "n_points": 2,
+        "note": "fewer than 3 usable positive points - not fitted",
+        "r2": null,
+        "sizes": [
+          139255.0,
+          278510.0
+        ],
+        "values": [
+          0.8999999761581421,
+          0.8666666448116302
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": null,
+        "label": "robustness_half_degradation_rate_synapses",
+        "n_points": 2,
+        "note": "fewer than 3 usable positive points - not fitted",
+        "r2": null,
+        "sizes": [
+          34153566.0,
+          68433997.0
+        ],
+        "values": [
+          0.8999999761581421,
+          0.8666666448116302
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.8999999761581421,
+        "10": null,
+        "2": 0.8666666448116302,
+        "5": null
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "fewer than 3 usable positive points - not fitted"
+      }
+    },
+    "robustness_lowest_significant_drop_rate_neurons": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "alpha": null,
+        "label": "robustness_lowest_significant_drop_rate_neurons",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_neurons": {
+        "alpha": null,
+        "label": "robustness_lowest_significant_drop_rate_neurons",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_synapses": {
+        "alpha": null,
+        "label": "robustness_lowest_significant_drop_rate_neurons",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "values_by_scale": {
+        "1": null,
+        "10": null,
+        "2": null,
+        "5": null
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    "robustness_lowest_significant_drop_rate_synapses": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "alpha": null,
+        "label": "robustness_lowest_significant_drop_rate_synapses",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_neurons": {
+        "alpha": null,
+        "label": "robustness_lowest_significant_drop_rate_synapses",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_synapses": {
+        "alpha": null,
+        "label": "robustness_lowest_significant_drop_rate_synapses",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "values_by_scale": {
+        "1": null,
+        "10": null,
+        "2": null,
+        "5": null
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    "robustness_max_tolerated_rate_neurons": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.8999999761581415,
+        "label": "robustness_max_tolerated_rate_neurons",
+        "n_points": 4,
+        "r2": null,
+        "slope": 1.5081580894986496e-22
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.0,
+        "label": "robustness_max_tolerated_rate_neurons",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.8999999761581421,
+          0.8999999761581421,
+          0.8999999761581421,
+          0.8999999761581421
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.0,
+        "label": "robustness_max_tolerated_rate_neurons",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.8999999761581421,
+          0.8999999761581421,
+          0.8999999761581421,
+          0.8999999761581421
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.8999999761581421,
+        "10": 0.8999999761581421,
+        "2": 0.8999999761581421,
+        "5": 0.8999999761581421
+      },
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 0.9 across every measured scale"
+      }
+    },
+    "robustness_max_tolerated_rate_synapses": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.6897959070546283,
+        "label": "robustness_max_tolerated_rate_synapses",
+        "n_points": 4,
+        "r2": 0.7346938775510201,
+        "slope": 1.758629453783475e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.13171890316515442,
+        "intercept": -1.942751607067633,
+        "label": "robustness_max_tolerated_rate_synapses",
+        "log_log_residual_rms": 0.07029203319760567,
+        "n_points": 4,
+        "r2": 0.8435385344531237,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.699999988079071,
+          0.699999988079071,
+          0.8999999761581421,
+          0.8999999761581421
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.1307851280256323,
+        "intercept": -2.6510738417469764,
+        "label": "robustness_max_tolerated_rate_synapses",
+        "log_log_residual_rms": 0.07035783895703006,
+        "n_points": 4,
+        "r2": 0.8432454461880556,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.699999988079071,
+          0.699999988079071,
+          0.8999999761581421,
+          0.8999999761581421
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.699999988079071,
+        "10": 0.8999999761581421,
+        "2": 0.699999988079071,
+        "5": 0.8999999761581421
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.13171890316515442,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.8435385344531237,
+        "reason": "alpha=0.132 with R^2=0.844",
+        "weak_fit_warning": false
+      }
+    },
+    "robustness_mi_half_degradation_rate_neurons": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "alpha": null,
+        "label": "robustness_mi_half_degradation_rate_neurons",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_neurons": {
+        "alpha": null,
+        "label": "robustness_mi_half_degradation_rate_neurons",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_synapses": {
+        "alpha": null,
+        "label": "robustness_mi_half_degradation_rate_neurons",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "values_by_scale": {
+        "1": null,
+        "10": null,
+        "2": null,
+        "5": null
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    "robustness_mi_half_degradation_rate_synapses": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "label": "robustness_mi_half_degradation_rate_synapses",
+        "n_points": 2,
+        "r2": null,
+        "slope": null
+      },
+      "power_law_vs_neurons": {
+        "alpha": null,
+        "label": "robustness_mi_half_degradation_rate_synapses",
+        "n_points": 2,
+        "note": "fewer than 3 usable positive points - not fitted",
+        "r2": null,
+        "sizes": [
+          139255.0,
+          278510.0
+        ],
+        "values": [
+          0.8820468040294026,
+          0.8309676528587662
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": null,
+        "label": "robustness_mi_half_degradation_rate_synapses",
+        "n_points": 2,
+        "note": "fewer than 3 usable positive points - not fitted",
+        "r2": null,
+        "sizes": [
+          34153566.0,
+          68433997.0
+        ],
+        "values": [
+          0.8820468040294026,
+          0.8309676528587662
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.8820468040294026,
+        "10": null,
+        "2": 0.8309676528587662,
+        "5": null
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "fewer than 3 usable positive points - not fitted"
+      }
+    },
+    "robustness_mi_retention_at_largest_rate_neurons": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 1.3653602384700148,
+        "label": "robustness_mi_retention_at_largest_rate_neurons",
+        "n_points": 4,
+        "r2": 0.3333333333333336,
+        "slope": -3.279597128200201e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": -0.18533136327207758,
+        "intercept": 2.5320263801627143,
+        "label": "robustness_mi_retention_at_largest_rate_neurons",
+        "log_log_residual_rms": 0.19721812257911586,
+        "n_points": 4,
+        "r2": 0.5755281817470297,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          1.639380417322527,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": -0.18379122788699626,
+        "intercept": 3.524463831299946,
+        "label": "robustness_mi_retention_at_largest_rate_neurons",
+        "log_log_residual_rms": 0.19759273941835998,
+        "n_points": 4,
+        "r2": 0.5739140773934056,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          1.639380417322527,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 1.639380417322527,
+        "10": 1.0,
+        "2": 1.0,
+        "5": 1.0
+      },
+      "verdict": {
+        "alpha_vs_neurons": -0.18533136327207758,
+        "grows_with_scale": false,
+        "r2_vs_neurons": 0.5755281817470297,
+        "reason": "alpha=-0.185 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "robustness_mi_retention_at_largest_rate_synapses": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.2838867582846935,
+        "label": "robustness_mi_retention_at_largest_rate_synapses",
+        "n_points": 4,
+        "r2": 0.6913377218584831,
+        "slope": 5.938513480969086e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.570453119285963,
+        "intercept": -8.010664318645265,
+        "label": "robustness_mi_retention_at_largest_rate_synapses",
+        "log_log_residual_rms": 0.5246734594832216,
+        "n_points": 4,
+        "r2": 0.6447594903740608,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.3876360861049757,
+          0.23645279766002797,
+          1.0,
+          1.0
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.5666353846638486,
+        "intercept": -11.082479915153387,
+        "label": "robustness_mi_retention_at_largest_rate_synapses",
+        "log_log_residual_rms": 0.5244584493574991,
+        "n_points": 4,
+        "r2": 0.6450505844060089,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.3876360861049757,
+          0.23645279766002797,
+          1.0,
+          1.0
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.3876360861049757,
+        "10": 1.0,
+        "2": 0.23645279766002797,
+        "5": 1.0
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.570453119285963,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.6447594903740608,
+        "reason": "alpha=0.570 with R^2=0.645; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "sequence_depth": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.0,
+        "label": "sequence_depth",
+        "n_points": 4,
+        "r2": null,
+        "slope": 0.0
+      },
+      "power_law_vs_neurons": {
+        "alpha": null,
+        "label": "sequence_depth",
+        "n_points": 0,
+        "note": "fewer than 3 usable positive points - not fitted",
+        "r2": null,
+        "sizes": [],
+        "values": []
+      },
+      "power_law_vs_synapses": {
+        "alpha": null,
+        "label": "sequence_depth",
+        "n_points": 0,
+        "note": "fewer than 3 usable positive points - not fitted",
+        "r2": null,
+        "sizes": [],
+        "values": []
+      },
+      "values_by_scale": {
+        "1": 0,
+        "10": 0,
+        "2": 0,
+        "5": 0
+      },
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 0 across every measured scale"
+      }
+    },
+    "stimulus_response_mi_at_ceiling": {
+      "bounded_like_probability": true,
+      "direction": "descriptive",
+      "linear_vs_neurons": {
+        "alpha": null,
+        "label": "stimulus_response_mi_at_ceiling",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_neurons": {
+        "alpha": null,
+        "label": "stimulus_response_mi_at_ceiling",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "power_law_vs_synapses": {
+        "alpha": null,
+        "label": "stimulus_response_mi_at_ceiling",
+        "n_points": 0,
+        "note": "metric not available at any scale",
+        "r2": null
+      },
+      "values_by_scale": {
+        "1": false,
+        "10": true,
+        "2": false,
+        "5": true
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    "stimulus_response_mi_bits": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 6.401230846783833,
+        "label": "stimulus_response_mi_bits",
+        "n_points": 4,
+        "r2": 0.43947781972408184,
+        "slope": 1.6225222026240813e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.017628365385696333,
+        "intercept": 1.6429917093280249,
+        "label": "stimulus_response_mi_bits",
+        "log_log_residual_rms": 0.014481740571132162,
+        "n_points": 4,
+        "r2": 0.6946636642652767,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          6.2984023444260835,
+          6.543295834054489,
+          6.584962500721156,
+          6.584962500721156
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.017485932900605877,
+        "intercept": 1.5485177858676937,
+        "label": "stimulus_response_mi_bits",
+        "log_log_residual_rms": 0.014520255101509852,
+        "n_points": 4,
+        "r2": 0.693037406238258,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          6.2984023444260835,
+          6.543295834054489,
+          6.584962500721156,
+          6.584962500721156
+        ]
+      },
+      "values_by_scale": {
+        "1": 6.2984023444260835,
+        "10": 6.584962500721156,
+        "2": 6.543295834054489,
+        "5": 6.584962500721156
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.017628365385696333,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.6946636642652767,
+        "reason": "alpha=0.018 with R^2=0.695; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "stimulus_response_mi_ceiling_bits": {
+      "bounded_like_probability": false,
+      "direction": "descriptive",
+      "linear_vs_neurons": {
+        "intercept": 6.584962500721154,
+        "label": "stimulus_response_mi_ceiling_bits",
+        "n_points": 4,
+        "r2": null,
+        "slope": 4.033964213394896e-22
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.0,
+        "label": "stimulus_response_mi_ceiling_bits",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          6.584962500721156,
+          6.584962500721156,
+          6.584962500721156,
+          6.584962500721156
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.0,
+        "label": "stimulus_response_mi_ceiling_bits",
+        "n_points": 4,
+        "note": "constant across the fitted scales (no growth in this range)",
+        "r2": null,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          6.584962500721156,
+          6.584962500721156,
+          6.584962500721156,
+          6.584962500721156
+        ]
+      },
+      "values_by_scale": {
+        "1": 6.584962500721156,
+        "10": 6.584962500721156,
+        "2": 6.584962500721156,
+        "5": 6.584962500721156
+      },
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 6.58496..6.58496)"
+      }
+    },
+    "stimulus_response_normalised_mi": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.9720982991296909,
+        "label": "stimulus_response_normalised_mi",
+        "n_points": 4,
+        "r2": 0.4394778197240843,
+        "slope": 2.463980929954217e-08
+      },
+      "power_law_vs_neurons": {
+        "alpha": 0.01762836538569634,
+        "intercept": -0.24179693119969978,
+        "label": "stimulus_response_normalised_mi",
+        "log_log_residual_rms": 0.014481740571132056,
+        "n_points": 4,
+        "r2": 0.6946636642652795,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.9564826441663576,
+          0.993672451944547,
+          0.9999999999999998,
+          0.9999999999999998
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": 0.017485932900605627,
+        "intercept": -0.33627085466002626,
+        "label": "stimulus_response_normalised_mi",
+        "log_log_residual_rms": 0.01452025510150978,
+        "n_points": 4,
+        "r2": 0.6930374062382594,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.9564826441663576,
+          0.993672451944547,
+          0.9999999999999998,
+          0.9999999999999998
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.9564826441663576,
+        "10": 0.9999999999999998,
+        "2": 0.993672451944547,
+        "5": 0.9999999999999998
+      },
+      "verdict": {
+        "alpha_vs_neurons": 0.01762836538569634,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.6946636642652795,
+        "reason": "alpha=0.018 with R^2=0.695; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "temporal_depth_delay_zero_accuracy": {
+      "bounded_like_probability": true,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.5272108843537413,
+        "label": "temporal_depth_delay_zero_accuracy",
+        "n_points": 4,
+        "r2": 0.1836734693877552,
+        "slope": -1.0991434741287269e-07
+      },
+      "power_law_vs_neurons": {
+        "alpha": -0.12631993432161737,
+        "intercept": 0.8227679461568866,
+        "label": "temporal_depth_delay_zero_accuracy",
+        "log_log_residual_rms": 0.36343556480003547,
+        "n_points": 4,
+        "r2": 0.1564614655468769,
+        "sizes": [
+          139255.0,
+          278510.0,
+          696275.0,
+          1392550.0
+        ],
+        "values": [
+          0.5833333333333334,
+          0.3333333333333333,
+          0.5833333333333334,
+          0.3333333333333333
+        ]
+      },
+      "power_law_vs_synapses": {
+        "alpha": -0.1255619861781636,
+        "intercept": 1.5046023560048203,
+        "label": "temporal_depth_delay_zero_accuracy",
+        "log_log_residual_rms": 0.36337332616739143,
+        "n_points": 4,
+        "r2": 0.1567503541128792,
+        "sizes": [
+          34153566.0,
+          68433997.0,
+          172021005.0,
+          347182855.0
+        ],
+        "values": [
+          0.5833333333333334,
+          0.3333333333333333,
+          0.5833333333333334,
+          0.3333333333333333
+        ]
+      },
+      "values_by_scale": {
+        "1": 0.5833333333333334,
+        "10": 0.3333333333333333,
+        "2": 0.3333333333333333,
+        "5": 0.5833333333333334
+      },
+      "verdict": {
+        "alpha_vs_neurons": -0.12631993432161737,
+        "grows_with_scale": false,
+        "r2_vs_neurons": 0.1564614655468769,
+        "reason": "alpha=-0.126 with R^2=0.156; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    "temporal_depth_steps": {
+      "bounded_like_probability": false,
+      "direction": "higher_is_better",
+      "linear_vs_neurons": {
+        "intercept": 0.0,
+        "label": "temporal_depth_steps",
+        "n_points": 4,
+        "r2": null,
+        "slope": 0.0
+      },
+      "power_law_vs_neurons": {
+        "alpha": null,
+        "label": "temporal_depth_steps",
+        "n_points": 0,
+        "note": "fewer than 3 usable positive points - not fitted",
+        "r2": null,
+        "sizes": [],
+        "values": []
+      },
+      "power_law_vs_synapses": {
+        "alpha": null,
+        "label": "temporal_depth_steps",
+        "n_points": 0,
+        "note": "fewer than 3 usable positive points - not fitted",
+        "r2": null,
+        "sizes": [],
+        "values": []
+      },
+      "values_by_scale": {
+        "1": 0,
+        "10": 0,
+        "2": 0,
+        "5": 0
+      },
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 0 across every measured scale"
+      }
+    }
+  },
+  "honesty": {
+    "censoring": {
+      "10": [
+        "memory capacity at the top of the tested grid"
+      ],
+      "2": [
+        "memory capacity at the top of the tested grid"
+      ],
+      "5": [
+        "memory capacity at the top of the tested grid"
+      ]
+    },
+    "constants_at_all_scales": [
+      "accuracy_at_full_stimulus_difference",
+      "distinct_pattern_ratio",
+      "generalization_novel_accuracy",
+      "memory_capacity_above_chance_only",
+      "robustness_accuracy_at_max_neuron_lesion",
+      "robustness_max_tolerated_rate_neurons",
+      "sequence_depth",
+      "temporal_depth_steps"
+    ],
+    "grounding_rule": "measurements only: capabilities that do not grow, saturate, or cannot be measured at a scale are reported as such with their numbers (PROJECT-VYBFLY.md \u00a730)",
+    "measurement_limits": {
+      "ceiling_limited": {
+        "accuracy_at_full_stimulus_difference": "at the 1.0 measurement ceiling at every scale: no headroom to detect growth (a harder version of the task would be needed)",
+        "distinct_pattern_ratio": "at the 1.0 measurement ceiling at every scale: no headroom to detect growth (a harder version of the task would be needed)",
+        "generalization_novel_accuracy": "at the 1.0 measurement ceiling at every scale: no headroom to detect growth (a harder version of the task would be needed)",
+        "robustness_accuracy_at_max_neuron_lesion": "at the 1.0 measurement ceiling at every scale: no headroom to detect growth (a harder version of the task would be needed)",
+        "robustness_mi_retention": "a retention above 1.0 is estimation noise from 10 test samples per lesion rate, not an improvement; the MI robustness numbers carry that caveat",
+        "stimulus_response_mi_bits": "the decoder's information is capped at log2(96) = 6.585 bits by the number of stimulus classes; the 5x and 10x values sit on that cap, so their difference is not a network property"
+      },
+      "grid_limited": {
+        "memory_capacity": "capacity is at the top of the tested grid (96 associations) at some scales, so the fitted exponent is a lower bound; the capacity at the stricter 0.99 threshold resolves further",
+        "min_separable_delta": "the smallest stimulus distance tested (Delta = 0.05) is already separable at some scales, so the fitted exponent for Delta* is bounded below by the grid, not by the network; use the MI-at-Delta=0.05 column as the censoring-free discrimination measure"
+      },
+      "not_measured": [
+        "spikes per biological second (the cascade is step-based; no step duration is asserted)",
+        "an independent power-vs-N exponent (the biological model is linear in N by construction, so it cannot test the energy hypothesis by itself)"
+      ]
+    },
+    "reported_errors": {}
+  },
+  "metrics_by_scale": {
+    "1": {
+      "accuracy_at_full_stimulus_difference": 1.0,
+      "avalanche_size_exponent": 0.3466020082460739,
+      "avalanche_size_exponent_r2": 0.314209862905829,
+      "branching_ratio_ratio_of_sums": 1.0052586778189776,
+      "components_for_90pct_variance": 319,
+      "discrimination_accuracy_at_finest_delta": 0.5,
+      "discrimination_bits_at_finest_delta": 0.0,
+      "discrimination_bits_at_overlap_0.6": 0.7743974703476992,
+      "discrimination_bits_at_overlap_0.9": 0.0,
+      "discrimination_bits_at_overlap_0.95": 0.0,
+      "discrimination_bits_identical_pools_control": 0.02439747034769925,
+      "discrimination_finest_delta_tested": 0.05,
+      "distinct_pattern_ratio": 1.0,
+      "errors": {},
+      "generalization_gap": -0.125,
+      "generalization_matched_accuracy": 0.875,
+      "generalization_novel_accuracy": 1.0,
+      "mean_final_active_fraction": 0.40445929765701294,
+      "mean_recruits_per_step": 6258.109027777778,
+      "mean_unit_entropy_bits": 0.19292545008270437,
+      "memory_capacity": 8,
+      "memory_capacity_above_chance_only": 96,
+      "memory_capacity_accuracy_at_grid_max": 0.8541666666666666,
+      "memory_capacity_at_0.95": 8,
+      "memory_capacity_at_0.99": 8,
+      "memory_capacity_censored": false,
+      "min_separable_delta": 0.4,
+      "min_separable_delta_at_grid_minimum": false,
+      "n_connections": 2700513,
+      "n_neurons": 139255,
+      "n_synapses": 34153566,
+      "neurons_recruited_fraction": 0.7492011058848874,
+      "participation_ratio": 182.59642477652721,
+      "protocol_fingerprint": "39f6c75cde6548e8",
+      "readout_dim": 6963,
+      "readout_unit_coverage": 0.7452247594427689,
+      "robustness_accuracy_at_max_neuron_lesion": 1.0,
+      "robustness_accuracy_at_max_neurons_lesion": 1.0,
+      "robustness_accuracy_at_max_synapses_lesion": 0.7,
+      "robustness_baseline_accuracy": 0.9,
+      "robustness_half_degradation_rate_neurons": null,
+      "robustness_half_degradation_rate_synapses": 0.8999999761581421,
+      "robustness_lowest_significant_drop_rate_neurons": null,
+      "robustness_lowest_significant_drop_rate_synapses": null,
+      "robustness_max_tolerated_rate_neurons": 0.8999999761581421,
+      "robustness_max_tolerated_rate_synapses": 0.699999988079071,
+      "robustness_mi_at_largest_rate_neurons": 1.0,
+      "robustness_mi_at_largest_rate_synapses": 0.23645279766002797,
+      "robustness_mi_half_degradation_rate_neurons": null,
+      "robustness_mi_half_degradation_rate_synapses": 0.8820468040294026,
+      "robustness_mi_retention_at_largest_rate_neurons": 1.639380417322527,
+      "robustness_mi_retention_at_largest_rate_synapses": 0.3876360861049757,
+      "scale_total_seconds": 28.1,
+      "sequence_depth": 0,
+      "stimulus_response_mi_at_ceiling": false,
+      "stimulus_response_mi_bits": 6.2984023444260835,
+      "stimulus_response_mi_ceiling_bits": 6.584962500721156,
+      "stimulus_response_normalised_mi": 0.9564826441663576,
+      "temporal_depth_delay_zero_accuracy": 0.5833333333333334,
+      "temporal_depth_steps": 0
+    },
+    "10": {
+      "accuracy_at_full_stimulus_difference": 1.0,
+      "avalanche_size_exponent": 0.09294109991274241,
+      "avalanche_size_exponent_r2": 0.0036436000481343545,
+      "branching_ratio_ratio_of_sums": 1.0034474276593912,
+      "components_for_90pct_variance": 400,
+      "discrimination_accuracy_at_finest_delta": 0.8125,
+      "discrimination_bits_at_finest_delta": 0.4300365325772657,
+      "discrimination_bits_at_overlap_0.6": 1.0,
+      "discrimination_bits_at_overlap_0.9": 0.7743974703476992,
+      "discrimination_bits_at_overlap_0.95": 0.4300365325772657,
+      "discrimination_bits_identical_pools_control": 0.0933601608327142,
+      "discrimination_finest_delta_tested": 0.05,
+      "distinct_pattern_ratio": 1.0,
+      "errors": {},
+      "generalization_gap": 0.0,
+      "generalization_matched_accuracy": 1.0,
+      "generalization_novel_accuracy": 1.0,
+      "mean_final_active_fraction": 0.41862890124320984,
+      "mean_recruits_per_step": 64773.52361111111,
+      "mean_unit_entropy_bits": 0.1634987969003307,
+      "memory_capacity": 96,
+      "memory_capacity_above_chance_only": 96,
+      "memory_capacity_accuracy_at_grid_max": 1.0,
+      "memory_capacity_at_0.95": 96,
+      "memory_capacity_at_0.99": 96,
+      "memory_capacity_censored": true,
+      "min_separable_delta": 0.05,
+      "min_separable_delta_at_grid_minimum": true,
+      "n_connections": 27891361,
+      "n_neurons": 1392550,
+      "n_synapses": 347182855,
+      "neurons_recruited_fraction": 0.7340368388926789,
+      "participation_ratio": 388.540714761344,
+      "protocol_fingerprint": "39f6c75cde6548e8",
+      "readout_dim": 69628,
+      "readout_unit_coverage": 0.7335411041535015,
+      "robustness_accuracy_at_max_neuron_lesion": 1.0,
+      "robustness_accuracy_at_max_neurons_lesion": 1.0,
+      "robustness_accuracy_at_max_synapses_lesion": 1.0,
+      "robustness_baseline_accuracy": 1.0,
+      "robustness_half_degradation_rate_neurons": null,
+      "robustness_half_degradation_rate_synapses": null,
+      "robustness_lowest_significant_drop_rate_neurons": null,
+      "robustness_lowest_significant_drop_rate_synapses": null,
+      "robustness_max_tolerated_rate_neurons": 0.8999999761581421,
+      "robustness_max_tolerated_rate_synapses": 0.8999999761581421,
+      "robustness_mi_at_largest_rate_neurons": 1.0,
+      "robustness_mi_at_largest_rate_synapses": 1.0,
+      "robustness_mi_half_degradation_rate_neurons": null,
+      "robustness_mi_half_degradation_rate_synapses": null,
+      "robustness_mi_retention_at_largest_rate_neurons": 1.0,
+      "robustness_mi_retention_at_largest_rate_synapses": 1.0,
+      "scale_total_seconds": 671.8,
+      "sequence_depth": 0,
+      "stimulus_response_mi_at_ceiling": true,
+      "stimulus_response_mi_bits": 6.584962500721156,
+      "stimulus_response_mi_ceiling_bits": 6.584962500721156,
+      "stimulus_response_normalised_mi": 0.9999999999999998,
+      "temporal_depth_delay_zero_accuracy": 0.3333333333333333,
+      "temporal_depth_steps": 0
+    },
+    "2": {
+      "accuracy_at_full_stimulus_difference": 1.0,
+      "avalanche_size_exponent": 0.5079205007474664,
+      "avalanche_size_exponent_r2": 0.2675032324413008,
+      "branching_ratio_ratio_of_sums": 1.003389979269588,
+      "components_for_90pct_variance": 358,
+      "discrimination_accuracy_at_finest_delta": 0.75,
+      "discrimination_bits_at_finest_delta": 0.25,
+      "discrimination_bits_at_overlap_0.6": 0.7743974703476992,
+      "discrimination_bits_at_overlap_0.9": 0.15563906222956642,
+      "discrimination_bits_at_overlap_0.95": 0.25,
+      "discrimination_bits_identical_pools_control": 0.11875840811813283,
+      "discrimination_finest_delta_tested": 0.05,
+      "distinct_pattern_ratio": 1.0,
+      "errors": {},
+      "generalization_gap": 0.0,
+      "generalization_matched_accuracy": 1.0,
+      "generalization_novel_accuracy": 1.0,
+      "mean_final_active_fraction": 0.38678237795829773,
+      "mean_recruits_per_step": 11969.196064814814,
+      "mean_unit_entropy_bits": 0.18075865577790728,
+      "memory_capacity": 96,
+      "memory_capacity_above_chance_only": 96,
+      "memory_capacity_accuracy_at_grid_max": 0.9791666666666666,
+      "memory_capacity_at_0.95": 96,
+      "memory_capacity_at_0.99": 80,
+      "memory_capacity_censored": true,
+      "min_separable_delta": 0.05,
+      "min_separable_delta_at_grid_minimum": true,
+      "n_connections": 5187641,
+      "n_neurons": 278510,
+      "n_synapses": 68433997,
+      "neurons_recruited_fraction": 0.7257154141682525,
+      "participation_ratio": 268.5835620022859,
+      "protocol_fingerprint": "39f6c75cde6548e8",
+      "readout_dim": 13926,
+      "readout_unit_coverage": 0.722389774522476,
+      "robustness_accuracy_at_max_neuron_lesion": 1.0,
+      "robustness_accuracy_at_max_neurons_lesion": 1.0,
+      "robustness_accuracy_at_max_synapses_lesion": 0.7,
+      "robustness_baseline_accuracy": 1.0,
+      "robustness_half_degradation_rate_neurons": null,
+      "robustness_half_degradation_rate_synapses": 0.8666666448116302,
+      "robustness_lowest_significant_drop_rate_neurons": null,
+      "robustness_lowest_significant_drop_rate_synapses": null,
+      "robustness_max_tolerated_rate_neurons": 0.8999999761581421,
+      "robustness_max_tolerated_rate_synapses": 0.699999988079071,
+      "robustness_mi_at_largest_rate_neurons": 1.0,
+      "robustness_mi_at_largest_rate_synapses": 0.23645279766002797,
+      "robustness_mi_half_degradation_rate_neurons": null,
+      "robustness_mi_half_degradation_rate_synapses": 0.8309676528587662,
+      "robustness_mi_retention_at_largest_rate_neurons": 1.0,
+      "robustness_mi_retention_at_largest_rate_synapses": 0.23645279766002797,
+      "scale_total_seconds": 127.5,
+      "sequence_depth": 0,
+      "stimulus_response_mi_at_ceiling": false,
+      "stimulus_response_mi_bits": 6.543295834054489,
+      "stimulus_response_mi_ceiling_bits": 6.584962500721156,
+      "stimulus_response_normalised_mi": 0.993672451944547,
+      "temporal_depth_delay_zero_accuracy": 0.3333333333333333,
+      "temporal_depth_steps": 0
+    },
+    "5": {
+      "accuracy_at_full_stimulus_difference": 1.0,
+      "avalanche_size_exponent": 0.025433284461438853,
+      "avalanche_size_exponent_r2": 0.0002966299455217092,
+      "branching_ratio_ratio_of_sums": 1.0032226828423025,
+      "components_for_90pct_variance": 387,
+      "discrimination_accuracy_at_finest_delta": 0.75,
+      "discrimination_bits_at_finest_delta": 0.18872187554086717,
+      "discrimination_bits_at_overlap_0.6": 1.0,
+      "discrimination_bits_at_overlap_0.9": 0.5243974703476992,
+      "discrimination_bits_at_overlap_0.95": 0.18872187554086717,
+      "discrimination_bits_identical_pools_control": 0.2743974703476993,
+      "discrimination_finest_delta_tested": 0.05,
+      "distinct_pattern_ratio": 1.0,
+      "errors": {},
+      "generalization_gap": 0.0,
+      "generalization_matched_accuracy": 1.0,
+      "generalization_novel_accuracy": 1.0,
+      "mean_final_active_fraction": 0.40084901452064514,
+      "mean_recruits_per_step": 31011.23912037037,
+      "mean_unit_entropy_bits": 0.1688234643498159,
+      "memory_capacity": 96,
+      "memory_capacity_above_chance_only": 96,
+      "memory_capacity_accuracy_at_grid_max": 1.0,
+      "memory_capacity_at_0.95": 96,
+      "memory_capacity_at_0.99": 96,
+      "memory_capacity_censored": true,
+      "min_separable_delta": 0.05,
+      "min_separable_delta_at_grid_minimum": true,
+      "n_connections": 13511566,
+      "n_neurons": 696275,
+      "n_synapses": 172021005,
+      "neurons_recruited_fraction": 0.7271279307744785,
+      "participation_ratio": 339.23639886359825,
+      "protocol_fingerprint": "39f6c75cde6548e8",
+      "readout_dim": 34814,
+      "readout_unit_coverage": 0.7297638880909979,
+      "robustness_accuracy_at_max_neuron_lesion": 1.0,
+      "robustness_accuracy_at_max_neurons_lesion": 1.0,
+      "robustness_accuracy_at_max_synapses_lesion": 1.0,
+      "robustness_baseline_accuracy": 1.0,
+      "robustness_half_degradation_rate_neurons": null,
+      "robustness_half_degradation_rate_synapses": null,
+      "robustness_lowest_significant_drop_rate_neurons": null,
+      "robustness_lowest_significant_drop_rate_synapses": null,
+      "robustness_max_tolerated_rate_neurons": 0.8999999761581421,
+      "robustness_max_tolerated_rate_synapses": 0.8999999761581421,
+      "robustness_mi_at_largest_rate_neurons": 1.0,
+      "robustness_mi_at_largest_rate_synapses": 1.0,
+      "robustness_mi_half_degradation_rate_neurons": null,
+      "robustness_mi_half_degradation_rate_synapses": null,
+      "robustness_mi_retention_at_largest_rate_neurons": 1.0,
+      "robustness_mi_retention_at_largest_rate_synapses": 1.0,
+      "scale_total_seconds": 300.1,
+      "sequence_depth": 0,
+      "stimulus_response_mi_at_ceiling": true,
+      "stimulus_response_mi_bits": 6.584962500721156,
+      "stimulus_response_mi_ceiling_bits": 6.584962500721156,
+      "stimulus_response_normalised_mi": 0.9999999999999998,
+      "temporal_depth_delay_zero_accuracy": 0.5833333333333334,
+      "temporal_depth_steps": 0
+    }
+  },
+  "phase": "9 (capability scaling tests, \u00a715; milestones M12 scaling benchmarks, M14 capability/watt where energy data exists)",
+  "protocol": {
+    "capacity_grid": [
+      2,
+      4,
+      8,
+      16,
+      32,
+      48,
+      64,
+      80,
+      96
+    ],
+    "capacity_threshold": 0.9,
+    "cascade_steps": 8,
+    "discrimination_overlaps": [
+      1.0,
+      0.95,
+      0.9,
+      0.8,
+      0.6,
+      0.4,
+      0.2,
+      0.0
+    ],
+    "discrimination_pairs": 2,
+    "discrimination_test": 4,
+    "discrimination_threshold": 0.75,
+    "discrimination_train": 4,
+    "dynamics": "synchronous threshold cascade (flyscale.propagation.cascade): fire iff synapses arriving from the previous step's active set >= relative_threshold x mean synapses per connection in that graph",
+    "generalization_classes": 16,
+    "lesion_neuron_rates": [
+      0.5,
+      0.9
+    ],
+    "lesion_synapse_rates": [
+      0.25,
+      0.5,
+      0.7,
+      0.9
+    ],
+    "max_active_fraction": 1.0,
+    "n_classes": 96,
+    "novel_trials_per_class": 1,
+    "pool_fraction": 0.004,
+    "protocol_revision": "v3",
+    "protocol_revisions": {
+      "v1": {
+        "capacity_grid": [
+          2,
+          4,
+          8,
+          16,
+          24,
+          32,
+          48,
+          64
+        ],
+        "discrimination_test": 3,
+        "discrimination_train": 3,
+        "lesion_neuron_rates": [
+          0.1,
+          0.25,
+          0.5
+        ],
+        "lesion_synapse_rates": [
+          0.1,
+          0.25,
+          0.5
+        ],
+        "n_classes": 64,
+        "novel_trials_per_class": 2,
+        "reference_test": 3,
+        "reference_train": 3,
+        "sequence_instances": 8,
+        "temporal_trials": 6,
+        "test_trials_per_class": 2,
+        "train_trials_per_class": 4
+      },
+      "v2": {
+        "change": "more classes with fewer trials each so that capacity is resolvable below the grid maximum; 10 trials per temporal delay and 10 sequence instances for 1/10 accuracy resolution; lesion rates extended to 0.9 because 50% neuron loss left the reference task at full accuracy"
+      },
+      "v3": {
+        "change": "test-sample counts raised so that a significance test is possible at the same 0.05 level, paid for by trimming measurements whose range was already resolved: discrimination 4+4 per side (16 test samples per Delta), temporal 12 trials per condition per delay (24 test samples), sequences 12 instances (12 test samples per k), robustness 5+5 per side (10 test samples per lesion rate); class battery 96x3+1+1 trials, temporal delays (0,1,2,4,8), neuron-lesion rates (0.5,0.9) because 1x-5x tolerated everything up to 0.7. v2 results are kept under results/phase9/scales_archive/protocol_v2/ and artifacts_archive/protocol_v2/ so the five v1/v2 headline numbers can be compared against v3",
+        "v2_headline_numbers": {
+          "memory_capacity_Mstar": {
+            "1x": 16,
+            "2x": 96,
+            "5x": 96
+          },
+          "min_separable_delta": {
+            "1x": 0.2,
+            "2x": 0.1,
+            "5x": 0.4
+          },
+          "participation_ratio": {
+            "1x": 194.1,
+            "2x": 295.8,
+            "5x": 382.7
+          },
+          "sequence_depth": {
+            "1x": 0,
+            "2x": 0,
+            "5x": 0
+          },
+          "stimulus_response_mi_bits": {
+            "1x": 6.143,
+            "2x": 6.517,
+            "5x": 6.585
+          },
+          "temporal_depth_steps": {
+            "1x": 4,
+            "2x": 2,
+            "5x": 4
+          }
+        }
+      }
+    },
+    "readout": "binary final activation mask over readout_fraction x N neurons drawn with a fixed seed; nearest-centroid classifier (analytic, no training loop)",
+    "readout_fraction": 0.05,
+    "reference_overlap": 0.6,
+    "reference_test": 5,
+    "reference_train": 5,
+    "relative_threshold": 3.0,
+    "sample_fraction": 0.002,
+    "seed": 0,
+    "sequence_dwell": 2,
+    "sequence_instances": 12,
+    "sequence_lengths": [
+      2,
+      3,
+      4
+    ],
+    "sequence_threshold": 0.75,
+    "stimulus_classes": [
+      "sensory",
+      "visual_projection",
+      "optic"
+    ],
+    "temporal_delays": [
+      0,
+      1,
+      2,
+      4,
+      8
+    ],
+    "temporal_threshold": 0.75,
+    "temporal_trials": 12,
+    "test_trials_per_class": 1,
+    "train_trials_per_class": 3
+  },
+  "protocol_fingerprints": {
+    "1": "39f6c75cde6548e8",
+    "10": "39f6c75cde6548e8",
+    "2": "39f6c75cde6548e8",
+    "5": "39f6c75cde6548e8"
+  },
+  "readout_dims": {
+    "1": 6963,
+    "10": 69628,
+    "2": 13926,
+    "5": 34814
+  },
+  "replicas": {
+    "errors": {},
+    "reference_threshold": 5,
+    "scales": {
+      "1": {
+        "graph": {
+          "density": 0.00013926045,
+          "mean_out_degree": 19.3926,
+          "mean_synapses_per_connection": 12.6471,
+          "n_connections": 2700513,
+          "n_neurons": 139255,
+          "n_synapses": 34153566
+        },
+        "path": "results/phase9/replicas/g1",
+        "seconds_load": 1.31,
+        "source": "cached"
+      },
+      "10": {
+        "graph": {
+          "density": 1.4382965e-05,
+          "mean_out_degree": 20.029,
+          "mean_synapses_per_connection": 12.4477,
+          "n_connections": 27891361,
+          "n_neurons": 1392550,
+          "n_synapses": 347182855
+        },
+        "parameters": {
+          "factor": 10.0,
+          "geometry": {
+            "R": 1.7481218938992897,
+            "T": 0.7556933600339182,
+            "dim": 3,
+            "kind": "euclidean",
+            "n": 139255,
+            "source": "annotation_xyz+law_fit"
+          },
+          "geometry_R": 1.7481218938992897,
+          "geometry_T": 0.7556933600339182,
+          "operation": "renorm.upscale",
+          "rewire_fraction": 0.1,
+          "sibling_edges": true,
+          "sibling_prob_scale": 0.1
+        },
+        "path": "results/phase9/replicas/g10",
+        "provenance": {
+          "children_histogram": {
+            "10": 139255
+          },
+          "factor": 10.0,
+          "geometry": {
+            "R": 1.7481218938992897,
+            "T": 0.7556933600339182,
+            "dim": 3,
+            "kind": "euclidean",
+            "n": 139255,
+            "source": "annotation_xyz+law_fit"
+          },
+          "kind": "upscale",
+          "mean_children": 10.0,
+          "n_sibling_edges_pre_merge": 1129439,
+          "perturbation": 0.05794209858664885,
+          "rewire_fraction": 0.1,
+          "seed": 0,
+          "sibling_edges": true,
+          "sibling_prob_scale": 0.1,
+          "sibling_threshold": 5,
+          "source_edges": 2700513,
+          "source_n": 139255
+        },
+        "seconds_build": 95.7,
+        "seconds_total": 114.4,
+        "source": "built"
+      },
+      "2": {
+        "graph": {
+          "density": 6.6879018e-05,
+          "mean_out_degree": 18.6264,
+          "mean_synapses_per_connection": 13.1917,
+          "n_connections": 5187641,
+          "n_neurons": 278510,
+          "n_synapses": 68433997
+        },
+        "parameters": {
+          "factor": 2.0,
+          "geometry": {
+            "R": 1.7481218938992897,
+            "T": 0.7556933600339182,
+            "dim": 3,
+            "kind": "euclidean",
+            "n": 139255,
+            "source": "annotation_xyz+law_fit"
+          },
+          "geometry_R": 1.7481218938992897,
+          "geometry_T": 0.7556933600339182,
+          "operation": "renorm.upscale",
+          "rewire_fraction": 0.1,
+          "sibling_edges": true,
+          "sibling_prob_scale": 0.1
+        },
+        "path": "results/phase9/replicas/g2",
+        "provenance": {
+          "children_histogram": {
+            "2": 139255
+          },
+          "factor": 2.0,
+          "geometry": {
+            "R": 1.7481218938992897,
+            "T": 0.7556933600339182,
+            "dim": 3,
+            "kind": "euclidean",
+            "n": 139255,
+            "source": "annotation_xyz+law_fit"
+          },
+          "kind": "upscale",
+          "mean_children": 2.0,
+          "n_sibling_edges_pre_merge": 25373,
+          "perturbation": 0.05794209858664885,
+          "rewire_fraction": 0.1,
+          "seed": 0,
+          "sibling_edges": true,
+          "sibling_prob_scale": 0.1,
+          "sibling_threshold": 5,
+          "source_edges": 2700513,
+          "source_n": 139255
+        },
+        "seconds_build": 13.6,
+        "seconds_total": 37.2,
+        "source": "built"
+      },
+      "5": {
+        "graph": {
+          "density": 2.7870497e-05,
+          "mean_out_degree": 19.4055,
+          "mean_synapses_per_connection": 12.7314,
+          "n_connections": 13511566,
+          "n_neurons": 696275,
+          "n_synapses": 172021005
+        },
+        "parameters": {
+          "factor": 5.0,
+          "geometry": {
+            "R": 1.7481218938992897,
+            "T": 0.7556933600339182,
+            "dim": 3,
+            "kind": "euclidean",
+            "n": 139255,
+            "source": "annotation_xyz+law_fit"
+          },
+          "geometry_R": 1.7481218938992897,
+          "geometry_T": 0.7556933600339182,
+          "operation": "renorm.upscale",
+          "rewire_fraction": 0.1,
+          "sibling_edges": true,
+          "sibling_prob_scale": 0.1
+        },
+        "path": "results/phase9/replicas/g5",
+        "provenance": {
+          "children_histogram": {
+            "5": 139255
+          },
+          "factor": 5.0,
+          "geometry": {
+            "R": 1.7481218938992897,
+            "T": 0.7556933600339182,
+            "dim": 3,
+            "kind": "euclidean",
+            "n": 139255,
+            "source": "annotation_xyz+law_fit"
+          },
+          "kind": "upscale",
+          "mean_children": 5.0,
+          "n_sibling_edges_pre_merge": 250635,
+          "perturbation": 0.05794209858664885,
+          "rewire_fraction": 0.1,
+          "seed": 0,
+          "sibling_edges": true,
+          "sibling_prob_scale": 0.1,
+          "sibling_threshold": 5,
+          "source_edges": 2700513,
+          "source_n": 139255
+        },
+        "seconds_build": 29.1,
+        "seconds_total": 37.5,
+        "source": "built"
+      }
+    },
+    "seconds_total": 190.7,
+    "seed": 0
+  },
+  "reproducibility_verification": {
+    "capability_module_sha256_16_this_run": "954ac84213e6559f",
+    "differing_fields": [],
+    "fields_only_in_the_earlier_run": [],
+    "fields_only_in_the_rerun": [],
+    "n_common_capability_fields": 359,
+    "n_differing_fields": 0,
+    "n_trials_with_different_activation": 0,
+    "n_trials_with_different_recruitment": 0,
+    "note": "a DIFFERENT verdict can come from two very different causes and the field list distinguishes them: fields 'only in the rerun' mean the module gained fields after the stored run (a version artefact, not irreproducibility), whereas a field in 'differing_fields' whose value also appears in the stored run is a real reproducibility failure",
+    "per_trial_activation_fractions_identical": true,
+    "per_trial_recruitment_identical": true,
+    "protocol_fingerprints_match": true,
+    "scale": 1.0,
+    "verdict": "identical"
+  },
+  "scales_run": [
+    "1",
+    "2",
+    "5",
+    "10"
+  ],
+  "scaling_exponents_summary": [
+    {
+      "alpha_vs_N": 0.0,
+      "alpha_vs_synapses": 0.0,
+      "direction": "higher_is_better",
+      "metric": "accuracy_at_full_stimulus_difference",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 1 across every measured scale"
+      }
+    },
+    {
+      "alpha_vs_N": -0.9402131554270953,
+      "alpha_vs_synapses": -0.9328110014389354,
+      "direction": "descriptive",
+      "metric": "avalanche_size_exponent",
+      "r2_vs_N": 0.488423301943532,
+      "r2_vs_synapses": 0.48748315417717025,
+      "values": [
+        0.3466020082460739,
+        0.5079205007474664,
+        0.025433284461438853,
+        0.09294109991274241
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 0.0254333..0.507921)"
+      }
+    },
+    {
+      "alpha_vs_N": -2.6862610016168134,
+      "alpha_vs_synapses": -2.665379252951937,
+      "direction": "descriptive",
+      "metric": "avalanche_size_exponent_r2",
+      "r2_vs_N": 0.6355712195956413,
+      "r2_vs_synapses": 0.634474832471553,
+      "values": [
+        0.314209862905829,
+        0.2675032324413008,
+        0.0002966299455217092,
+        0.0036436000481343545
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 0.00029663..0.31421)"
+      }
+    },
+    {
+      "alpha_vs_N": -0.000701014249778232,
+      "alpha_vs_synapses": -0.000695035265920272,
+      "direction": "descriptive",
+      "metric": "branching_ratio_ratio_of_sums",
+      "r2_vs_N": 0.5534729494404034,
+      "r2_vs_synapses": 0.5516770980398902,
+      "values": [
+        1.0052586778189776,
+        1.003389979269588,
+        1.0032226828423025,
+        1.0034474276593912
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 1.00322..1.00526)"
+      }
+    },
+    {
+      "alpha_vs_N": 0.09645633483886257,
+      "alpha_vs_synapses": 0.09574298556122514,
+      "direction": "higher_is_better",
+      "metric": "components_for_90pct_variance",
+      "r2_vs_N": 0.9420597323673412,
+      "r2_vs_synapses": 0.9411512576152349,
+      "values": [
+        319,
+        358,
+        387,
+        400
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.09645633483886257,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.9420597323673412,
+        "reason": "alpha=0.096 with R^2=0.942",
+        "weak_fit_warning": false
+      }
+    },
+    {
+      "alpha_vs_N": 0.18202808093238404,
+      "alpha_vs_synapses": 0.18060835611032228,
+      "direction": "higher_is_better",
+      "metric": "discrimination_accuracy_at_finest_delta",
+      "r2_vs_N": 0.704939912116754,
+      "r2_vs_synapses": 0.7036870582794259,
+      "values": [
+        0.5,
+        0.75,
+        0.75,
+        0.8125
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.18202808093238404,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.704939912116754,
+        "reason": "alpha=0.182 with R^2=0.705; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": 0.303349804380735,
+      "alpha_vs_synapses": 0.30151184591615904,
+      "direction": "higher_is_better",
+      "metric": "discrimination_bits_at_finest_delta",
+      "r2_vs_N": 0.34218206345838353,
+      "r2_vs_synapses": 0.34407684799284255,
+      "values": [
+        0.0,
+        0.25,
+        0.18872187554086717,
+        0.4300365325772657
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.303349804380735,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.34218206345838353,
+        "reason": "alpha=0.303 with R^2=0.342; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": 0.13400175524237498,
+      "alpha_vs_synapses": 0.13305179662071254,
+      "direction": "higher_is_better",
+      "metric": "discrimination_bits_at_overlap_0.6",
+      "r2_vs_N": 0.843538534453123,
+      "r2_vs_synapses": 0.8432454461880554,
+      "values": [
+        0.7743974703476992,
+        0.7743974703476992,
+        1.0,
+        1.0
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.13400175524237498,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.843538534453123,
+        "reason": "alpha=0.134 with R^2=0.844",
+        "weak_fit_warning": false
+      }
+    },
+    {
+      "alpha_vs_N": 1.0141485539290718,
+      "alpha_vs_synapses": 1.004797928268519,
+      "direction": "higher_is_better",
+      "metric": "discrimination_bits_at_overlap_0.9",
+      "r2_vs_N": 0.9570940217707754,
+      "r2_vs_synapses": 0.9562816088060835,
+      "values": [
+        0.0,
+        0.15563906222956642,
+        0.5243974703476992,
+        0.7743974703476992
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 1.0141485539290718,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.9570940217707754,
+        "reason": "alpha=1.014 with R^2=0.957",
+        "weak_fit_warning": false
+      }
+    },
+    {
+      "alpha_vs_N": 0.303349804380735,
+      "alpha_vs_synapses": 0.30151184591615904,
+      "direction": "higher_is_better",
+      "metric": "discrimination_bits_at_overlap_0.95",
+      "r2_vs_N": 0.34218206345838353,
+      "r2_vs_synapses": 0.34407684799284255,
+      "values": [
+        0.0,
+        0.25,
+        0.18872187554086717,
+        0.4300365325772657
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.303349804380735,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.34218206345838353,
+        "reason": "alpha=0.303 with R^2=0.342; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": 0.6280916040358414,
+      "alpha_vs_synapses": 0.6221559190559831,
+      "direction": "descriptive",
+      "metric": "discrimination_bits_identical_pools_control",
+      "r2_vs_N": 0.4009924408723058,
+      "r2_vs_synapses": 0.39894887943420665,
+      "values": [
+        0.02439747034769925,
+        0.11875840811813283,
+        0.2743974703476993,
+        0.0933601608327142
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 0.0243975..0.274397)"
+      }
+    },
+    {
+      "alpha_vs_N": 0.0,
+      "alpha_vs_synapses": 0.0,
+      "direction": "descriptive",
+      "metric": "discrimination_finest_delta_tested",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        0.05,
+        0.05,
+        0.05,
+        0.05
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 0.05..0.05)"
+      }
+    },
+    {
+      "alpha_vs_N": 0.0,
+      "alpha_vs_synapses": 0.0,
+      "direction": "higher_is_better",
+      "metric": "distinct_pattern_ratio",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 1 across every measured scale"
+      }
+    },
+    {
+      "alpha_vs_N": null,
+      "alpha_vs_synapses": null,
+      "direction": "lower_is_better",
+      "metric": "generalization_gap",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        -0.125,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "fewer than 3 usable positive points - not fitted"
+      }
+    },
+    {
+      "alpha_vs_N": 0.0500639997000573,
+      "alpha_vs_synapses": 0.04964795928414797,
+      "direction": "higher_is_better",
+      "metric": "generalization_matched_accuracy",
+      "r2_vs_N": 0.5755281817470292,
+      "r2_vs_synapses": 0.5739140773934055,
+      "values": [
+        0.875,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.0500639997000573,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.5755281817470292,
+        "reason": "alpha=0.050 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": 0.0,
+      "alpha_vs_synapses": 0.0,
+      "direction": "higher_is_better",
+      "metric": "generalization_novel_accuracy",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 1 across every measured scale"
+      }
+    },
+    {
+      "alpha_vs_N": 0.01823970981188887,
+      "alpha_vs_synapses": 0.01816139956020089,
+      "direction": "descriptive",
+      "metric": "mean_final_active_fraction",
+      "r2_vs_N": 0.3221879599528863,
+      "r2_vs_synapses": 0.3238923194957597,
+      "values": [
+        0.40445929765701294,
+        0.38678237795829773,
+        0.40084901452064514,
+        0.41862890124320984
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 0.386782..0.418629)"
+      }
+    },
+    {
+      "alpha_vs_N": 1.0182397175057085,
+      "alpha_vs_synapses": 1.0112426313910203,
+      "direction": "descriptive",
+      "metric": "mean_recruits_per_step",
+      "r2_vs_N": 0.9993254054149749,
+      "r2_vs_synapses": 0.9994157001038163,
+      "values": [
+        6258.109027777778,
+        11969.196064814814,
+        31011.23912037037,
+        64773.52361111111
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 6258.11..64773.5)"
+      }
+    },
+    {
+      "alpha_vs_N": -0.07224061380162106,
+      "alpha_vs_synapses": -0.07172121688408403,
+      "direction": "higher_is_better",
+      "metric": "mean_unit_entropy_bits",
+      "r2_vs_N": 0.9830458184226488,
+      "r2_vs_synapses": 0.9825050016788285,
+      "values": [
+        0.19292545008270437,
+        0.18075865577790728,
+        0.1688234643498159,
+        0.1634987969003307
+      ],
+      "verdict": {
+        "alpha_vs_neurons": -0.07224061380162106,
+        "grows_with_scale": false,
+        "r2_vs_neurons": 0.9830458184226488,
+        "reason": "alpha=-0.072 with R^2=0.983",
+        "weak_fit_warning": false
+      }
+    },
+    {
+      "alpha_vs_N": 0.9316488304699245,
+      "alpha_vs_synapses": 0.9239066690518932,
+      "direction": "higher_is_better",
+      "metric": "memory_capacity",
+      "r2_vs_N": 0.5755281817470294,
+      "r2_vs_synapses": 0.5739140773934059,
+      "values": [
+        8,
+        96,
+        96,
+        96
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.9316488304699245,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.5755281817470294,
+        "reason": "alpha=0.932 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": 0.0,
+      "alpha_vs_synapses": 0.0,
+      "direction": "higher_is_better",
+      "metric": "memory_capacity_above_chance_only",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        96,
+        96,
+        96,
+        96
+      ],
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 96 across every measured scale"
+      }
+    },
+    {
+      "alpha_vs_N": 0.06223983089676161,
+      "alpha_vs_synapses": 0.06173608060554262,
+      "direction": "higher_is_better",
+      "metric": "memory_capacity_accuracy_at_grid_max",
+      "r2_vs_N": 0.6872683079327986,
+      "r2_vs_synapses": 0.6856400589166485,
+      "values": [
+        0.8541666666666666,
+        0.9791666666666666,
+        1.0,
+        1.0
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.06223983089676161,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.6872683079327986,
+        "reason": "alpha=0.062 with R^2=0.687; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": 0.9316488304699245,
+      "alpha_vs_synapses": 0.9239066690518932,
+      "direction": "higher_is_better",
+      "metric": "memory_capacity_at_0.95",
+      "r2_vs_N": 0.5755281817470294,
+      "r2_vs_synapses": 0.5739140773934059,
+      "values": [
+        8,
+        96,
+        96,
+        96
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.9316488304699245,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.5755281817470294,
+        "reason": "alpha=0.932 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": 0.9588506396932986,
+      "alpha_vs_synapses": 0.9509991053298996,
+      "direction": "higher_is_better",
+      "metric": "memory_capacity_at_0.99",
+      "r2_vs_N": 0.6373722277891607,
+      "r2_vs_synapses": 0.63574066735741,
+      "values": [
+        8,
+        80,
+        96,
+        96
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.9588506396932986,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.6373722277891607,
+        "reason": "alpha=0.959 with R^2=0.637; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": -0.7796306072511326,
+      "alpha_vs_synapses": -0.7731517433161755,
+      "direction": "lower_is_better",
+      "metric": "min_separable_delta",
+      "r2_vs_N": 0.5755281817470292,
+      "r2_vs_synapses": 0.5739140773934048,
+      "values": [
+        0.4,
+        0.05,
+        0.05,
+        0.05
+      ],
+      "verdict": {
+        "alpha_vs_neurons": -0.7796306072511326,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.5755281817470292,
+        "reason": "alpha=-0.780 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": null,
+      "alpha_vs_synapses": null,
+      "direction": "descriptive",
+      "metric": "min_separable_delta_at_grid_minimum",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        false,
+        true,
+        true,
+        true
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    {
+      "alpha_vs_N": -0.007376401880198422,
+      "alpha_vs_synapses": -0.007302875433986939,
+      "direction": "higher_is_better",
+      "metric": "neurons_recruited_fraction",
+      "r2_vs_N": 0.26208799953012873,
+      "r2_vs_synapses": 0.26047997848811066,
+      "values": [
+        0.7492011058848874,
+        0.7257154141682525,
+        0.7271279307744785,
+        0.7340368388926789
+      ],
+      "verdict": {
+        "alpha_vs_neurons": -0.007376401880198422,
+        "grows_with_scale": false,
+        "r2_vs_neurons": 0.26208799953012873,
+        "reason": "alpha=-0.007 with R^2=0.262; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": 0.3179544637494848,
+      "alpha_vs_synapses": 0.3156192608011783,
+      "direction": "higher_is_better",
+      "metric": "participation_ratio",
+      "r2_vs_N": 0.9463963815565786,
+      "r2_vs_synapses": 0.9455810941498489,
+      "values": [
+        182.59642477652721,
+        268.5835620022859,
+        339.23639886359825,
+        388.540714761344
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.3179544637494848,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.9463963815565786,
+        "reason": "alpha=0.318 with R^2=0.946",
+        "weak_fit_warning": false
+      }
+    },
+    {
+      "alpha_vs_N": -0.004409347702754541,
+      "alpha_vs_synapses": -0.004360209981439896,
+      "direction": "higher_is_better",
+      "metric": "readout_unit_coverage",
+      "r2_vs_N": 0.11809303701134244,
+      "r2_vs_synapses": 0.11708977535375331,
+      "values": [
+        0.7452247594427689,
+        0.722389774522476,
+        0.7297638880909979,
+        0.7335411041535015
+      ],
+      "verdict": {
+        "alpha_vs_neurons": -0.004409347702754541,
+        "grows_with_scale": false,
+        "r2_vs_neurons": 0.11809303701134244,
+        "reason": "alpha=-0.004 with R^2=0.118; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": 0.0,
+      "alpha_vs_synapses": 0.0,
+      "direction": "higher_is_better",
+      "metric": "robustness_accuracy_at_max_neuron_lesion",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 1 across every measured scale"
+      }
+    },
+    {
+      "alpha_vs_N": 0.18694045738688753,
+      "alpha_vs_synapses": 0.18561520833391065,
+      "direction": "higher_is_better",
+      "metric": "robustness_accuracy_at_max_synapses_lesion",
+      "r2_vs_N": 0.8435385344531238,
+      "r2_vs_synapses": 0.8432454461880551,
+      "values": [
+        0.7,
+        0.7,
+        1.0,
+        1.0
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.18694045738688753,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.8435385344531238,
+        "reason": "alpha=0.187 with R^2=0.844",
+        "weak_fit_warning": false
+      }
+    },
+    {
+      "alpha_vs_N": 0.03950208801553832,
+      "alpha_vs_synapses": 0.03917381889549731,
+      "direction": "higher_is_better",
+      "metric": "robustness_baseline_accuracy",
+      "r2_vs_N": 0.5755281817470295,
+      "r2_vs_synapses": 0.5739140773934059,
+      "values": [
+        0.9,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.03950208801553832,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.5755281817470295,
+        "reason": "alpha=0.040 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": null,
+      "alpha_vs_synapses": null,
+      "direction": "higher_is_better",
+      "metric": "robustness_half_degradation_rate_neurons",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    {
+      "alpha_vs_N": null,
+      "alpha_vs_synapses": null,
+      "direction": "higher_is_better",
+      "metric": "robustness_half_degradation_rate_synapses",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        0.8999999761581421,
+        0.8666666448116302,
+        null,
+        null
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "fewer than 3 usable positive points - not fitted"
+      }
+    },
+    {
+      "alpha_vs_N": null,
+      "alpha_vs_synapses": null,
+      "direction": "higher_is_better",
+      "metric": "robustness_lowest_significant_drop_rate_neurons",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    {
+      "alpha_vs_N": null,
+      "alpha_vs_synapses": null,
+      "direction": "higher_is_better",
+      "metric": "robustness_lowest_significant_drop_rate_synapses",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    {
+      "alpha_vs_N": 0.0,
+      "alpha_vs_synapses": 0.0,
+      "direction": "higher_is_better",
+      "metric": "robustness_max_tolerated_rate_neurons",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421
+      ],
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 0.9 across every measured scale"
+      }
+    },
+    {
+      "alpha_vs_N": 0.13171890316515442,
+      "alpha_vs_synapses": 0.1307851280256323,
+      "direction": "higher_is_better",
+      "metric": "robustness_max_tolerated_rate_synapses",
+      "r2_vs_N": 0.8435385344531237,
+      "r2_vs_synapses": 0.8432454461880556,
+      "values": [
+        0.699999988079071,
+        0.699999988079071,
+        0.8999999761581421,
+        0.8999999761581421
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.13171890316515442,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.8435385344531237,
+        "reason": "alpha=0.132 with R^2=0.844",
+        "weak_fit_warning": false
+      }
+    },
+    {
+      "alpha_vs_N": null,
+      "alpha_vs_synapses": null,
+      "direction": "higher_is_better",
+      "metric": "robustness_mi_half_degradation_rate_neurons",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    {
+      "alpha_vs_N": null,
+      "alpha_vs_synapses": null,
+      "direction": "higher_is_better",
+      "metric": "robustness_mi_half_degradation_rate_synapses",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        0.8820468040294026,
+        0.8309676528587662,
+        null,
+        null
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "fewer than 3 usable positive points - not fitted"
+      }
+    },
+    {
+      "alpha_vs_N": -0.18533136327207758,
+      "alpha_vs_synapses": -0.18379122788699626,
+      "direction": "higher_is_better",
+      "metric": "robustness_mi_retention_at_largest_rate_neurons",
+      "r2_vs_N": 0.5755281817470297,
+      "r2_vs_synapses": 0.5739140773934056,
+      "values": [
+        1.639380417322527,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "verdict": {
+        "alpha_vs_neurons": -0.18533136327207758,
+        "grows_with_scale": false,
+        "r2_vs_neurons": 0.5755281817470297,
+        "reason": "alpha=-0.185 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": 0.570453119285963,
+      "alpha_vs_synapses": 0.5666353846638486,
+      "direction": "higher_is_better",
+      "metric": "robustness_mi_retention_at_largest_rate_synapses",
+      "r2_vs_N": 0.6447594903740608,
+      "r2_vs_synapses": 0.6450505844060089,
+      "values": [
+        0.3876360861049757,
+        0.23645279766002797,
+        1.0,
+        1.0
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.570453119285963,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.6447594903740608,
+        "reason": "alpha=0.570 with R^2=0.645; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": null,
+      "alpha_vs_synapses": null,
+      "direction": "higher_is_better",
+      "metric": "sequence_depth",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 0 across every measured scale"
+      }
+    },
+    {
+      "alpha_vs_N": null,
+      "alpha_vs_synapses": null,
+      "direction": "descriptive",
+      "metric": "stimulus_response_mi_at_ceiling",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        false,
+        false,
+        true,
+        true
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "not measured at any scale"
+      }
+    },
+    {
+      "alpha_vs_N": 0.017628365385696333,
+      "alpha_vs_synapses": 0.017485932900605877,
+      "direction": "higher_is_better",
+      "metric": "stimulus_response_mi_bits",
+      "r2_vs_N": 0.6946636642652767,
+      "r2_vs_synapses": 0.693037406238258,
+      "values": [
+        6.2984023444260835,
+        6.543295834054489,
+        6.584962500721156,
+        6.584962500721156
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.017628365385696333,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.6946636642652767,
+        "reason": "alpha=0.018 with R^2=0.695; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": 0.0,
+      "alpha_vs_synapses": 0.0,
+      "direction": "descriptive",
+      "metric": "stimulus_response_mi_ceiling_bits",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        6.584962500721156,
+        6.584962500721156,
+        6.584962500721156,
+        6.584962500721156
+      ],
+      "verdict": {
+        "grows_with_scale": null,
+        "reason": "descriptive diagnostic, no growth claim applies (values 6.58496..6.58496)"
+      }
+    },
+    {
+      "alpha_vs_N": 0.01762836538569634,
+      "alpha_vs_synapses": 0.017485932900605627,
+      "direction": "higher_is_better",
+      "metric": "stimulus_response_normalised_mi",
+      "r2_vs_N": 0.6946636642652795,
+      "r2_vs_synapses": 0.6930374062382594,
+      "values": [
+        0.9564826441663576,
+        0.993672451944547,
+        0.9999999999999998,
+        0.9999999999999998
+      ],
+      "verdict": {
+        "alpha_vs_neurons": 0.01762836538569634,
+        "grows_with_scale": true,
+        "r2_vs_neurons": 0.6946636642652795,
+        "reason": "alpha=0.018 with R^2=0.695; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": -0.12631993432161737,
+      "alpha_vs_synapses": -0.1255619861781636,
+      "direction": "higher_is_better",
+      "metric": "temporal_depth_delay_zero_accuracy",
+      "r2_vs_N": 0.1564614655468769,
+      "r2_vs_synapses": 0.1567503541128792,
+      "values": [
+        0.5833333333333334,
+        0.3333333333333333,
+        0.5833333333333334,
+        0.3333333333333333
+      ],
+      "verdict": {
+        "alpha_vs_neurons": -0.12631993432161737,
+        "grows_with_scale": false,
+        "r2_vs_neurons": 0.1564614655468769,
+        "reason": "alpha=-0.126 with R^2=0.156; weak log-log fit (R^2<0.8), treat the exponent as indicative only",
+        "weak_fit_warning": true
+      }
+    },
+    {
+      "alpha_vs_N": null,
+      "alpha_vs_synapses": null,
+      "direction": "higher_is_better",
+      "metric": "temporal_depth_steps",
+      "r2_vs_N": null,
+      "r2_vs_synapses": null,
+      "values": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "verdict": {
+        "grows_with_scale": false,
+        "reason": "constant at 0 across every measured scale"
+      }
+    }
+  ],
+  "self_check": {
+    "epochs_equal_cascade": true,
+    "masked_equals_cascade": true,
+    "masks_equal_lesioned_graph": true,
+    "self_check_edges": 7202,
+    "self_check_n": 300
+  }
+}

@@ -1,0 +1,23 @@
+// probe_m2_b6_nested_chained_get - chained inner get: `buckets.get(1).get(0)` after a
+// write-back.  This is the Vec-return chained-call fault family.
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_b6_nested_chained_get.vyb
+
+main()<Int> -> {
+    buckets<Vec<Vec<Int>>> = Vec()
+    i<Int> = 0
+    while (i < 3) {
+        inner<Vec<Int>> = Vec()
+        inner.push(100 + i)
+        buckets.push(inner)
+        i = i + 1
+    }
+    b1<Vec<Int>> = buckets.get(1)
+    b1.push(11)
+    buckets.set(1, b1)
+    println("len=" + buckets.get(1).len().to_string())
+    println("chained_get=" + buckets.get(1).get(0).to_string())
+    println("probe-b6-done")
+    return 0
+}

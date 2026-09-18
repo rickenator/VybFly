@@ -1,0 +1,27 @@
+{\small\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l p{5.0cm} l p{6.0cm}}
+\toprule
+id & milestone & state & evidence \\
+\midrule
+M0 & reproduce FlyWire graph statistics & done & 11/11 required checks vs published values; 7/9 advisory \\
+M1 & CPU neural baseline (LIF, whole connectome) & done & dense $=$ sparse spike-for-spike (0 delta, $\rho=1.0$); 1.0 s in 120 s wall \\
+M2 & Vyb discrete-event runtime & PASS & spike-for-spike against an independent reference, 4/4 replications \\
+M3 & event-driven GPU backend & PASS & CPU $\approx$ GPU on the fixture; 0 launch errors (required upstream fix \#270) \\
+M4 & energy instrumentation & done & GPU power, counters, parity; RAPL unavailable as non-root \\
+M5 & latent geometry & done & spectral 32-D wins (0.952); hyperbolic beats anatomical 3-D \\
+M6 & downscaling 0.5/0.25/0.1x & done & composites 0.179 / 0.267 / 0.276 \\
+M7 & dynamic validation of downscaled scales & done & active-set Jaccard 0.909 / 0.950 / 0.853 \\
+M8 & 2x inverse scaling & done & sparsity preserved, strengths bounded \\
+M9 & closure R(G\_2) toward G\_1 (lineage) & done$^{\dagger}$ & composite 0.0184, degree Wasserstein 0.0074, ARI 0.912 \\
+M10 & 10x graph (1.39M neurons) & done & closure composite 0.00098, ARI 1.0 \\
+M11 & plasticity / associative learning & done & acquisition AUC 0.51 to 1.00; geometry adds nothing over shuffled controls \\
+M12 & capability scaling benchmarks & done & discrimination and dimensionality grow; temporal/sequence depth flat \\
+M13 & energy curves vs scale & done & 438 / 500 / 946 / 2022 GPU joules \\
+M14 & capability per watt & done (bound) & 0.07 / 0.62 / 0.61 / 0.53; censored \\
+M15 & 100x graph (~14M neurons) & gated & needs the sibling-edge placement vectorised (1.4e9 distances at $c=100$) \\
+\midrule
+\multicolumn{4}{l}{\footnotesize $^{\dagger}$ closure demonstrates invertibility of the generator, not self-similarity (see \S 9).} \\
+\bottomrule
+\end{tabular}
+
+}

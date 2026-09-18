@@ -1,0 +1,22 @@
+# DES throughput repeats - same fixture, same binary, repeated runs of
+#   VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb \
+#     src/vyb/phase2_des.vyb --module-path src/vyb
+# 'events_per_wall_s' is the primary replication's events / its in-program sim_ms (the number the
+# Vyb program itself reports in results/phase2/des_summary.json).
+# Wall clock is dominated by co-tenant load on this box (load average 11-14 of 20 CPUs during the
+# runs below), so 'events_per_cpu_second' (primary events / whole-program user CPU seconds, measured
+# with /usr/bin/time around the same command) is reported as the load-independent companion number.
+# spikes=771379 in every run: the run is deterministic across processes.
+repeat: spikes=771379 events=22766285 sim_ms=4846 wall_ms=4851 events_per_wall_s=4697953 bio_ms_per_wall_s=412 det_ok=1
+repeat: spikes=771379 events=22766285 sim_ms=4776 wall_ms=4783 events_per_wall_s=4766810 bio_ms_per_wall_s=418 det_ok=1
+repeat: spikes=771379 events=22766285 sim_ms=4771 wall_ms=4778 events_per_wall_s=4771805 bio_ms_per_wall_s=418 det_ok=1
+repeat: spikes=771379 events=22766285 sim_ms=4687 wall_ms=4694 events_per_wall_s=4857325 bio_ms_per_wall_s=426 det_ok=1
+repeat: spikes=771379 events=22766285 sim_ms=4646 wall_ms=4654 events_per_wall_s=4900190 bio_ms_per_wall_s=429 det_ok=1
+cpu_measured: whole_program_user_s=9.55 sys_s=0.54 wall_s=17.00 primary_events=22766285 sim_ms=10412 events_per_wall_s=2186542 events_per_cpu_second=2383904 bio_ms_per_wall_s=191
+cpu_measured: whole_program_user_s=9.33 sys_s=0.38 wall_s=13.68 primary_events=22766285 sim_ms=7931 events_per_wall_s=2870544 events_per_cpu_second=2440116 bio_ms_per_wall_s=251
+cpu_measured: whole_program_user_s=9.29 sys_s=0.56 wall_s=10.04 primary_events=22766285 sim_ms=5887 events_per_wall_s=3867213 events_per_cpu_second=2450622 bio_ms_per_wall_s=339
+# CONTEXT for the spread below: earlier in the same session, while this box was idle (load avg < 1),
+# the identical command measured events_per_wall_s = 6566566 / 6957911 / 6555221 / 6836722
+# (sim_ms 3467 / 3272 / 3473 / 3330, spikes 771379). The numbers below/above were taken while
+# ~14 of 20 CPUs were busy with other work; both are real measurements of the same program.
+aggregate: runs=8 events_per_wall_s min=2186542 median=4766810 max=4900190 | bio_ms_per_wall_s min=191 median=418 max=429 | spikes_observed=[771379]

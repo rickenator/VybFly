@@ -1,0 +1,193 @@
+{
+  "track": "biological",
+  "track_note": "Biological-equivalent energy (PROJECT-VYBFLY.md \u00a717 A). NOT this machine's electricity use; the two tracks must never be conflated.",
+  "model": "P_bio(N) = P0 * N / N0",
+  "anchor_key": "drosophila_brain_heat_panda2026",
+  "P0_watts": 2.56e-07,
+  "N0_neurons": 139255.0,
+  "per_neuron_watts": 1.838354098596101e-12,
+  "per_neuron_picowatts": 1.8383540985961009,
+  "units": "watts (J/s), continuous metabolic power",
+  "anchor": {
+    "key": "drosophila_brain_heat_panda2026",
+    "label": "Drosophila whole-brain metabolic heat output (direct calorimetry)",
+    "p_watts": 2.56e-07,
+    "n_neurons": 139255,
+    "reported_value": "~256 nW per brain (female, 10-day-old, y sc v)",
+    "species": "Drosophila melanogaster",
+    "method": "nanowatt-resolution biocalorimeter, live explanted brain perfused with Schneider's medium at 4 uL/min; Q = G_th * dT; ~1 h per measurement",
+    "citation_title": "Direct quantification of the metabolic heat output of individual Drosophila brains",
+    "authors": "Panda K, Mittapally R, Chen Q, Bhaskaran A, Reddy P, Meyhofer E, Yadlapalli S",
+    "year": 2026,
+    "doi": "10.1016/j.crmeth.2026.101501",
+    "url": "https://doi.org/10.1016/j.crmeth.2026.101501",
+    "is_drosophila_measurement": true,
+    "not_a_drosophila_measurement": false,
+    "caveats": [
+      "ex vivo: the brain is explanted and buffer-perfused, not in a behaving fly",
+      "one genotype (y sc v), one sex (female), one age (10 days) -- sex/age/genotype differences of 10-15% are reported within the same study",
+      "calorimeter time constant ~40 s and resolution ~7.6 nW: fast (sub-second) metabolic transients such as spike-driven ATP flux are smoothed away, so this is a slow/steady-state figure",
+      "pairing the measured organ with N0 = 139,255 is an assumption: the neuron count is the FlyWire FAFB v783 whole-brain count, not a count of the measured animal",
+      "metabolic heat output is total tissue metabolism (neurons + glia + housekeeping), not a measure of spiking computation"
+    ],
+    "provenance_extra": {
+      "preprint": "bioRxiv 2025.08.08.669302 (DOI 10.1101/2025.08.08.669302)",
+      "dry_mass": "~6.6 ug per female brain; ~38.7 nW/ug",
+      "buffer_flow_sensitivity": "2 uL/min -> ~62 nW and unstable; 4 uL/min -> ~256 nW; 6 uL/min -> ~247 nW (oxygen supply limited at 2)"
+    },
+    "per_neuron_watts": 1.838354098596101e-12,
+    "per_neuron_picowatts": 1.8383540985961009
+  },
+  "not_a_drosophila_measurement": false,
+  "is_drosophila_measurement": true,
+  "flywire_v783_neuron_count": 139255,
+  "comparison_anchors": {
+    "mammalian_per_neuron_herculano_houzel2011": {
+      "key": "mammalian_per_neuron_herculano_houzel2011",
+      "label": "Mammalian whole-brain metabolic cost per neuron (the \u00a717 null model)",
+      "p_watts": 2.905555555555555e-10,
+      "n_neurons": 1.0,
+      "reported_value": "~6 kcal/day per billion neurons (= 6e-9 kcal/neuron/day = 0.291 nW/neuron)",
+      "species": "rodents and primates (mouse, rat, squirrel, monkey, baboon, human)",
+      "method": "published glucose+oxygen metabolic rates of awake whole brains (Karbowski 2007 data) divided by counted neuron numbers; glucose use per neuron constant within 40% across a 1000x span in neuron number; total brain glucose use linear in N with power exponent 0.988",
+      "citation_title": "Scaling of brain metabolism with a fixed energy budget per neuron: implications for neuronal activity, plasticity and evolution",
+      "authors": "Herculano-Houzel S",
+      "year": 2011,
+      "doi": "10.1371/journal.pone.0017514",
+      "url": "https://doi.org/10.1371/journal.pone.0017514",
+      "is_drosophila_measurement": false,
+      "not_a_drosophila_measurement": true,
+      "caveats": [
+        "MAMMALIAN ONLY: this is evidence for the linear-per-neuron null model, and PROJECT-VYBFLY.md \u00a717 explicitly forbids presenting it as a Drosophila measurement",
+        "method is a derived quantity: measured whole-brain glucose/oxygen uptake divided by counted neurons, not a direct per-neuron measurement",
+        "whole-brain average; cerebral cortex is >=10x the per-neuron cost of cerebellum",
+        "'awake resting', no task; task/activity scaling is not included",
+        "the value pairs with the fly only as a null-model ratio, so the resulting P_bio(fly-scale) is ~158x the directly measured fly calorimetry value"
+      ],
+      "provenance_extra": {
+        "watt_conversion": "6e-9 kcal/neuron/day * 4184 J/kcal / 86400 s = 2.9056e-10 W",
+        "human_check": "86e9 neurons * 6 kcal/day = 516 kcal/day ~ 25 W (paper's figure)"
+      },
+      "per_neuron_watts": 2.905555555555555e-10,
+      "per_neuron_picowatts": 290.55555555555554
+    },
+    "fly_nervous_system_estimate_scheffer2021": {
+      "key": "fly_nervous_system_estimate_scheffer2021",
+      "label": "Published *estimate* of Drosophila nervous-system compute power (~120 nW)",
+      "p_watts": 1.2e-07,
+      "n_neurons": 139255,
+      "reported_value": "~1.2e-7 W (~120 nW) for the Drosophila nervous system",
+      "species": "Drosophila melanogaster",
+      "method": "derived: Chadwick's resting oxygen consumption of 26 mm^3/g/min for a ~1 mg fly, scaled to D. melanogaster mass and to the ~5% of resting metabolism attributed to the nervous system; NOT a calorimetric or electrophysiological measurement",
+      "citation_title": "The Physical Design of Biological Systems - Insights from the Fly Brain",
+      "authors": "Scheffer LK",
+      "year": 2021,
+      "doi": "10.1145/3439706.3446898",
+      "url": "https://doi.org/10.1145/3439706.3446898",
+      "is_drosophila_measurement": false,
+      "not_a_drosophila_measurement": false,
+      "caveats": [
+        "derived estimate, not a measurement (oxygen-consumption proxy x assumed 5% nervous-system share x assumed body mass)",
+        "same order of magnitude as the direct calorimetry value (120 nW vs 256 nW), so it corroborates the fly-scale anchor to within ~2.1x; used here as a cross-check only",
+        "no neuron count is stated in the source; paired here with the FlyWire v783 count"
+      ],
+      "provenance_extra": {
+        "cross_check_ratio_vs_calorimetry": 0.46874999999999994
+      },
+      "per_neuron_watts": 8.617284837169221e-13,
+      "per_neuron_picowatts": 0.8617284837169221
+    }
+  },
+  "comparison_per_neuron_picowatts": {
+    "drosophila_brain_heat_panda2026": 1.8383540985961009,
+    "mammalian_per_neuron_herculano_houzel2011": 290.55555555555554,
+    "fly_nervous_system_estimate_scheffer2021": 0.8617284837169221
+  },
+  "mammalian_over_fly_calorimetry_ratio": 158.05200737847218,
+  "scaling_table": [
+    {
+      "scale": 1.0,
+      "n_neurons": 139255.0,
+      "p_bio_w": 2.56e-07,
+      "p_bio_nw": 256.0
+    },
+    {
+      "scale": 2.0,
+      "n_neurons": 278510.0,
+      "p_bio_w": 5.12e-07,
+      "p_bio_nw": 512.0
+    },
+    {
+      "scale": 5.0,
+      "n_neurons": 696275.0,
+      "p_bio_w": 1.28e-06,
+      "p_bio_nw": 1280.0
+    },
+    {
+      "scale": 10.0,
+      "n_neurons": 1392550.0,
+      "p_bio_w": 2.56e-06,
+      "p_bio_nw": 2560.0
+    },
+    {
+      "scale": 25.0,
+      "n_neurons": 3481375.0,
+      "p_bio_w": 6.4000000000000006e-06,
+      "p_bio_nw": 6400.000000000001
+    },
+    {
+      "scale": 50.0,
+      "n_neurons": 6962750.0,
+      "p_bio_w": 1.2800000000000001e-05,
+      "p_bio_nw": 12800.000000000002
+    },
+    {
+      "scale": 100.0,
+      "n_neurons": 13925500.0,
+      "p_bio_w": 2.5600000000000002e-05,
+      "p_bio_nw": 25600.000000000004
+    }
+  ],
+  "provenance": {
+    "atp_hydrolysis_j": 8.3e-20,
+    "atp_hydrolysis_assumption": "50 kJ/mol free energy of ATP hydrolysis under cellular conditions / N_A = 8.30e-20 J per ATP; standard-state 30.5 kJ/mol would scale all ATP-derived joules by 0.61"
+  },
+  "mammalian_cortex_per_event": {
+    "per_action_potential": {
+      "atp_per_neuron_per_spike": 710000000.0,
+      "joules": 5.893e-11,
+      "citation_title": "An energy budget for signaling in the grey matter of the brain",
+      "authors": "Attwell D, Laughlin SB",
+      "year": 2001,
+      "doi": "10.1097/00004647-200110000-00001",
+      "url": "https://doi.org/10.1097/00004647-200110000-00001",
+      "not_a_drosophila_measurement": true,
+      "caveats": "mammalian cortical grey matter; 'total ATP consumption when a neuron fires an action potential ... 7.1e8 ATP/neuron/spike', i.e. axon + presynaptic + postsynaptic ion fluxes, not the axonal spike alone"
+    },
+    "per_vesicle_release": {
+      "atp_per_vesicle_released": 164000.0,
+      "joules": 1.3612e-14,
+      "citation_title": "An energy budget for signaling in the grey matter of the brain",
+      "authors": "Attwell D, Laughlin SB",
+      "year": 2001,
+      "doi": "10.1097/00004647-200110000-00001",
+      "url": "https://doi.org/10.1097/00004647-200110000-00001",
+      "not_a_drosophila_measurement": true,
+      "caveats": "mammalian cortical grey matter; energy per glutamate vesicle actually released (presynaptic Ca2+ entry, vesicle cycling, postsynaptic actions, glutamate recycling), 84% of it postsynaptic ion pumping. This is a release event, not one anatomical synapse of the connectome"
+    }
+  },
+  "derived_fly_per_spike": {
+    "note": "NOT a published measurement: 256 nW / 139,255 neurons divided by an assumed mean firing rate, i.e. total tissue power attributed to spikes. Given only to contrast orders of magnitude; the calorimeter cannot resolve spikes.",
+    "assumed_mean_rate_hz": 1.0,
+    "joules_per_neuron_spike_at_1hz": 1.838354098596101e-12,
+    "not_a_drosophila_measurement": false,
+    "is_derived_not_measured": true
+  },
+  "generated_utc": "2026-09-17T22:40:09.797+00:00",
+  "at_flywire_scale": {
+    "n_neurons": 139255,
+    "p_bio_w": 2.56e-07,
+    "p_bio_nw": 256.0,
+    "joules_per_simulated_bio_second": 2.56e-07
+  }
+}

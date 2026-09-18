@@ -1,0 +1,18 @@
+{\small\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l r r r r r}
+\toprule
+geometry & AUC & AP & mean $\log L$ & $R$ & $T$ \\
+\midrule
+spectral 32 & 0.9519 & 0.9452 & -0.2868 & 0.000915 & 0.000253 \\
+spectral 16 & 0.8844 & 0.8445 & -0.3866 & 0.000399 & 0.000215 \\
+degree only (baseline) & 0.8739 & 0.8784 & -0.4445 & nan & nan \\
+degree only baseline & 0.8739 & 0.8784 & -0.4445 & -- & -- \\
+hyperbolic 2d & 0.8646 & 0.8375 & -0.4597 & 3.451 & 0.978 \\
+anatomical xyz & 0.8514 & 0.8307 & -0.4669 & 3.87e+04 & 1.83e+04 \\
+anatomical pca2 & 0.8512 & 0.8293 & -0.4671 & 3.86e+04 & 1.83e+04 \\
+anatomical xy & 0.8512 & 0.8293 & -0.4671 & 3.86e+04 & 1.83e+04 \\
+anatomical xyz zscored & 0.7981 & 0.8026 & -0.547 & 1.738 & 0.766 \\
+\bottomrule
+\end{tabular}
+
+}

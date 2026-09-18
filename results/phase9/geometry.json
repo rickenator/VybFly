@@ -1,0 +1,19 @@
+{
+  "R": 1.7481218938992897,
+  "T": 0.7556933600339182,
+  "fit": {
+    "R": 1.7481218938992897,
+    "T": 0.7556933600339182,
+    "auc": 0.1974643178,
+    "distance_median_negative": 2.3335970246126516,
+    "distance_median_positive": 1.1120554478369251,
+    "kind": "euclidean",
+    "log_likelihood": -433566.5318293539,
+    "n_negative": 400000,
+    "n_positive": 400000
+  },
+  "kind": "euclidean",
+  "note": "P(connect)=1/(1+exp((d-R)/T)) fitted by flyscale.renorm.fit_connection_law on standardised anatomical xyz; no Phase 4 embedding exists in results/phase4/artifacts",
+  "seconds": 16.09,
+  "source": "annotation_xyz+law_fit"
+}

@@ -1,0 +1,39 @@
+// MINIMAL REPRODUCTION: Vyb front-end mis-types the left operand of a multiplication when its
+// right operand is a parenthesised sub-expression and the product feeds an addition.
+//
+// Verified 2026-09-17, build `vyb 0.7.5` (~/Projects/Vyb/build/vyb):
+//   VYB_STDLIB=~/Projects/Vyb/stdlib build/vyb src/vyb_kernels/probes/paren_operand_bug.vyb
+// -> Semantic Errors:
+//      Operator '+' is not defined for operands 'Float' and 'ptr<s>'.
+//      Operator '+' is not defined for operands 'Float' and 'ptr<c>'.
+//    ("ptr<s>"/"ptr<c>" name the multiplication's LEFT operand, which is a plain Float parameter)
+//
+// Shape matrix measured on the same build (params p,q,r,s<Float>, all passing unless noted):
+//   p + q * s + r          ok
+//   p + s * q + r          ok
+//   (q - p) * s            ok
+//   p + (q - p) + r        ok
+//   p + s * (q)            FAIL   <- parenthesised operand, no subtraction involved
+//   p + s * (q - p) + r    FAIL
+//   p + s * (q - a)        FAIL
+// So the trigger is the parenthesised operand on the right of `*` inside a `+`, not the
+// subtraction and not the kernel/device mode: the same failure occurs in an ordinary program.
+//
+// WORKAROUND used by src/vyb_kernels/spike_bucket.vyb: bind the parenthesised sub-expression to
+// a temporary first, then multiply two named values.
+
+scale_bad(p<Float>, q<Float>, s<Float>)<Float> -> {
+    return p + s * (q)
+}
+
+scale_good(p<Float>, q<Float>, s<Float>)<Float> -> {
+    dq<Float> = q
+    sdq<Float> = s * dq
+    return p + sdq
+}
+
+main()<Int> -> {
+    good<Float> = scale_good(1.0, 2.0, 3.0)
+    println("scale_good=" + good.to_string())
+    return 0
+}

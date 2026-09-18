@@ -1,0 +1,45 @@
+# ---------------------------------------------------------------------------
+# What is deliberately NOT in this repository
+#
+# The FlyWire source data and every derived array are large and fully
+# regenerable: scripts/fetch_data.py verifies the download by md5 and
+# scripts/phase0_build.py rebuilds the canonical graph from it, so the repo
+# stays small and the pipeline stays the source of truth.
+# ---------------------------------------------------------------------------
+
+# source data (re-fetch with scripts/fetch_data.py)
+data/raw/
+data/processed/
+
+# derived arrays and replica graphs (regenerate with the phase scripts)
+*.npy
+*.npz
+results/**/artifacts/
+results/**/artifacts_archive/
+results/**/replicas/
+results/energy/curves/
+results/phase2/*spikes*.csv
+
+# environments and caches
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# generated compiler output (rebuild with the Vyb toolchain)
+*.ll
+*.o
+
+# logs and LaTeX intermediates
+logs/
+*.aux
+*.log
+*.out
+*.toc
+
+# third-party clone used only to extract published values; the extracted table
+# it feeds (references/flywire_published_values.json) IS committed
+references/flywire-network-analysis/
+
+.DS_Store
+results/paper/figs/

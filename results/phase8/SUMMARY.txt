@@ -1,0 +1,241 @@
+FlyScale Phase 8 / M11 — mushroom-body associative learning on FlyWire v783
+==============================================================================
+
+A biologically informed associative-learning benchmark on the real mushroom-body
+subgraph of the canonical v783 connectome: measured acquisition curve, measured
+memory capacity, and controls that make the result readable.
+All numbers come from one executed run of scripts/phase8_learning.py.
+dataset      : data/processed/canonical_v783 (139255 neurons)
+subgraph     : 5-synapse threshold (published convention)
+parameters   : eta=0.1, rule=multiplicative, KC sparsity=0.05, glomeruli/odour=5,
+               per-presentation KC jitter=0.3, seeds=[0, 1, 2, 3, 4]
+command      : scripts/phase8_learning.py
+runtime      : 559 s
+
+1. POPULATIONS — the annotation labels actually found and used
+------------------------------------------------------------------------------
+  Kenyon cells  cell_class == 'Kenyon_Cell'                  n =   5177
+                cell_type: KCa'b'-ap1, KCab, KCab-p, KCapbp-ap1, KCapbp-ap2, KCapbp-m, KCg-d, KCg-m, KCg-s1, KCg-s2, KCg-s3
+  MBONs         cell_class == 'MBON'                         n =     96
+  DANs          cell_class == 'DAN'                          n =    331
+                PAM*  (reward dopaminergic)                  n =    307
+                PPL*  (PPL1/PPL2, punishment dopaminergic)   n =     24
+  ALPNs         cell_class == 'ALPN'                         n =    685
+                of which cell_sub_class == 'uniglomerular'   n =    277
+  glomeruli     56 channels from the uniglomerular PN cell_type prefix
+  Every population above exists verbatim in neurons.parquet; none was invented or
+  substituted. No MB-intrinsic (MBIN, n=4) or olfactory-receptor (cell_class
+  'olfactory', n=2281) population was used.
+
+  CAVEAT, recorded not corrected (the file belongs to another work-stream):
+  neurons.parquet has top_nt == 'dopamine' for 5172 of 5177 Kenyon cells, while
+  known_nt is 'acetylcholine; sNPF' for all of them and 100% of KC->MBON edges
+  carry nt_code == acetylcholine. top_nt is inconsistent for Kenyon cells in this
+  canonical build and was not used; the edge-level nt_code was used instead.
+
+2. MEASURED MB SUBGRAPH (published 5-synapse threshold, real synapses)
+------------------------------------------------------------------------------
+  ALPN->KC   pairs=  21509   synapses=  316862
+  KC->MBON   pairs=  21438   synapses=  169931   KCs with output=5099/5177   MBONs reached=77/96
+             KCs per MBON 278.4 (mean), MBONs per KC 4.20 (mean)
+  DAN->MBON  pairs=    735   (PAM 630, PPL 105); dopamine nt_code on 730/735 pairs
+  KC->KC     pairs=   2133   (recurrent KC collaterals; measured, not used)
+  KC->MBON synapse rows inside the MB neuropils: {'MB_CA_L': 112, 'MB_CA_R': 139, 'MB_ML_L': 4744, 'MB_ML_R': 3063, 'MB_PED_L': 722, 'MB_PED_R': 1035, 'MB_VL_L': 1297, 'MB_VL_R': 2571}
+
+3. MODEL
+------------------------------------------------------------------------------
+  odour -> KC code: 5 of 56 glomeruli activated, drive pushed through the
+  measured row-normalised ALPN->KC matrix, then a k-winner-take-all at fixed
+  sparsity. Measured: 259 active KCs of 5177 (sparsity 0.050),
+  mean pairwise overlap 28.4 cells = 11.0% of the active set (independent-code expectation 13.0 cells).
+  rule (dw_ij = eta * da * g_j * x_i * (y_j / y_ref) * w_ij) on existing KC->MBON synapses only:
+    eligibility e_ij = x_i * y_j
+    dopamine gate g_j = 1 iff MBON j receives a measured reward-DAN (PAM->MBON) input
+    da = +1 on a rewarded presentation, 0 otherwise
+    homeostasis: each Kenyon cell's total output weight is rescaled to its
+    anatomical row sum after every update
+    no synapse is created, deleted, or re-signed (plasticity is masked to the
+    measured connectome)
+  readout: mean activity over the 34 anatomically PAM-innervated MBONs
+    (fixed for every condition, so ablating the dopamine gate does not change the
+    readout; the 'allpool' condition re-runs it over all 96 MBONs as a check)
+  protocol 1 (acquisition): 8 odours, odour 0 rewarded, 300 trials, probe every 10
+  protocol 2 (capacity): 64 odours, m rewarded, m in [1, 2, 4, 8, 16, 32, 48], 60 trials per association;
+    score = AUC over all (rewarded, unrewarded) odour pairs of the readout value
+    ('learned' AUC uses the change in value from the untrained readout, removing
+    the innate bias of the naive connectome)
+
+4. ACQUISITION — learning curve (mean over 5 seeds, sd in parentheses)
+------------------------------------------------------------------------------
+  condition                   AUC t=0  AUC t=300  learned t=300  trials->0.9  dV/V target
+  real_plastic                  0.514  1.000 (0.00)      1.000           58        0.547
+  real_frozen                   0.314  0.314 (0.28)      0.500          nan        0.000
+  shuffled_plastic              0.600  1.000 (0.00)      1.000           54        0.546
+  shuffled_frozen               0.571  0.571 (0.24)      0.500          nan        0.000
+  random_weight_plastic         0.571  1.000 (0.00)      1.000           30        0.607
+  shuffled_gate_plastic         0.600  1.000 (0.00)      1.000           54        0.546
+  randcode_plastic              0.571  1.000 (0.00)      1.000           30        0.617
+  bounded_plastic               0.514  1.000 (0.00)      1.000           58        0.438
+  additive_plastic              0.600  1.000 (0.00)      1.000           18        0.411
+  uniform_gate_plastic          0.314  0.971 (0.06)      1.000          106        0.323
+  allpool_plastic               0.429  0.429 (0.20)      0.500          nan        0.000
+  aversive_sign_plastic         0.057  0.000 (0.00)      0.000          nan       -0.671
+  ppl_wiring_plastic            0.429  1.000 (0.00)      1.000           84        0.412
+  rpe_plastic                   0.714  1.000 (0.00)      1.000           30        0.067
+
+  acquisition curves — mean AUC (rewarded-odour vs unrewarded rank separation)
+  condition                    t=10   t=30   t=60  t=100  t=150  t=200  t=300
+  real_plastic                 0.51   0.80   0.97   0.97   1.00   1.00   1.00
+  real_frozen                  0.31   0.31   0.31   0.31   0.31   0.31   0.31
+  shuffled_plastic             0.60   0.86   0.94   1.00   1.00   1.00   1.00
+  shuffled_frozen              0.57   0.57   0.57   0.57   0.57   0.57   0.57
+  uniform_gate_plastic         0.31   0.51   0.74   0.94   0.97   0.97   0.97
+  randcode_plastic             0.57   0.74   1.00   1.00   1.00   1.00   1.00
+  additive_plastic             0.60   1.00   1.00   1.00   1.00   1.00   1.00
+  rpe_plastic                  0.71   0.94   1.00   1.00   1.00   1.00   1.00
+  aversive_sign_plastic        0.06   0.03   0.00   0.00   0.00   0.00   0.00
+  ppl_wiring_plastic           0.43   0.66   0.91   0.97   0.97   1.00   1.00
+  allpool_plastic              0.43   0.43   0.43   0.43   0.43   0.43   0.43
+  bounded_plastic              0.51   0.80   0.97   0.97   1.00   1.00   1.00
+  random_weight_plastic        0.57   0.83   1.00   1.00   1.00   1.00   1.00
+
+  condition definitions:
+    real_plastic             real MB wiring, reward-modulated Hebbian plasticity (main condition)
+    real_frozen              no-plasticity control: KC->MBON weights frozen at their anatomical values
+    shuffled_plastic         KC->MBON targets degree-preservingly shuffled (same KC out-degrees and MBON in-degrees, same synapse-weight multiset), plastic
+    shuffled_frozen          shuffled wiring and no plasticity = random-weight readout with the same degree sequence and weight multiset
+    random_weight_plastic    real KC->MBON topology but synapse weights randomly permuted, plastic
+    shuffled_gate_plastic    shuffled KC->MBON wiring AND degree-preserving shuffle of the reward DAN->MBON gate, plastic
+    randcode_plastic         real MB, odour coding replaced by a degree-matched random ALPN->KC projection, plastic
+    bounded_plastic          real wiring, plastic, every synapse capped at 4x / 0.25x its anatomical weight (explicit architecture-preservation constraint)
+    additive_plastic         same gate/homeostasis but the additive three-factor update dw = eta*da*x*y (ablates the soft-bound form)
+    uniform_gate_plastic     dopamine broadcast to every MBON instead of routed through the measured DAN wiring (ablates the anatomical gate)
+    allpool_plastic          readout pool = all 96 MBONs instead of only the PAM-gated ones
+    aversive_sign_plastic    identical to real_plastic in every respect (same anatomical PAM gate, same readout) except that the teaching signal is -1: isolates the SIGN of the dopamine signal, so the punished odour is predicted to fall in the readout
+    ppl_wiring_plastic       punishment routed through the measured PPL1/PPL2 -> MBON wiring instead of the PAM wiring; the two dopamine populations innervate largely different MBON sets, so this is a wiring comparison, not a clean sign control
+    rpe_plastic              reward prediction error dopamine (da = r - V/V_ref) instead of r = 1
+
+5. MEMORY CAPACITY — how many odour->reward associations are held at once
+------------------------------------------------------------------------------
+     m   real+plastic  shuffled+pl  real frozen  shuf frozen   randw+pl   additive
+     1          0.940        0.895        0.357        0.521      0.968      1.000
+     2          0.932        0.842        0.525        0.589      0.942      0.955
+     4          0.883        0.821        0.560        0.527      0.901      0.948
+     8          0.939        0.916        0.596        0.587      0.957      0.889
+    16          0.766        0.760        0.547        0.550      0.808      0.576
+    32          0.523        0.525        0.495        0.521      0.539      0.508
+    48          0.511        0.517        0.505        0.521      0.507      0.510
+
+  measured capacity = largest m whose seed-averaged AUC reaches the criterion
+  condition                 cap AUC>=0.9  cap AUC>=0.75  learned cap  per-seed mean
+    real_plastic                        8             16            8            7.2
+    shuffled_plastic                    8             16            8            6.4
+    shuffled_gate_plastic               8             16            8            6.4
+    randcode_plastic                    8             16           16            8.0
+    random_weight_plastic               8             16            8            8.0
+    additive_plastic                    4              8            8            5.0
+    bounded_plastic                     8              8            8            7.2
+    real_frozen                         0              0            0            0.0
+    shuffled_frozen                     0              0            0            0.0
+    uniform_gate_plastic                0              8            8            1.6
+    allpool_plastic                     0              0            0            0.0
+    rpe_plastic                        48             48           48           48.0
+    aversive_sign_plastic              16             32           16           16.0
+    ppl_wiring_plastic                  0              0            0            0.0
+  capacity is interference-limited, not training-limited: raising the budget from
+  60 to 300 trials per association moves the collapse point by at most one
+  grid step (see capacity_budget_check in learning.json).
+
+6. CONTROLS AND THE §27 RISK (does training dominate architecture?)
+------------------------------------------------------------------------------
+  rule effect, real wiring        : +0.686 AUC (plastic - frozen)
+  rule effect, shuffled wiring    : +0.429 AUC
+  geometry effect, initial bias   : -0.086 AUC
+  geometry effect, frozen end     : -0.257 AUC
+  geometry x rule interaction     : +0.257 AUC
+  real - shuffled (plastic), paired per seed: +0.000 +- 0.000 (n=5)
+  geometry__real_minus_shuffled_gate_plastic      +0.000 +- 0.000
+  geometry__real_minus_randcode_plastic           +0.000 +- 0.000
+  geometry__real_minus_randomweight_plastic       +0.000 +- 0.000
+  gate__real_minus_uniform_gate                   +0.029 +- 0.057
+  pool__pam_pool_minus_all_pool                   +0.571 +- 0.202
+  bounded__minus_unbounded                        +0.000 +- 0.000
+  rule_form__multiplicative_minus_additive        +0.000 +- 0.000
+
+7. ARCHITECTURE PRESERVATION (scope doc: learning rules must not destroy the source)
+------------------------------------------------------------------------------
+  plastic runs audited: 60   all KC->MBON edges preserved: True
+  synapses created (max over runs): 0   deleted (max): 0
+  per-KC output weight budget restored to the anatomical value, max relative error 5.1e-16
+  mean |relative weight change| 0.050-0.413; fraction of synapses beyond 2x 0.005-0.080
+  Spearman(initial weight, final weight) 0.543-0.930 -> the anatomical weight ordering survives learning
+  explicit cap variant (all synapses within 0.25x-4x of anatomical): AUC 1.000 vs 1.000 unbounded
+
+8. SENSITIVITY
+------------------------------------------------------------------------------
+  eta=0.02  trials to AUC>=0.9    108 (sd    50),  final AUC 0.971, capacity 0
+  eta=0.05  trials to AUC>=0.9     82 (sd    49),  final AUC 1.000, capacity 5
+  eta=0.1   trials to AUC>=0.9     58 (sd    44),  final AUC 1.000, capacity 7
+  eta=0.25  trials to AUC>=0.9     32 (sd    20),  final AUC 1.000, capacity 7
+  eta=0.5   trials to AUC>=0.9     22 (sd    10),  final AUC 1.000, capacity 7
+  KC sparsity=0.02  final AUC 1.000, capacity(AUC>=0.9)   10, learned-capacity   16
+  KC sparsity=0.05  final AUC 1.000, capacity(AUC>=0.9)    7, learned-capacity    8
+  KC sparsity=0.1   final AUC 1.000, capacity(AUC>=0.9)    4, learned-capacity    8
+  KC sparsity=0.2   final AUC 1.000, capacity(AUC>=0.9)    2, learned-capacity    3
+  (the raw-capacity column is coarse: the m=8 crossing sits within seed noise at
+   large KC counts, while the learned-capacity column saturates at 8 for >=1294 KCs)
+  KCs kept   647 (0.125 of 5177): capacity(AUC>=0.9) 1, learned-capacity 6, final AUC 1.000
+  KCs kept  1294 (0.250 of 5177): capacity(AUC>=0.9) 4, learned-capacity 8, final AUC 1.000
+  KCs kept  2588 (0.500 of 5177): capacity(AUC>=0.9) 2, learned-capacity 8, final AUC 1.000
+  KCs kept  5177 (1.000 of 5177): capacity(AUC>=0.9) 7, learned-capacity 8, final AUC 1.000
+
+9. WHAT IS AND IS NOT SHOWN
+------------------------------------------------------------------------------
+  * The plastic pathway learns the association: the rewarded odour's rank
+    separation rises from AUC 0.51 (naive connectome readout) to 1.00
+    within 58 of 300 trials and the mean MBON response to it
+    rises by +54.7% while the untrained connectome readout
+    puts it below the unrewarded odours; the no-plasticity control is exactly flat.
+  * The connectome geometry is NOT what makes learning work: a degree-preserving
+    shuffle of the KC->MBON targets reproduces acquisition (1.000 vs 1.000) and capacity
+    (6 vs 7 per-seed, 8 vs 8 on the seed-averaged curve), as do shuffled
+    weights, a shuffled dopamine gate, a random-projection odour code and the
+    additive variant of the rule. Under this benchmark §27 is confirmed in the
+    strong form:
+    the imposed rule carries the performance and the connectome only sets the
+    initial bias of the naive readout.
+    measured capacity is 8 association(s) for real+plastic and 8 for shuffled+plastic, against
+    0 and 0 for the two frozen controls.
+  * The 'allpool' condition is flat by construction, and that is worth stating:
+    with the readout taken over the entire MBON layer, per-KC output-weight
+    normalisation makes the pool mean exactly invariant (sum_j y_j = sum_i x_i *
+    budget_i), so a uniform readout over all 96 MBONs cannot move no matter how the
+    weights redistribute. Only a restricted readout can express learning.
+  * The rpe variant reaches a much higher capacity (48 vs 8) because in that mode an
+    unrewarded presentation carries an active negative teaching signal
+    (da = 0 - V/V_ref < 0) that suppresses the competitor odours; the reward-only
+    rule never depresses an unrewarded odour and is limited by interference.
+  * Capacity rises as the KC code gets sparser (sparsity 0.02 -> 10 associations,
+    0.05 -> 7, 0.10 -> 4, 0.20 -> 2), the sparse-coding prediction.
+  * Two manipulations do change the outcome and are reported as such, both of them
+    changing *where the teaching signal can act* rather than what the odours look
+    like:
+    - broadcasting dopamine to every MBON instead of routing it through the measured
+      DAN wiring gives final AUC 0.971 vs 1.000 with the
+      anatomical gate (learned-component AUC 1.000 vs 1.000), i.e. *which* synapses the teaching signal can
+      reach does matter here (106 vs 58 trials to criterion, capacity 0 vs 8), unlike which KCs an MBON listens to or
+      how the odour code is built.
+    - flipping only the sign of the teaching signal (aversive_sign_plastic, identical
+      gate and readout) drives the punished odour's readout down: final AUC 0.000
+      (chance 0.5), where every appetitive condition sits at 1.000. The learned
+      component is symmetric, so the rule is genuinely signed, not a mere
+      strengthening term. Routing the punishment through the measured PPL1/PPL2
+      wiring instead gives 1.000: the two dopamine populations
+      innervate largely different MBON sets, so with the appetitive readout fixed
+      this is a wiring comparison and not a clean sign control — reported as such.
+  * This is a benchmark, not a model of the fly: no spiking, no KC->KC collaterals,
+    no MBON->DAN feedback, single-compartment MBONs, a synthetic odour input over
+    glomeruli and a uniform-mean readout over the PAM-gated MBON pool.
+  * Absolute capacity depends on the readout, criterion and protocol; the frozen
+    and shuffled controls are therefore reported on exactly the same protocol.
+

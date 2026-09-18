@@ -1,0 +1,15 @@
+// 6 descriptor words: reads word 2 and word 3, writes them plus its lane id.
+probe6(dsc<Int>) -> {
+    out_a<Int> = ld_i64(dsc + 0) as Int
+    out_b<Int> = ld_i64(dsc + 8) as Int
+    out_lane<Int> = ld_i64(dsc + 16) as Int
+    n<Int> = ld_i64(dsc + 24) as Int
+    wa<Int> = ld_i64(dsc + 32) as Int
+    wb<Int> = ld_i64(dsc + 40) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    if (gid < n) {
+        st_i32(out_a + gid * 4, wa)
+        st_i32(out_b + gid * 4, wb)
+        st_i32(out_lane + gid * 4, gid)
+    }
+}

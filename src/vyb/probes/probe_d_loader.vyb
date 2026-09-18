@@ -1,0 +1,13 @@
+import flyload::{load_i32, load_i64, summarise_i32}
+
+main()<Int> -> {
+    dir<String> = "data/processed/canonical_v783/bin/"
+    ids<Vec<Int>> = load_i64(dir + "neurons.root_id.i64", 139255)
+    println("ids_len=" + ids.len().to_string())
+    if (ids.len() > 1) { println("id0=" + ids.get(0).to_string() + " id_last=" + ids.get(ids.len() - 1).to_string()) }
+
+    s<Vec<Int>> = summarise_i32(dir + "pairs.syn.i32", 15091983, 5)
+    println("syn_total=" + s.get(0).to_string() + " thr5_n=" + s.get(1).to_string() + " thr5_total=" + s.get(2).to_string())
+    println("max=" + s.get(3).to_string() + " min=" + s.get(4).to_string() + " seen=" + s.get(5).to_string())
+    return 0
+}

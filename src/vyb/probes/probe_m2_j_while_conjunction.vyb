@@ -1,0 +1,31 @@
+// probe_m2_j_while_conjunction - a while condition with a conjunction, and a helper whose loop
+// body short-circuits early (the shape of lif_leak).
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_j_while_conjunction.vyb
+
+trunc_div(a<Int>, b<Int>)<Int> -> {
+    if (b == 0) { return 0 }
+    if (a >= 0) { return a / b }
+    return -((-a) / b)
+}
+
+leak(vm<Int>, vrest<Int>, decay_k<Int>, ticks<Int>)<Int> -> {
+    d<Int> = vm - vrest
+    j<Int> = 0
+    while (j < ticks && d != 0) {
+        d = trunc_div(d * decay_k, 1000)
+        j = j + 1
+    }
+    return vrest + d
+}
+
+main()<Int> -> {
+    println("zero_ticks=" + leak(-60000, -65000, 951, 0).to_string())
+    println("one_tick=" + leak(-60000, -65000, 951, 1).to_string())
+    println("two_ticks=" + leak(-60000, -65000, 951, 2).to_string())
+    println("at_rest=" + leak(-65000, -65000, 951, 7).to_string())
+    println("negative=" + leak(-70000, -65000, 951, 2).to_string())
+    println("probe-j-done")
+    return 0
+}

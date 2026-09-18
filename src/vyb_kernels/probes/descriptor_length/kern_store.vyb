@@ -1,0 +1,13 @@
+// Minimal: no descriptor at all. Each lane writes its own lane-dependent value into its own
+// 4-byte slot. If an i32 store is lowered as an 8-byte store, the high half lands in the next
+// lane's slot.
+probe_store(dsc<Int>) -> {
+    out<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    if (gid < n) {
+        v<Int> = gid + 1000
+        st_i32(out + gid * 4, v)
+        st_i32(out + (gid + 32) * 4, v * 2)
+    }
+}

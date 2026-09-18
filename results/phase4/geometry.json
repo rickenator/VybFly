@@ -1,0 +1,2674 @@
+{
+  "canonical": {
+    "built_utc": "2026-09-17T20:51:55Z",
+    "canonical_dir": "~/Projects/VybFly/data/processed/canonical_v783",
+    "canonical_version": "flywire-v783-canon-1",
+    "conventions": {
+      "autapses": "kept; use mask_autapses()",
+      "clustering_input": "see flyscale.metrics.graph_variants",
+      "indexing": "neurons sorted by root_id; idx = position",
+      "nt_order": [
+        "gaba",
+        "ach",
+        "glut",
+        "oct",
+        "ser",
+        "da"
+      ],
+      "pair_graph": "published rows aggregated over neuropil; all pair weights 1"
+    },
+    "counts": {
+      "n_annotated_neurons": 139241,
+      "n_autapse_pairs": 0,
+      "n_edges_in_reciprocal_pairs": 4014518,
+      "n_edges_rows": 16847997,
+      "n_neurons": 139255,
+      "n_neuropils": 79,
+      "n_pairs": 15091983,
+      "n_raw_rows_streamed": 16847997,
+      "n_raw_rows_with_unmatched_root_id": 0,
+      "n_reciprocal_pairs": 2007259,
+      "n_synapses_autapse": 0,
+      "n_synapses_pairs": 54492922,
+      "reciprocity": 0.26600334760514904
+    },
+    "source": {
+      "annotations": "flyconnectome/flywire_annotations Supplemental_file1 (Schlegel et al. 2024)",
+      "connections_file": "proofread_connections_783.feather",
+      "connections_sha256_head16": "6f7bab19a105407e",
+      "dataset": "FlyWire FAFB v783 (FAFB v783 (CB))",
+      "zenodo_doi": "10.5281/zenodo.10676866"
+    }
+  },
+  "comparison_table": [
+    {
+      "R": 38674.48736797053,
+      "R_density_matched": -109192.97972594082,
+      "T": 18297.171130596,
+      "ap": 0.8306546309717199,
+      "auc": 0.851382212145802,
+      "geometry": "anatomical_xyz",
+      "log_likelihood_mean": -0.4668963094936385
+    },
+    {
+      "R": 38603.31202920437,
+      "R_density_matched": -109525.82103053128,
+      "T": 18329.549767018438,
+      "ap": 0.829297784787827,
+      "auc": 0.8511756166128135,
+      "geometry": "anatomical_xy",
+      "log_likelihood_mean": -0.4670655821372719
+    },
+    {
+      "R": 38607.177368273944,
+      "R_density_matched": -109532.5701747547,
+      "T": 18330.86320682431,
+      "ap": 0.8293000347662015,
+      "auc": 0.8511784015408886,
+      "geometry": "anatomical_pca2",
+      "log_likelihood_mean": -0.46706346135231086
+    },
+    {
+      "R": 1.7380707374314157,
+      "R_density_matched": -4.453608164482621,
+      "T": 0.7661604724862888,
+      "ap": 0.8026283585163332,
+      "auc": 0.7981223195868726,
+      "geometry": "anatomical_xyz_zscored",
+      "log_likelihood_mean": -0.5469911971623672
+    },
+    {
+      "R": 0.00039911194275064,
+      "R_density_matched": -0.0013393036585225087,
+      "T": 0.00021511214317610023,
+      "ap": 0.8444936129336844,
+      "auc": 0.8843912013151525,
+      "geometry": "spectral_16",
+      "log_likelihood_mean": -0.38661633244438814
+    },
+    {
+      "R": 0.0009147718131019497,
+      "R_density_matched": -0.0011295367963760651,
+      "T": 0.00025296344900270626,
+      "ap": 0.9451895251954966,
+      "auc": 0.9518708696385689,
+      "geometry": "spectral_32",
+      "log_likelihood_mean": -0.286813044968313
+    },
+    {
+      "R": 3.451147899174943,
+      "R_density_matched": -4.451780039250868,
+      "T": 0.977911015614465,
+      "ap": 0.8375227970384397,
+      "auc": 0.8645541290635546,
+      "geometry": "hyperbolic_2d",
+      "log_likelihood_mean": -0.45973845382299383
+    },
+    {
+      "R": NaN,
+      "R_density_matched": NaN,
+      "T": NaN,
+      "ap": 0.8783776434719165,
+      "auc": 0.8738729859171968,
+      "geometry": "degree_only (baseline)",
+      "log_likelihood_mean": -0.4444904862873396
+    }
+  ],
+  "config": {
+    "hyperbolic_batch": 65536,
+    "hyperbolic_epochs": 150,
+    "hyperbolic_lr": 0.05,
+    "scikit_learn_available": false,
+    "seed": 0,
+    "spectral_dims": [
+      16,
+      32
+    ],
+    "test_frac": 0.1,
+    "threshold_synapses": 5
+  },
+  "degree_only_baseline": {
+    "a": -7.375624266777958,
+    "b": 0.9896967843374,
+    "calibration": "logistic in (log d_i + log d_j) fitted on the fit pairs",
+    "converged": true,
+    "fit": {
+      "auc": 0.8728428294872967,
+      "log_likelihood_mean": -0.4465733971512903,
+      "n_neg": 2428328,
+      "n_pos": 2428328
+    },
+    "heldout": {
+      "auc": 0.8738729859171968,
+      "average_precision": 0.8783776434719165,
+      "log_likelihood_mean": -0.4444904862873396,
+      "n_neg": 269478,
+      "n_pos": 269478,
+      "nll_mean": 0.4444904862873396
+    },
+    "n_tied_scores": 494893,
+    "name": "degree_only",
+    "note": "scores are integer-valued (degree products) so ties are frequent; AUC uses exact midpoint tie credit and AP is the exact expectation over random tie-breaking, so the ties do not favour the baseline",
+    "score": "log(total_degree_i) + log(total_degree_j)",
+    "seconds": 6.6
+  },
+  "environment": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.5",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "scipy": "1.18.1"
+  },
+  "errors": {},
+  "geometries": {
+    "anatomical_pca2": {
+      "connection_law": {
+        "P_connect_at_median_positive_distance": 0.7540998643351812,
+        "R": 38607.177368273944,
+        "R_density_matched": -109532.5701747547,
+        "T": 18330.86320682431,
+        "converged": true,
+        "distance_summary": {
+          "median": 31945.67926241331,
+          "median_neg": 62085.00156333884,
+          "median_pos": 18065.624810088404,
+          "p10": 6648.461466767779,
+          "p90": 110991.37876015654
+        },
+        "log_likelihood_mean": -0.46637782408133993,
+        "logit_pi": -8.081438711946658,
+        "n_nonfinite_distance": 0,
+        "n_pairs": 400000,
+        "nll_mean": 0.46637782408133993,
+        "note": "R is the distance at which the balanced 1:1 fit sample is 50/50; the law for a uniformly drawn pair of the real connectome is the same T with R_density_matched = R + T*logit(pi) (exact, by Bayes' rule)",
+        "optimizer": "scipy L-BFGS-B on (R, log T), 31 iterations",
+        "prevalence_pi": 0.0003091302372859114
+      },
+      "fit": {
+        "auc": 0.8519800219352787,
+        "log_likelihood_mean": -0.46637782408133993,
+        "n_neg": 2428328,
+        "n_pos": 2428328
+      },
+      "heldout": {
+        "auc": 0.8511784015408886,
+        "average_precision": 0.8293000347662015,
+        "distance_separation": {
+          "median_neg": 61865.69559936516,
+          "median_pos": 18148.635251221836
+        },
+        "log_likelihood_mean": -0.46706346135231086,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.46706346135231086
+      },
+      "kind": "euclidean",
+      "n_dims": 2,
+      "n_pairs_dropped_nonfinite": {
+        "fit_neg": 0,
+        "fit_pos": 0,
+        "test_neg": 0,
+        "test_pos": 0
+      },
+      "name": "anatomical_pca2",
+      "seconds": 2.7,
+      "with_degree_auxiliary": {
+        "coefficients": {
+          "intercept": -9.942323113742269,
+          "log_degree_sum": 1.6991451593058116,
+          "minus_distance": 8.163747123613755e-05
+        },
+        "converged": true,
+        "heldout": {
+          "auc": 0.9491298272704959,
+          "average_precision": 0.9428256141844407,
+          "log_likelihood_mean": -0.2988371704779717
+        },
+        "n_fit_pairs_used": 300000,
+        "n_neg": 269478,
+        "n_pos": 269478
+      }
+    },
+    "anatomical_xy": {
+      "connection_law": {
+        "P_connect_at_median_positive_distance": 0.7540831886729414,
+        "R": 38603.31202920437,
+        "R_density_matched": -109525.82103053128,
+        "T": 18329.549767018438,
+        "converged": true,
+        "distance_summary": {
+          "median": 31946.314818691735,
+          "median_neg": 62082.47822140771,
+          "median_pos": 18064.87961482898,
+          "p10": 6648.717995866857,
+          "p90": 110984.05688292219
+        },
+        "log_likelihood_mean": -0.46637949629564646,
+        "logit_pi": -8.081438711946658,
+        "n_nonfinite_distance": 0,
+        "n_pairs": 400000,
+        "nll_mean": 0.46637949629564646,
+        "note": "R is the distance at which the balanced 1:1 fit sample is 50/50; the law for a uniformly drawn pair of the real connectome is the same T with R_density_matched = R + T*logit(pi) (exact, by Bayes' rule)",
+        "optimizer": "scipy L-BFGS-B on (R, log T), 32 iterations",
+        "prevalence_pi": 0.0003091302372859114
+      },
+      "fit": {
+        "auc": 0.851977455151963,
+        "log_likelihood_mean": -0.46637949629564646,
+        "n_neg": 2428328,
+        "n_pos": 2428328
+      },
+      "heldout": {
+        "auc": 0.8511756166128135,
+        "average_precision": 0.829297784787827,
+        "distance_separation": {
+          "median_neg": 61861.858681238155,
+          "median_pos": 18147.37770311228
+        },
+        "log_likelihood_mean": -0.4670655821372719,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.4670655821372719
+      },
+      "kind": "euclidean",
+      "n_dims": 2,
+      "n_pairs_dropped_nonfinite": {
+        "fit_neg": 0,
+        "fit_pos": 0,
+        "test_neg": 0,
+        "test_pos": 0
+      },
+      "name": "anatomical_xy",
+      "seconds": 2.8,
+      "with_degree_auxiliary": {
+        "coefficients": {
+          "intercept": -5.863188733748836,
+          "log_degree_sum": 1.1162489347837217,
+          "minus_distance": 6.997291647764027e-05
+        },
+        "converged": true,
+        "heldout": {
+          "auc": 0.950540253837327,
+          "average_precision": 0.9440576112232619,
+          "log_likelihood_mean": -0.28026953825309214
+        },
+        "n_fit_pairs_used": 300000,
+        "n_neg": 269478,
+        "n_pos": 269478
+      }
+    },
+    "anatomical_xyz": {
+      "connection_law": {
+        "P_connect_at_median_positive_distance": 0.7545077611803287,
+        "R": 38674.48736797053,
+        "R_density_matched": -109192.97972594082,
+        "T": 18297.171130596,
+        "converged": true,
+        "distance_summary": {
+          "median": 31992.15964887641,
+          "median_neg": 62119.27547160109,
+          "median_pos": 18130.419382888504,
+          "p10": 6773.61111917202,
+          "p90": 111002.2449295361
+        },
+        "log_likelihood_mean": -0.46620768097916504,
+        "logit_pi": -8.081438711946658,
+        "n_nonfinite_distance": 0,
+        "n_pairs": 400000,
+        "nll_mean": 0.46620768097916504,
+        "note": "R is the distance at which the balanced 1:1 fit sample is 50/50; the law for a uniformly drawn pair of the real connectome is the same T with R_density_matched = R + T*logit(pi) (exact, by Bayes' rule)",
+        "optimizer": "scipy L-BFGS-B on (R, log T), 30 iterations",
+        "prevalence_pi": 0.0003091302372859114
+      },
+      "fit": {
+        "auc": 0.852182970467799,
+        "log_likelihood_mean": -0.46620768097916504,
+        "n_neg": 2428328,
+        "n_pos": 2428328
+      },
+      "heldout": {
+        "auc": 0.851382212145802,
+        "average_precision": 0.8306546309717199,
+        "distance_separation": {
+          "median_neg": 61896.87518710978,
+          "median_pos": 18224.036421709265
+        },
+        "log_likelihood_mean": -0.4668963094936385,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.4668963094936385
+      },
+      "kind": "euclidean",
+      "n_dims": 3,
+      "n_pairs_dropped_nonfinite": {
+        "fit_neg": 0,
+        "fit_pos": 0,
+        "test_neg": 0,
+        "test_pos": 0
+      },
+      "name": "anatomical_xyz",
+      "seconds": 2.9,
+      "with_degree_auxiliary": {
+        "coefficients": {
+          "intercept": -9.91468407244811,
+          "log_degree_sum": 1.6969409973540013,
+          "minus_distance": 8.180440206563356e-05
+        },
+        "converged": true,
+        "heldout": {
+          "auc": 0.9492053388153323,
+          "average_precision": 0.9429188642403418,
+          "log_likelihood_mean": -0.2984932849354721
+        },
+        "n_fit_pairs_used": 300000,
+        "n_neg": 269478,
+        "n_pos": 269478
+      }
+    },
+    "anatomical_xyz_zscored": {
+      "connection_law": {
+        "P_connect_at_median_positive_distance": 0.6940151761375829,
+        "R": 1.7380707374314157,
+        "R_density_matched": -4.453608164482621,
+        "T": 0.7661604724862888,
+        "converged": true,
+        "distance_summary": {
+          "median": 1.7223794135028743,
+          "median_neg": 2.3103950170967567,
+          "median_pos": 1.1106172421952532,
+          "p10": 0.448179573584355,
+          "p90": 3.0969914144307533
+        },
+        "log_likelihood_mean": -0.5467775138130119,
+        "logit_pi": -8.081438711946658,
+        "n_nonfinite_distance": 0,
+        "n_pairs": 400000,
+        "nll_mean": 0.5467775138130119,
+        "note": "R is the distance at which the balanced 1:1 fit sample is 50/50; the law for a uniformly drawn pair of the real connectome is the same T with R_density_matched = R + T*logit(pi) (exact, by Bayes' rule)",
+        "optimizer": "scipy L-BFGS-B on (R, log T), 7 iterations",
+        "prevalence_pi": 0.0003091302372859114
+      },
+      "fit": {
+        "auc": 0.7981756597548666,
+        "log_likelihood_mean": -0.5467775138130119,
+        "n_neg": 2428328,
+        "n_pos": 2428328
+      },
+      "heldout": {
+        "auc": 0.7981223195868726,
+        "average_precision": 0.8026283585163332,
+        "distance_separation": {
+          "median_neg": 2.3066205030723728,
+          "median_pos": 1.1107217980598971
+        },
+        "log_likelihood_mean": -0.5469911971623672,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.5469911971623672
+      },
+      "kind": "euclidean",
+      "n_dims": 3,
+      "n_pairs_dropped_nonfinite": {
+        "fit_neg": 0,
+        "fit_pos": 0,
+        "test_neg": 0,
+        "test_pos": 0
+      },
+      "name": "anatomical_xyz_zscored",
+      "seconds": 1.5,
+      "with_degree_auxiliary": {
+        "coefficients": {
+          "intercept": -5.669919707412021,
+          "log_degree_sum": 1.11317007227692,
+          "minus_distance": 1.578089540885904
+        },
+        "converged": true,
+        "heldout": {
+          "auc": 0.9337447754842537,
+          "average_precision": 0.9297180010579713,
+          "log_likelihood_mean": -0.3277119959547631
+        },
+        "n_fit_pairs_used": 300000,
+        "n_neg": 269478,
+        "n_pos": 269478
+      }
+    },
+    "hyperbolic_2d": {
+      "connection_law": {
+        "P_connect_at_median_positive_distance": 0.7951502753652405,
+        "R": 3.451147899174943,
+        "R_density_matched": -4.451780039250868,
+        "T": 0.977911015614465,
+        "converged": true,
+        "distance_summary": {
+          "median": 3.298017025150028,
+          "median_neg": 5.059056490638508,
+          "median_pos": 2.124851720178534,
+          "p10": 1.0289926284653428,
+          "p90": 6.3589492988990655
+        },
+        "log_likelihood_mean": -0.4324340698890691,
+        "logit_pi": -8.081438711946658,
+        "n_nonfinite_distance": 0,
+        "n_pairs": 400000,
+        "nll_mean": 0.4324340698890691,
+        "note": "R is the distance at which the balanced 1:1 fit sample is 50/50; the law for a uniformly drawn pair of the real connectome is the same T with R_density_matched = R + T*logit(pi) (exact, by Bayes' rule)",
+        "optimizer": "scipy L-BFGS-B on (R, log T), 7 iterations",
+        "prevalence_pi": 0.0003091302372859114
+      },
+      "fit": {
+        "auc": 0.8795683306328819,
+        "log_likelihood_mean": -0.4324340698890691,
+        "n_neg": 2428328,
+        "n_pos": 2428328
+      },
+      "heldout": {
+        "auc": 0.8645541290635546,
+        "average_precision": 0.8375227970384397,
+        "distance_separation": {
+          "median_neg": 5.064946685448884,
+          "median_pos": 2.200768693883524
+        },
+        "log_likelihood_mean": -0.45973845382299383,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.45973845382299383
+      },
+      "kind": "hyperbolic",
+      "n_dims": 2,
+      "n_pairs_dropped_nonfinite": {
+        "fit_neg": 0,
+        "fit_pos": 0,
+        "test_neg": 0,
+        "test_pos": 0
+      },
+      "name": "hyperbolic_2d",
+      "seconds": 1.5,
+      "with_degree_auxiliary": {
+        "coefficients": {
+          "intercept": -2.254064983346241,
+          "log_degree_sum": 0.6340901242732289,
+          "minus_distance": 0.7216749189047127
+        },
+        "converged": true,
+        "heldout": {
+          "auc": 0.9035866117865028,
+          "average_precision": 0.909793505463819,
+          "log_likelihood_mean": -0.39659960940268396
+        },
+        "n_fit_pairs_used": 300000,
+        "n_neg": 269478,
+        "n_pos": 269478
+      }
+    },
+    "spectral_16": {
+      "connection_law": {
+        "P_connect_at_median_positive_distance": 0.8200949444241324,
+        "R": 0.00039911194275064,
+        "R_density_matched": -0.0013393036585225087,
+        "T": 0.00021511214317610023,
+        "converged": true,
+        "distance_summary": {
+          "median": 0.0002057906918616783,
+          "median_neg": 0.0010651072296860437,
+          "median_pos": 7.278878407818742e-05,
+          "p10": 2.3674991110666218e-05,
+          "p90": 0.0014102040116947682
+        },
+        "log_likelihood_mean": -0.37880489976134557,
+        "logit_pi": -8.081438711946658,
+        "n_nonfinite_distance": 0,
+        "n_pairs": 400000,
+        "nll_mean": 0.38321718488419204,
+        "note": "R is the distance at which the balanced 1:1 fit sample is 50/50; the law for a uniformly drawn pair of the real connectome is the same T with R_density_matched = R + T*logit(pi) (exact, by Bayes' rule)",
+        "optimizer": "scipy L-BFGS-B on (R, log T), 16 iterations",
+        "prevalence_pi": 0.0003091302372859114
+      },
+      "fit": {
+        "auc": 0.8891231254629678,
+        "log_likelihood_mean": -0.37880489976134557,
+        "n_neg": 2428328,
+        "n_pos": 2428328
+      },
+      "heldout": {
+        "auc": 0.8843912013151525,
+        "average_precision": 0.8444936129336844,
+        "distance_separation": {
+          "median_neg": 0.0010596901796718055,
+          "median_pos": 7.65048521583312e-05
+        },
+        "log_likelihood_mean": -0.38661633244438814,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.38661633244438814
+      },
+      "kind": "euclidean",
+      "n_dims": 16,
+      "n_pairs_dropped_nonfinite": {
+        "fit_neg": 0,
+        "fit_pos": 0,
+        "test_neg": 0,
+        "test_pos": 0
+      },
+      "name": "spectral_16",
+      "seconds": 2.3,
+      "with_degree_auxiliary": {
+        "coefficients": {
+          "intercept": -5.941763449332346,
+          "log_degree_sum": 1.0634309754574915,
+          "minus_distance": 5553.515415087982
+        },
+        "converged": true,
+        "heldout": {
+          "auc": 0.963506552743041,
+          "average_precision": 0.9604945852825769,
+          "log_likelihood_mean": -0.24567493777465615
+        },
+        "n_fit_pairs_used": 300000,
+        "n_neg": 269478,
+        "n_pos": 269478
+      }
+    },
+    "spectral_32": {
+      "connection_law": {
+        "P_connect_at_median_positive_distance": 0.9245812247395212,
+        "R": 0.0009147718131019497,
+        "R_density_matched": -0.0011295367963760651,
+        "T": 0.00025296344900270626,
+        "converged": true,
+        "distance_summary": {
+          "median": 0.0007951110360536195,
+          "median_neg": 0.0017886516343745959,
+          "median_pos": 0.00028077340329588367,
+          "p10": 0.00013212014073481129,
+          "p90": 0.0023694792561714207
+        },
+        "log_likelihood_mean": -0.2722755591458115,
+        "logit_pi": -8.081438711946658,
+        "n_nonfinite_distance": 0,
+        "n_pairs": 400000,
+        "nll_mean": 0.2878662255852091,
+        "note": "R is the distance at which the balanced 1:1 fit sample is 50/50; the law for a uniformly drawn pair of the real connectome is the same T with R_density_matched = R + T*logit(pi) (exact, by Bayes' rule)",
+        "optimizer": "scipy L-BFGS-B on (R, log T), 18 iterations",
+        "prevalence_pi": 0.0003091302372859114
+      },
+      "fit": {
+        "auc": 0.956035818577191,
+        "log_likelihood_mean": -0.2722755591458115,
+        "n_neg": 2428328,
+        "n_pos": 2428328
+      },
+      "heldout": {
+        "auc": 0.9518708696385689,
+        "average_precision": 0.9451895251954966,
+        "distance_separation": {
+          "median_neg": 0.0017907282855373309,
+          "median_pos": 0.00029679936778458007
+        },
+        "log_likelihood_mean": -0.286813044968313,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.286813044968313
+      },
+      "kind": "euclidean",
+      "n_dims": 32,
+      "n_pairs_dropped_nonfinite": {
+        "fit_neg": 0,
+        "fit_pos": 0,
+        "test_neg": 0,
+        "test_pos": 0
+      },
+      "name": "spectral_32",
+      "seconds": 3.0,
+      "with_degree_auxiliary": {
+        "coefficients": {
+          "intercept": -3.8581195236334773,
+          "log_degree_sum": 0.9973548745693669,
+          "minus_distance": 4201.495160828324
+        },
+        "converged": true,
+        "heldout": {
+          "auc": 0.9774274881895636,
+          "average_precision": 0.9766565647582681,
+          "log_likelihood_mean": -0.19819552013578667
+        },
+        "n_fit_pairs_used": 300000,
+        "n_neg": 269478,
+        "n_pos": 269478
+      }
+    }
+  },
+  "geometry_attributes": {
+    "anatomical": {
+      "axis_range_nm": [
+        [
+          21906.0,
+          225720.0
+        ],
+        [
+          12840.0,
+          110722.0
+        ],
+        [
+          16.0,
+          6968.0
+        ]
+      ],
+      "axis_std_nm": [
+        55118.01734613916,
+        17986.28396102825,
+        1350.6298555676024
+      ],
+      "columns": [
+        "pos_x",
+        "pos_y",
+        "pos_z"
+      ],
+      "note": "as published in the Schlegel et al. 2024 annotation table, in nm; the z axis spans far less than x/y, so anatomical_xyz_zscored and anatomical_pca2 are reported as unit-sensitivity auxiliaries",
+      "pca_explained_variance_ratio": [
+        0.9036046374054103,
+        0.09589729816707233,
+        0.0004980644275174493
+      ]
+    },
+    "hyperbolic_2d": {
+      "R": 3.65389398679422,
+      "T": 0.7291759656682939,
+      "dim": 2,
+      "history": [
+        {
+          "R": 1.2360916060086231,
+          "T": 0.6757859647515403,
+          "epoch": 1,
+          "finite": true,
+          "in_sample_auc": 0.7126309528,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 8.2,
+          "train_nll_mean": 0.6181383453102567
+        },
+        {
+          "R": 1.301056688822486,
+          "T": 0.5131943971783124,
+          "epoch": 2,
+          "finite": true,
+          "in_sample_auc": 0.8018510326,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 13.1,
+          "train_nll_mean": 0.5379758549403594
+        },
+        {
+          "R": 1.4938739436655266,
+          "T": 0.5419836419334005,
+          "epoch": 3,
+          "finite": true,
+          "in_sample_auc": 0.8101026257,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 18.3,
+          "train_nll_mean": 0.528206742306545
+        },
+        {
+          "R": 1.5921571256573657,
+          "T": 0.5416475975300388,
+          "epoch": 4,
+          "finite": true,
+          "in_sample_auc": 0.8331288782,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 29.3,
+          "train_nll_mean": 0.5015121700526224
+        },
+        {
+          "R": 1.6824347843794243,
+          "T": 0.5492067038975592,
+          "epoch": 5,
+          "finite": true,
+          "in_sample_auc": 0.8452593313,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 38.1,
+          "train_nll_mean": 0.48644617047600247
+        },
+        {
+          "R": 1.753378681545151,
+          "T": 0.5541567947158341,
+          "epoch": 6,
+          "finite": true,
+          "in_sample_auc": 0.854290181,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 47.9,
+          "train_nll_mean": 0.4741059163137495
+        },
+        {
+          "R": 1.816587120293237,
+          "T": 0.5589075872313972,
+          "epoch": 7,
+          "finite": true,
+          "in_sample_auc": 0.8613419856,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 57.0,
+          "train_nll_mean": 0.4634783851174559
+        },
+        {
+          "R": 1.8708603418121441,
+          "T": 0.5613458570851743,
+          "epoch": 8,
+          "finite": true,
+          "in_sample_auc": 0.8667259261,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 64.6,
+          "train_nll_mean": 0.4552697117218105
+        },
+        {
+          "R": 1.9235036898398363,
+          "T": 0.5658334536490021,
+          "epoch": 9,
+          "finite": true,
+          "in_sample_auc": 0.8714458935,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 72.2,
+          "train_nll_mean": 0.44825341097699667
+        },
+        {
+          "R": 1.9668917502086496,
+          "T": 0.5702093487340733,
+          "epoch": 10,
+          "finite": true,
+          "in_sample_auc": 0.8751266091,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 78.7,
+          "train_nll_mean": 0.44247777910801267
+        },
+        {
+          "R": 2.013342719813705,
+          "T": 0.5764880527174912,
+          "epoch": 11,
+          "finite": true,
+          "in_sample_auc": 0.8786987436,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 82.7,
+          "train_nll_mean": 0.4380198707355956
+        },
+        {
+          "R": 2.0514312597136133,
+          "T": 0.5779791407331334,
+          "epoch": 12,
+          "finite": true,
+          "in_sample_auc": 0.881697132,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 86.1,
+          "train_nll_mean": 0.43270713540691286
+        },
+        {
+          "R": 2.0862010944257805,
+          "T": 0.5803284806367681,
+          "epoch": 13,
+          "finite": true,
+          "in_sample_auc": 0.8842095616,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 89.0,
+          "train_nll_mean": 0.42825287238977006
+        },
+        {
+          "R": 2.122737120598753,
+          "T": 0.5842071809344032,
+          "epoch": 14,
+          "finite": true,
+          "in_sample_auc": 0.8866211611,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 92.1,
+          "train_nll_mean": 0.4245203726120316
+        },
+        {
+          "R": 2.154699357840354,
+          "T": 0.5878883312554907,
+          "epoch": 15,
+          "finite": true,
+          "in_sample_auc": 0.888602653,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 95.4,
+          "train_nll_mean": 0.42133009218002393
+        },
+        {
+          "R": 2.189010472218273,
+          "T": 0.5894327121021986,
+          "epoch": 16,
+          "finite": true,
+          "in_sample_auc": 0.8906141417,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 98.6,
+          "train_nll_mean": 0.41691927930988487
+        },
+        {
+          "R": 2.220784089626564,
+          "T": 0.5931479255666031,
+          "epoch": 17,
+          "finite": true,
+          "in_sample_auc": 0.8924657165,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 101.5,
+          "train_nll_mean": 0.4142506956750397
+        },
+        {
+          "R": 2.2488231890138475,
+          "T": 0.5956750839703139,
+          "epoch": 18,
+          "finite": true,
+          "in_sample_auc": 0.8940365115,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 104.7,
+          "train_nll_mean": 0.41209499698760543
+        },
+        {
+          "R": 2.2786511556859725,
+          "T": 0.5955268115264974,
+          "epoch": 19,
+          "finite": true,
+          "in_sample_auc": 0.8956979308,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 107.1,
+          "train_nll_mean": 0.40698537525927425
+        },
+        {
+          "R": 2.3061537041448457,
+          "T": 0.5975094900019996,
+          "epoch": 20,
+          "finite": true,
+          "in_sample_auc": 0.8974320678,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 109.5,
+          "train_nll_mean": 0.4048230983230555
+        },
+        {
+          "R": 2.3331355155525193,
+          "T": 0.6019425594662098,
+          "epoch": 21,
+          "finite": true,
+          "in_sample_auc": 0.898422624,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 112.1,
+          "train_nll_mean": 0.4039610303510235
+        },
+        {
+          "R": 2.3563331905087437,
+          "T": 0.6007750871982629,
+          "epoch": 22,
+          "finite": true,
+          "in_sample_auc": 0.8997850351,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 116.0,
+          "train_nll_mean": 0.3993093281696082
+        },
+        {
+          "R": 2.3831299169682856,
+          "T": 0.6030216257249864,
+          "epoch": 23,
+          "finite": true,
+          "in_sample_auc": 0.9008521407,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 121.7,
+          "train_nll_mean": 0.39702050775637365
+        },
+        {
+          "R": 2.408193692432842,
+          "T": 0.6086855089898933,
+          "epoch": 24,
+          "finite": true,
+          "in_sample_auc": 0.9021147094,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 129.4,
+          "train_nll_mean": 0.3963335517107512
+        },
+        {
+          "R": 2.433986528702252,
+          "T": 0.6125396469420584,
+          "epoch": 25,
+          "finite": true,
+          "in_sample_auc": 0.9032655405,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 137.4,
+          "train_nll_mean": 0.3958041246195411
+        },
+        {
+          "R": 2.4603908707741993,
+          "T": 0.6161423290100155,
+          "epoch": 26,
+          "finite": true,
+          "in_sample_auc": 0.9042193628,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 141.1,
+          "train_nll_mean": 0.39371256688295425
+        },
+        {
+          "R": 2.4856194763282944,
+          "T": 0.61469864326834,
+          "epoch": 27,
+          "finite": true,
+          "in_sample_auc": 0.9050847361,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 143.9,
+          "train_nll_mean": 0.3903530118234248
+        },
+        {
+          "R": 2.507750824920074,
+          "T": 0.6153815713900093,
+          "epoch": 28,
+          "finite": true,
+          "in_sample_auc": 0.906012341,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 146.7,
+          "train_nll_mean": 0.3881645982270146
+        },
+        {
+          "R": 2.530808665642892,
+          "T": 0.6192859726665745,
+          "epoch": 29,
+          "finite": true,
+          "in_sample_auc": 0.9065094376,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 149.5,
+          "train_nll_mean": 0.38745461476091375
+        },
+        {
+          "R": 2.551891547163305,
+          "T": 0.6216116332492874,
+          "epoch": 30,
+          "finite": true,
+          "in_sample_auc": 0.9076660188,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 152.7,
+          "train_nll_mean": 0.386015364322588
+        },
+        {
+          "R": 2.571676517140292,
+          "T": 0.6240227566315509,
+          "epoch": 31,
+          "finite": true,
+          "in_sample_auc": 0.9083745129,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 155.6,
+          "train_nll_mean": 0.3846632267106232
+        },
+        {
+          "R": 2.592837504263238,
+          "T": 0.6246113079677783,
+          "epoch": 32,
+          "finite": true,
+          "in_sample_auc": 0.9091321087,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 158.4,
+          "train_nll_mean": 0.38354271442443605
+        },
+        {
+          "R": 2.6157071318779628,
+          "T": 0.6288312075011693,
+          "epoch": 33,
+          "finite": true,
+          "in_sample_auc": 0.9099380208,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 161.2,
+          "train_nll_mean": 0.3819491387235077
+        },
+        {
+          "R": 2.633055110168126,
+          "T": 0.6278550401312387,
+          "epoch": 34,
+          "finite": true,
+          "in_sample_auc": 0.9104232144,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 164.1,
+          "train_nll_mean": 0.37994134869921
+        },
+        {
+          "R": 2.6556599812293173,
+          "T": 0.6274643696412088,
+          "epoch": 35,
+          "finite": true,
+          "in_sample_auc": 0.9112429461,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 167.4,
+          "train_nll_mean": 0.3775502061950774
+        },
+        {
+          "R": 2.6767593017082922,
+          "T": 0.6319472490451787,
+          "epoch": 36,
+          "finite": true,
+          "in_sample_auc": 0.9118179935,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 170.0,
+          "train_nll_mean": 0.3767512537137305
+        },
+        {
+          "R": 2.695775439031375,
+          "T": 0.6321961201190744,
+          "epoch": 37,
+          "finite": true,
+          "in_sample_auc": 0.9122918363,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 173.0,
+          "train_nll_mean": 0.37563225780016
+        },
+        {
+          "R": 2.7171460872323627,
+          "T": 0.6340189470496126,
+          "epoch": 38,
+          "finite": true,
+          "in_sample_auc": 0.912903353,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 176.3,
+          "train_nll_mean": 0.37410258902083954
+        },
+        {
+          "R": 2.7362816485153285,
+          "T": 0.6363908434937384,
+          "epoch": 39,
+          "finite": true,
+          "in_sample_auc": 0.9136194008,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 179.8,
+          "train_nll_mean": 0.3741434513438581
+        },
+        {
+          "R": 2.751682100590557,
+          "T": 0.6414013780275932,
+          "epoch": 40,
+          "finite": true,
+          "in_sample_auc": 0.9140426854,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 182.5,
+          "train_nll_mean": 0.3744882821755837
+        },
+        {
+          "R": 2.7748621385481127,
+          "T": 0.641375131611429,
+          "epoch": 41,
+          "finite": true,
+          "in_sample_auc": 0.9145409492,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 185.3,
+          "train_nll_mean": 0.37217982746801986
+        },
+        {
+          "R": 2.7940937920298885,
+          "T": 0.6444544284160573,
+          "epoch": 42,
+          "finite": true,
+          "in_sample_auc": 0.9149878206,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 188.0,
+          "train_nll_mean": 0.3718559858462584
+        },
+        {
+          "R": 2.8150665014664544,
+          "T": 0.6419878816269111,
+          "epoch": 43,
+          "finite": true,
+          "in_sample_auc": 0.9153363631,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 190.7,
+          "train_nll_mean": 0.3689466061479224
+        },
+        {
+          "R": 2.8325535843449496,
+          "T": 0.6437396747516352,
+          "epoch": 44,
+          "finite": true,
+          "in_sample_auc": 0.9158640209,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 193.4,
+          "train_nll_mean": 0.3683899940180692
+        },
+        {
+          "R": 2.8535517212005814,
+          "T": 0.6490707738245001,
+          "epoch": 45,
+          "finite": true,
+          "in_sample_auc": 0.9163152141,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 196.9,
+          "train_nll_mean": 0.3687147392302308
+        },
+        {
+          "R": 2.872728880869471,
+          "T": 0.6484555229616529,
+          "epoch": 46,
+          "finite": true,
+          "in_sample_auc": 0.9166742571,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 200.5,
+          "train_nll_mean": 0.3669552607873678
+        },
+        {
+          "R": 2.8887899154217647,
+          "T": 0.6524889481730507,
+          "epoch": 47,
+          "finite": true,
+          "in_sample_auc": 0.9170782102,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 204.0,
+          "train_nll_mean": 0.3670842438135024
+        },
+        {
+          "R": 2.908942875703075,
+          "T": 0.6509208098934973,
+          "epoch": 48,
+          "finite": true,
+          "in_sample_auc": 0.9174071225,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 207.2,
+          "train_nll_mean": 0.3657305607493401
+        },
+        {
+          "R": 2.9286523027878304,
+          "T": 0.6530023404657814,
+          "epoch": 49,
+          "finite": true,
+          "in_sample_auc": 0.9178804179,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 210.6,
+          "train_nll_mean": 0.3642401385357298
+        },
+        {
+          "R": 2.9458233254116193,
+          "T": 0.6572556059972359,
+          "epoch": 50,
+          "finite": true,
+          "in_sample_auc": 0.9181405104,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 214.0,
+          "train_nll_mean": 0.36520501492099305
+        },
+        {
+          "R": 2.9651564480213106,
+          "T": 0.6578390382414316,
+          "epoch": 51,
+          "finite": true,
+          "in_sample_auc": 0.9184788491,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 217.2,
+          "train_nll_mean": 0.3636391633485854
+        },
+        {
+          "R": 2.984081773072448,
+          "T": 0.6588435592864961,
+          "epoch": 52,
+          "finite": true,
+          "in_sample_auc": 0.9187613817,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 220.4,
+          "train_nll_mean": 0.36277702348767443
+        },
+        {
+          "R": 3.003146350940427,
+          "T": 0.6640707963723442,
+          "epoch": 53,
+          "finite": true,
+          "in_sample_auc": 0.9190240013,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 223.9,
+          "train_nll_mean": 0.36376084128756075
+        },
+        {
+          "R": 3.017577899769346,
+          "T": 0.6618985891775226,
+          "epoch": 54,
+          "finite": true,
+          "in_sample_auc": 0.9193932336,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 227.4,
+          "train_nll_mean": 0.3616455637027377
+        },
+        {
+          "R": 3.035630357535354,
+          "T": 0.6696916641281706,
+          "epoch": 55,
+          "finite": true,
+          "in_sample_auc": 0.9195362643,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 230.8,
+          "train_nll_mean": 0.3632365971701869
+        },
+        {
+          "R": 3.0504881286627077,
+          "T": 0.6653310977107074,
+          "epoch": 56,
+          "finite": true,
+          "in_sample_auc": 0.9199345342,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 234.5,
+          "train_nll_mean": 0.36072387442527265
+        },
+        {
+          "R": 3.066570343012597,
+          "T": 0.668267555230859,
+          "epoch": 57,
+          "finite": true,
+          "in_sample_auc": 0.9200803778,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 242.0,
+          "train_nll_mean": 0.36021695185934904
+        },
+        {
+          "R": 3.086040716844761,
+          "T": 0.6674486034869715,
+          "epoch": 58,
+          "finite": true,
+          "in_sample_auc": 0.9202823344,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 249.7,
+          "train_nll_mean": 0.3595571050612601
+        },
+        {
+          "R": 3.1007986315347917,
+          "T": 0.6706109454577543,
+          "epoch": 59,
+          "finite": true,
+          "in_sample_auc": 0.9205703475,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 253.2,
+          "train_nll_mean": 0.35902535360309584
+        },
+        {
+          "R": 3.1218248664327852,
+          "T": 0.6741194603577394,
+          "epoch": 60,
+          "finite": true,
+          "in_sample_auc": 0.92080658,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 257.1,
+          "train_nll_mean": 0.3590227916439455
+        },
+        {
+          "R": 3.133268314947129,
+          "T": 0.6748570807295505,
+          "epoch": 61,
+          "finite": true,
+          "in_sample_auc": 0.9209592586,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 260.4,
+          "train_nll_mean": 0.35815122567649865
+        },
+        {
+          "R": 3.150043006252153,
+          "T": 0.6753001784589421,
+          "epoch": 62,
+          "finite": true,
+          "in_sample_auc": 0.9212896364,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 264.3,
+          "train_nll_mean": 0.35720555948818206
+        },
+        {
+          "R": 3.1651145154402514,
+          "T": 0.6777308109000512,
+          "epoch": 63,
+          "finite": true,
+          "in_sample_auc": 0.9214377206,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 267.6,
+          "train_nll_mean": 0.3573772722557906
+        },
+        {
+          "R": 3.1817509604634235,
+          "T": 0.6756548274601828,
+          "epoch": 64,
+          "finite": true,
+          "in_sample_auc": 0.9216903119,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 271.9,
+          "train_nll_mean": 0.3553324455498159
+        },
+        {
+          "R": 3.2002786740820137,
+          "T": 0.6800918534612836,
+          "epoch": 65,
+          "finite": true,
+          "in_sample_auc": 0.9219421234,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 279.1,
+          "train_nll_mean": 0.3567491259371797
+        },
+        {
+          "R": 3.210869503042773,
+          "T": 0.682112178338023,
+          "epoch": 66,
+          "finite": true,
+          "in_sample_auc": 0.9220953866,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 286.4,
+          "train_nll_mean": 0.3562961373982324
+        },
+        {
+          "R": 3.2319056277432883,
+          "T": 0.6838767401629752,
+          "epoch": 67,
+          "finite": true,
+          "in_sample_auc": 0.9222908151,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 289.8,
+          "train_nll_mean": 0.3555782827025915
+        },
+        {
+          "R": 3.247014529858945,
+          "T": 0.6857815169088116,
+          "epoch": 68,
+          "finite": true,
+          "in_sample_auc": 0.9224811361,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 292.3,
+          "train_nll_mean": 0.354727957342741
+        },
+        {
+          "R": 3.262454733059948,
+          "T": 0.6883210504183566,
+          "epoch": 69,
+          "finite": true,
+          "in_sample_auc": 0.9225993709,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 294.8,
+          "train_nll_mean": 0.35506315380340064
+        },
+        {
+          "R": 3.2798644032961612,
+          "T": 0.6884934737857537,
+          "epoch": 70,
+          "finite": true,
+          "in_sample_auc": 0.9227447002,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 297.3,
+          "train_nll_mean": 0.35458356095528404
+        },
+        {
+          "R": 3.296145650552864,
+          "T": 0.6904787691643123,
+          "epoch": 71,
+          "finite": true,
+          "in_sample_auc": 0.9229266898,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 299.8,
+          "train_nll_mean": 0.35373719670591963
+        },
+        {
+          "R": 3.311258408829275,
+          "T": 0.6924793830286801,
+          "epoch": 72,
+          "finite": true,
+          "in_sample_auc": 0.9231816042,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 302.4,
+          "train_nll_mean": 0.35412327538539556
+        },
+        {
+          "R": 3.3242094450635573,
+          "T": 0.6958889554891725,
+          "epoch": 73,
+          "finite": true,
+          "in_sample_auc": 0.923315054,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 305.3,
+          "train_nll_mean": 0.3545510564438023
+        },
+        {
+          "R": 3.339626668981035,
+          "T": 0.6959440045749035,
+          "epoch": 74,
+          "finite": true,
+          "in_sample_auc": 0.9234516803,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 307.8,
+          "train_nll_mean": 0.35352488861816544
+        },
+        {
+          "R": 3.3554162200840447,
+          "T": 0.6972182783509898,
+          "epoch": 75,
+          "finite": true,
+          "in_sample_auc": 0.9235980636,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 310.3,
+          "train_nll_mean": 0.3523143394454548
+        },
+        {
+          "R": 3.368665789869234,
+          "T": 0.6956346479821913,
+          "epoch": 76,
+          "finite": true,
+          "in_sample_auc": 0.9237348163,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 312.9,
+          "train_nll_mean": 0.351904416572779
+        },
+        {
+          "R": 3.3805931123969515,
+          "T": 0.6985491546304148,
+          "epoch": 77,
+          "finite": true,
+          "in_sample_auc": 0.9238200692,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 315.2,
+          "train_nll_mean": 0.35224443985018866
+        },
+        {
+          "R": 3.3961689635174164,
+          "T": 0.700915811374623,
+          "epoch": 78,
+          "finite": true,
+          "in_sample_auc": 0.9240637639,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 318.1,
+          "train_nll_mean": 0.3515837484732225
+        },
+        {
+          "R": 3.4108192820088736,
+          "T": 0.6968837685263439,
+          "epoch": 79,
+          "finite": true,
+          "in_sample_auc": 0.9241920981,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 322.0,
+          "train_nll_mean": 0.34963155682928904
+        },
+        {
+          "R": 3.4247725119492216,
+          "T": 0.7004301066134395,
+          "epoch": 80,
+          "finite": true,
+          "in_sample_auc": 0.9243079077,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 325.2,
+          "train_nll_mean": 0.35003567576093897
+        },
+        {
+          "R": 3.44243935005539,
+          "T": 0.7049123680605391,
+          "epoch": 81,
+          "finite": true,
+          "in_sample_auc": 0.9244893047,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 328.0,
+          "train_nll_mean": 0.3512905918474419
+        },
+        {
+          "R": 3.455902148606243,
+          "T": 0.7029211601632698,
+          "epoch": 82,
+          "finite": true,
+          "in_sample_auc": 0.9245457579,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 331.8,
+          "train_nll_mean": 0.34890793319969
+        },
+        {
+          "R": 3.4716216827103916,
+          "T": 0.7084835492912064,
+          "epoch": 83,
+          "finite": true,
+          "in_sample_auc": 0.9246406737,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 335.1,
+          "train_nll_mean": 0.35105664061884423
+        },
+        {
+          "R": 3.4840402788350473,
+          "T": 0.7067684197270728,
+          "epoch": 84,
+          "finite": true,
+          "in_sample_auc": 0.9247456456,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 338.7,
+          "train_nll_mean": 0.3484733397199666
+        },
+        {
+          "R": 3.501262894976108,
+          "T": 0.7095753327256485,
+          "epoch": 85,
+          "finite": true,
+          "in_sample_auc": 0.9247987332,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 342.0,
+          "train_nll_mean": 0.3494381044927689
+        },
+        {
+          "R": 3.5128593005961317,
+          "T": 0.7121077035782106,
+          "epoch": 86,
+          "finite": true,
+          "in_sample_auc": 0.9249497578,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 345.5,
+          "train_nll_mean": 0.34948311603577314
+        },
+        {
+          "R": 3.523956887854296,
+          "T": 0.711133648493173,
+          "epoch": 87,
+          "finite": true,
+          "in_sample_auc": 0.9251167664,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 349.1,
+          "train_nll_mean": 0.3490380875527559
+        },
+        {
+          "R": 3.540061756972365,
+          "T": 0.7164925026021672,
+          "epoch": 88,
+          "finite": true,
+          "in_sample_auc": 0.925220045,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 352.4,
+          "train_nll_mean": 0.3494382010532524
+        },
+        {
+          "R": 3.550525694283779,
+          "T": 0.7157213532894192,
+          "epoch": 89,
+          "finite": true,
+          "in_sample_auc": 0.9253921809,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 356.1,
+          "train_nll_mean": 0.3488783454668822
+        },
+        {
+          "R": 3.568754048235648,
+          "T": 0.7220162593739416,
+          "epoch": 90,
+          "finite": true,
+          "in_sample_auc": 0.9255124244,
+          "law_refit_ok": true,
+          "lr": 0.05,
+          "seconds": 359.4,
+          "train_nll_mean": 0.3503616869890917
+        },
+        {
+          "R": 3.5550074094330424,
+          "T": 0.7121734906587222,
+          "epoch": 91,
+          "finite": true,
+          "in_sample_auc": 0.9263798365,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 363.1,
+          "train_nll_mean": 0.3456772011921521
+        },
+        {
+          "R": 3.5510981174375256,
+          "T": 0.7127828462129968,
+          "epoch": 92,
+          "finite": true,
+          "in_sample_auc": 0.926528395,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 366.2,
+          "train_nll_mean": 0.34532648017406536
+        },
+        {
+          "R": 3.543544160387837,
+          "T": 0.7118417358234564,
+          "epoch": 93,
+          "finite": true,
+          "in_sample_auc": 0.9266757627,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 369.5,
+          "train_nll_mean": 0.3437806967739857
+        },
+        {
+          "R": 3.548961152656721,
+          "T": 0.7147800971383259,
+          "epoch": 94,
+          "finite": true,
+          "in_sample_auc": 0.9267848675,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 372.7,
+          "train_nll_mean": 0.3452348698495218
+        },
+        {
+          "R": 3.5472449507305592,
+          "T": 0.7145321270420293,
+          "epoch": 95,
+          "finite": true,
+          "in_sample_auc": 0.9268790536,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 375.8,
+          "train_nll_mean": 0.345420037640947
+        },
+        {
+          "R": 3.5504241658948157,
+          "T": 0.7170180097398462,
+          "epoch": 96,
+          "finite": true,
+          "in_sample_auc": 0.926978661,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 379.5,
+          "train_nll_mean": 0.34624783674273657
+        },
+        {
+          "R": 3.548211333508276,
+          "T": 0.7152883692821816,
+          "epoch": 97,
+          "finite": true,
+          "in_sample_auc": 0.9270396484,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 382.6,
+          "train_nll_mean": 0.34458800616812424
+        },
+        {
+          "R": 3.5472809529525815,
+          "T": 0.7167199358483233,
+          "epoch": 98,
+          "finite": true,
+          "in_sample_auc": 0.9271002812,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 386.1,
+          "train_nll_mean": 0.34576382575190445
+        },
+        {
+          "R": 3.5519881164897633,
+          "T": 0.7146220503526908,
+          "epoch": 99,
+          "finite": true,
+          "in_sample_auc": 0.927202486,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 389.5,
+          "train_nll_mean": 0.3442941122584835
+        },
+        {
+          "R": 3.5525544138227736,
+          "T": 0.71519439759145,
+          "epoch": 100,
+          "finite": true,
+          "in_sample_auc": 0.9272433334,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 393.3,
+          "train_nll_mean": 0.3439844987197224
+        },
+        {
+          "R": 3.556251474734808,
+          "T": 0.7180423864903294,
+          "epoch": 101,
+          "finite": true,
+          "in_sample_auc": 0.9273295228,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 396.9,
+          "train_nll_mean": 0.3444605932064369
+        },
+        {
+          "R": 3.558000279722551,
+          "T": 0.7173595368022027,
+          "epoch": 102,
+          "finite": true,
+          "in_sample_auc": 0.927361886,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 400.5,
+          "train_nll_mean": 0.3446680382451954
+        },
+        {
+          "R": 3.561521258907632,
+          "T": 0.7189430109897518,
+          "epoch": 103,
+          "finite": true,
+          "in_sample_auc": 0.9274100356,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 404.0,
+          "train_nll_mean": 0.34519756732200535
+        },
+        {
+          "R": 3.5646818608444915,
+          "T": 0.7162161377850751,
+          "epoch": 104,
+          "finite": true,
+          "in_sample_auc": 0.9275249756,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 408.1,
+          "train_nll_mean": 0.34362029665484023
+        },
+        {
+          "R": 3.5624503459570427,
+          "T": 0.7187618629747666,
+          "epoch": 105,
+          "finite": true,
+          "in_sample_auc": 0.9275512742,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 411.7,
+          "train_nll_mean": 0.3440842145961153
+        },
+        {
+          "R": 3.5713278693630177,
+          "T": 0.718485889216671,
+          "epoch": 106,
+          "finite": true,
+          "in_sample_auc": 0.9276232554,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 415.3,
+          "train_nll_mean": 0.3433961868628016
+        },
+        {
+          "R": 3.576824942435682,
+          "T": 0.7226676549153341,
+          "epoch": 107,
+          "finite": true,
+          "in_sample_auc": 0.9276647277,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 419.0,
+          "train_nll_mean": 0.34548465672348916
+        },
+        {
+          "R": 3.5815375345173166,
+          "T": 0.7199953239815132,
+          "epoch": 108,
+          "finite": true,
+          "in_sample_auc": 0.9277124859,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 423.0,
+          "train_nll_mean": 0.3439697217260901
+        },
+        {
+          "R": 3.5833120586864706,
+          "T": 0.7150020190079172,
+          "epoch": 109,
+          "finite": true,
+          "in_sample_auc": 0.9277582434,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 426.8,
+          "train_nll_mean": 0.34157174672773677
+        },
+        {
+          "R": 3.582122493993263,
+          "T": 0.7175661613616442,
+          "epoch": 110,
+          "finite": true,
+          "in_sample_auc": 0.9277765617,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 430.2,
+          "train_nll_mean": 0.3424827963811167
+        },
+        {
+          "R": 3.5894471662002343,
+          "T": 0.719210490390248,
+          "epoch": 111,
+          "finite": true,
+          "in_sample_auc": 0.9278721235,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 433.9,
+          "train_nll_mean": 0.3426593380540041
+        },
+        {
+          "R": 3.5875980514914785,
+          "T": 0.7201132851290885,
+          "epoch": 112,
+          "finite": true,
+          "in_sample_auc": 0.9278847567,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 437.6,
+          "train_nll_mean": 0.3426677030190159
+        },
+        {
+          "R": 3.5920309456954276,
+          "T": 0.7158612596748806,
+          "epoch": 113,
+          "finite": true,
+          "in_sample_auc": 0.9279613836,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 441.4,
+          "train_nll_mean": 0.340988481013431
+        },
+        {
+          "R": 3.601536708871759,
+          "T": 0.7204041292878831,
+          "epoch": 114,
+          "finite": true,
+          "in_sample_auc": 0.9280035604,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 445.3,
+          "train_nll_mean": 0.3431908872341042
+        },
+        {
+          "R": 3.6035416080175238,
+          "T": 0.7203030724694051,
+          "epoch": 115,
+          "finite": true,
+          "in_sample_auc": 0.9280660598,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 449.0,
+          "train_nll_mean": 0.34219029368258835
+        },
+        {
+          "R": 3.6066941869266604,
+          "T": 0.7196536912723578,
+          "epoch": 116,
+          "finite": true,
+          "in_sample_auc": 0.9280836078,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 452.3,
+          "train_nll_mean": 0.3419598662561993
+        },
+        {
+          "R": 3.6058716781602675,
+          "T": 0.720368697858024,
+          "epoch": 117,
+          "finite": true,
+          "in_sample_auc": 0.9281071248,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 455.6,
+          "train_nll_mean": 0.3418420383977273
+        },
+        {
+          "R": 3.6134517890772995,
+          "T": 0.7208922961902572,
+          "epoch": 118,
+          "finite": true,
+          "in_sample_auc": 0.9282075453,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 458.6,
+          "train_nll_mean": 0.3416996041834597
+        },
+        {
+          "R": 3.6164454338965712,
+          "T": 0.7234080434332923,
+          "epoch": 119,
+          "finite": true,
+          "in_sample_auc": 0.9282683653,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 462.1,
+          "train_nll_mean": 0.3431012404863289
+        },
+        {
+          "R": 3.6207998089014213,
+          "T": 0.7228677937206403,
+          "epoch": 120,
+          "finite": true,
+          "in_sample_auc": 0.9283183915,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 465.8,
+          "train_nll_mean": 0.3418074419080047
+        },
+        {
+          "R": 3.6250339793146984,
+          "T": 0.7214177463030419,
+          "epoch": 121,
+          "finite": true,
+          "in_sample_auc": 0.928302308,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 469.0,
+          "train_nll_mean": 0.3417520042243699
+        },
+        {
+          "R": 3.630328737048415,
+          "T": 0.721304085820185,
+          "epoch": 122,
+          "finite": true,
+          "in_sample_auc": 0.9283784287,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 472.8,
+          "train_nll_mean": 0.34079954188686823
+        },
+        {
+          "R": 3.631776883406748,
+          "T": 0.7219462313069978,
+          "epoch": 123,
+          "finite": true,
+          "in_sample_auc": 0.9283760365,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 476.5,
+          "train_nll_mean": 0.34057542537231944
+        },
+        {
+          "R": 3.6339012842795184,
+          "T": 0.7253700976680423,
+          "epoch": 124,
+          "finite": true,
+          "in_sample_auc": 0.9284382133,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 479.4,
+          "train_nll_mean": 0.3416719025586613
+        },
+        {
+          "R": 3.641325816867455,
+          "T": 0.7278552690385942,
+          "epoch": 125,
+          "finite": true,
+          "in_sample_auc": 0.9285039645,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 482.1,
+          "train_nll_mean": 0.3432942438763674
+        },
+        {
+          "R": 3.647030376819722,
+          "T": 0.7289502026029941,
+          "epoch": 126,
+          "finite": true,
+          "in_sample_auc": 0.9285412677,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 484.9,
+          "train_nll_mean": 0.3430409076441881
+        },
+        {
+          "R": 3.644673260933279,
+          "T": 0.7228751854390078,
+          "epoch": 127,
+          "finite": true,
+          "in_sample_auc": 0.9285558595,
+          "law_refit_ok": true,
+          "lr": 0.025,
+          "seconds": 487.6,
+          "train_nll_mean": 0.3403327645163217
+        },
+        {
+          "R": 3.6471656129358454,
+          "T": 0.7264889637611914,
+          "epoch": 128,
+          "finite": true,
+          "in_sample_auc": 0.9287337009,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 490.3,
+          "train_nll_mean": 0.3410800504193337
+        },
+        {
+          "R": 3.6460361796301903,
+          "T": 0.7251485673311724,
+          "epoch": 129,
+          "finite": true,
+          "in_sample_auc": 0.9287821422,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 492.7,
+          "train_nll_mean": 0.34051252129357973
+        },
+        {
+          "R": 3.6440798657817695,
+          "T": 0.7245831680423291,
+          "epoch": 130,
+          "finite": true,
+          "in_sample_auc": 0.9288244259,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 495.2,
+          "train_nll_mean": 0.3403358961685892
+        },
+        {
+          "R": 3.6409252813852926,
+          "T": 0.7271109431255334,
+          "epoch": 131,
+          "finite": true,
+          "in_sample_auc": 0.9288555541,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 497.7,
+          "train_nll_mean": 0.3413483933868044
+        },
+        {
+          "R": 3.6447619443635086,
+          "T": 0.7248328463985332,
+          "epoch": 132,
+          "finite": true,
+          "in_sample_auc": 0.9289140205,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 500.4,
+          "train_nll_mean": 0.3401410085834646
+        },
+        {
+          "R": 3.6507442345542787,
+          "T": 0.7266339802623534,
+          "epoch": 133,
+          "finite": true,
+          "in_sample_auc": 0.928918381,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 502.4,
+          "train_nll_mean": 0.34076583553849743
+        },
+        {
+          "R": 3.6460452794502887,
+          "T": 0.7309643519687089,
+          "epoch": 134,
+          "finite": true,
+          "in_sample_auc": 0.9289519465,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 504.2,
+          "train_nll_mean": 0.3426283789558107
+        },
+        {
+          "R": 3.640357406506558,
+          "T": 0.7284661451316777,
+          "epoch": 135,
+          "finite": true,
+          "in_sample_auc": 0.9289944504,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 506.1,
+          "train_nll_mean": 0.34077719740549256
+        },
+        {
+          "R": 3.642904697448967,
+          "T": 0.7300030651647162,
+          "epoch": 136,
+          "finite": true,
+          "in_sample_auc": 0.9290095057,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 508.0,
+          "train_nll_mean": 0.34216618423396955
+        },
+        {
+          "R": 3.6471714266456914,
+          "T": 0.7252487313066458,
+          "epoch": 137,
+          "finite": true,
+          "in_sample_auc": 0.9290357573,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 509.8,
+          "train_nll_mean": 0.3390110500551479
+        },
+        {
+          "R": 3.641297065094913,
+          "T": 0.7269896887698118,
+          "epoch": 138,
+          "finite": true,
+          "in_sample_auc": 0.9290389146,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 511.6,
+          "train_nll_mean": 0.3399100755118021
+        },
+        {
+          "R": 3.642490120380371,
+          "T": 0.7252398692755982,
+          "epoch": 139,
+          "finite": true,
+          "in_sample_auc": 0.9290864829,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 513.4,
+          "train_nll_mean": 0.33946519144362874
+        },
+        {
+          "R": 3.64354969154928,
+          "T": 0.725150010896769,
+          "epoch": 140,
+          "finite": true,
+          "in_sample_auc": 0.9291081891,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 515.2,
+          "train_nll_mean": 0.3389444609265739
+        },
+        {
+          "R": 3.6443946295264475,
+          "T": 0.7265097173183287,
+          "epoch": 141,
+          "finite": true,
+          "in_sample_auc": 0.9291092758,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 517.0,
+          "train_nll_mean": 0.34001813682746673
+        },
+        {
+          "R": 3.6448740839390044,
+          "T": 0.7276989987560405,
+          "epoch": 142,
+          "finite": true,
+          "in_sample_auc": 0.9291641184,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 518.8,
+          "train_nll_mean": 0.34036096506697067
+        },
+        {
+          "R": 3.6445221825126213,
+          "T": 0.7283959086058222,
+          "epoch": 143,
+          "finite": true,
+          "in_sample_auc": 0.9291708846,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 520.7,
+          "train_nll_mean": 0.341013532922858
+        },
+        {
+          "R": 3.647030858826282,
+          "T": 0.7271407941618724,
+          "epoch": 144,
+          "finite": true,
+          "in_sample_auc": 0.9292049631,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 523.3,
+          "train_nll_mean": 0.3395769111169745
+        },
+        {
+          "R": 3.6474922983993,
+          "T": 0.730047311531916,
+          "epoch": 145,
+          "finite": true,
+          "in_sample_auc": 0.9292151966,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 529.1,
+          "train_nll_mean": 0.34075193587188224
+        },
+        {
+          "R": 3.6489000424802995,
+          "T": 0.7329089481762545,
+          "epoch": 146,
+          "finite": true,
+          "in_sample_auc": 0.9292329551,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 535.3,
+          "train_nll_mean": 0.3416580494275721
+        },
+        {
+          "R": 3.6475824653143363,
+          "T": 0.7298336827085314,
+          "epoch": 147,
+          "finite": true,
+          "in_sample_auc": 0.9292686493,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 539.4,
+          "train_nll_mean": 0.3407774245829931
+        },
+        {
+          "R": 3.650234857318412,
+          "T": 0.7280422970717346,
+          "epoch": 148,
+          "finite": true,
+          "in_sample_auc": 0.9292785293,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 542.0,
+          "train_nll_mean": 0.3391970576480763
+        },
+        {
+          "R": 3.649888681326546,
+          "T": 0.7276077953511307,
+          "epoch": 149,
+          "finite": true,
+          "in_sample_auc": 0.9292910494,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 544.5,
+          "train_nll_mean": 0.3392397041825064
+        },
+        {
+          "R": 3.65389398679422,
+          "T": 0.7291759656682939,
+          "epoch": 150,
+          "finite": true,
+          "in_sample_auc": 0.9293107528,
+          "law_refit_ok": true,
+          "lr": 0.0125,
+          "seconds": 546.7,
+          "train_nll_mean": 0.34043819769381645
+        }
+      ],
+      "law_init": {
+        "R": 0.5839092251209058,
+        "T": 0.32539609698326866,
+        "fallback_used": null
+      },
+      "n_law_refit_fallbacks": 0,
+      "n_negative_samples": 2428328,
+      "n_nodes_fitted": 139255,
+      "n_positive_edges": 2428328,
+      "n_unconstrained_nodes": 2523,
+      "protocol": {
+        "deterministic": true,
+        "init": "degree radius assignment by total-degree rank (hubs near the origin), seed=0",
+        "law_refit": "maximum likelihood after every epoch (alternating)",
+        "max_hyperboloid_norm_clamp": 500.0,
+        "model": "P(connect|d) = 1/(1+exp((d-R)/T)), d = Poincare distance",
+        "negative_sampling": "uniform non-edges of the full graph, 1:1 with positives",
+        "optimiser": "Adam (lr=0.05, batch=65536, 150 epochs) on the hyperboloid model, Euclidean distance gradient"
+      },
+      "radius_summary": {
+        "max": 0.9879913108568663,
+        "median": 0.9176624956243591,
+        "min": 0.00274515686682134,
+        "p99": 0.98322031940959
+      },
+      "seconds": 546.8,
+      "train_log_likelihood": -0.33129002260416923,
+      "train_nll_mean": 0.33129002260416923
+    },
+    "spectral_16": {
+      "definition": "normalised-Laplacian eigenmaps: psi_j(i) = u_j(i)/sqrt(deg_i), u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
+      "eigenvalues_1_minus_lambda_desc": [
+        0.007327887549060996,
+        0.01453305899645474,
+        0.020489108137161094,
+        0.023497828773719087,
+        0.025178060659456825,
+        0.025378628780697743,
+        0.029907808870652808,
+        0.030774539827092884,
+        0.031175266270776603,
+        0.039887788926392775,
+        0.04058383357133988,
+        0.0437151950151734,
+        0.04727114440061242,
+        0.048584325518798654,
+        0.05914140021167602,
+        0.06364106293707938
+      ],
+      "k": 16,
+      "lambda_max_fitted": 0.992672112450939,
+      "lambda_min_fitted": 0.9363589370629206,
+      "n_edges_in_fit_graph": 2275467,
+      "n_isolated_nodes_in_scope": 7074,
+      "n_nodes_fitted": 132181,
+      "n_nodes_not_fitted": 7074,
+      "residual_max": 7.534076565562144e-07,
+      "seconds": 10.9,
+      "tol": 1e-05
+    },
+    "spectral_32": {
+      "definition": "normalised-Laplacian eigenmaps: psi_j(i) = u_j(i)/sqrt(deg_i), u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
+      "eigenvalues_1_minus_lambda_desc": [
+        0.007327887549065992,
+        0.014533058996455073,
+        0.02048910813716165,
+        0.023497828773720197,
+        0.02517806065945305,
+        0.025378628780697965,
+        0.029907808870655472,
+        0.030774539827086667,
+        0.03117526627077194,
+        0.03988778892636069,
+        0.040583833571197325,
+        0.04371519501485788,
+        0.047271144324694814,
+        0.048584325506136894,
+        0.059141400207341266,
+        0.06364106280503534,
+        0.06455361212451105,
+        0.07116860508835043,
+        0.07923382311229643,
+        0.07946337278440008,
+        0.09366991970508265,
+        0.10066117116052897,
+        0.10195545750701696,
+        0.10345973503562012,
+        0.10525948187375456,
+        0.11184402132834725,
+        0.1132801087328692,
+        0.11540501473469855,
+        0.11566563737181479,
+        0.11701694165218868,
+        0.11805874046021325,
+        0.11867990680062579
+      ],
+      "k": 32,
+      "lambda_max_fitted": 0.992672112450934,
+      "lambda_min_fitted": 0.8813200931993742,
+      "n_edges_in_fit_graph": 2275467,
+      "n_isolated_nodes_in_scope": 7074,
+      "n_nodes_fitted": 132181,
+      "n_nodes_not_fitted": 7074,
+      "residual_max": 2.0408717969614722e-07,
+      "seconds": 37.6,
+      "tol": 1e-05
+    }
+  },
+  "headline": {
+    "best_geometry_by_heldout_auc": "spectral_32",
+    "degree_only_auc": 0.8738729859171968,
+    "degree_only_beats_all_geometries": false,
+    "hyperbolic_beats_anatomical_3d": true
+  },
+  "hyperbolic_budget_sensitivity": [
+    {
+      "R": 2.1688488678614593,
+      "T": 0.6093481480986487,
+      "config": {
+        "batch": 65536,
+        "dim": 2,
+        "epochs": 15,
+        "init": "uniform",
+        "lr": 0.05
+      },
+      "heldout": {
+        "auc": 0.8271943026449547,
+        "average_precision": 0.8087558684126942,
+        "distance_separation": {
+          "median_neg": 2.9374102480594138,
+          "median_pos": 1.2421273102405639
+        },
+        "log_likelihood_mean": -0.5126209195595325,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.5126209195595325
+      },
+      "in_sample_auc": 0.8955537404,
+      "seconds": 43.4,
+      "train_log_likelihood": -0.4024669862397705
+    },
+    {
+      "R": 1.8745469291429027,
+      "T": 0.5404198640425809,
+      "config": {
+        "batch": 65536,
+        "dim": 2,
+        "epochs": 15,
+        "init": "degree",
+        "lr": 0.05
+      },
+      "heldout": {
+        "auc": 0.810819021929921,
+        "average_precision": 0.7956585836905863,
+        "distance_separation": {
+          "median_neg": 2.4543544665565467,
+          "median_pos": 1.1143576747853647
+        },
+        "log_likelihood_mean": -0.5320810816710413,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.5320810816710413
+      },
+      "in_sample_auc": 0.8877186372,
+      "seconds": 38.4,
+      "train_log_likelihood": -0.41602883598660906
+    },
+    {
+      "R": 3.5433464531104617,
+      "T": 0.6536283295950812,
+      "config": {
+        "batch": 65536,
+        "dim": 2,
+        "epochs": 150,
+        "init": "uniform",
+        "lr": 0.05
+      },
+      "heldout": {
+        "auc": 0.8921098481390064,
+        "average_precision": 0.8615892333718059,
+        "distance_separation": {
+          "median_neg": 5.220715270209322,
+          "median_pos": 2.013109723522062
+        },
+        "log_likelihood_mean": -0.4106509839152754,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.4106509839152754
+      },
+      "in_sample_auc": 0.9466774712,
+      "seconds": 763.6,
+      "train_log_likelihood": -0.2879198654602361
+    }
+  ],
+  "hyperbolic_budget_sensitivity_note": "exploratory: each configuration is scored on the same held-out pairs, so these numbers are reported for transparency about the training budget. The uniform-radius initialisation carries no degree information, so comparing it with the degree-ranked initialisation at the same budget separates 'the latent geometry captures connectivity' from 'the starting point handed the model the degree ranking'.",
+  "phase": 4,
+  "protocol": {
+    "analysis_graph": "undirected, autapse-free, unweighted projection of Connectome.thresholded(5)",
+    "analysis_node_fraction": 0.9492011058848875,
+    "analysis_nodes": 132181,
+    "analysis_nodes_reason": "normalised-Laplacian eigenmaps are undefined on a disconnected graph (each component contributes a trivial eigenvalue 1), so the analysis is restricted to the giant weakly-connected component; every geometry is fit and scored on that same node set",
+    "build_seconds": 2.6,
+    "connection_law": "P(connect|d) = 1/(1+exp((d-R)/T)) fitted by maximum likelihood on the fit pairs (balanced 1:1) for each geometry and for the degree baseline (logistic in the summed log degrees)",
+    "degrees": {
+      "mean_total_degree_in_giant": 40.82297758376771,
+      "n_neurons_without_annotation": 14,
+      "n_zero_degree_in_giant": 0
+    },
+    "fit_edges_inside_giant": 2428328,
+    "frac_edges_inside_giant": 0.9989975978638133,
+    "giant_component_fraction": 0.9492011058848875,
+    "giant_component_size": 132181,
+    "heldout_pair_sets": "positives = held-out connections, negatives = equal number of sampled non-edges (1:1); identical for every geometry",
+    "metrics": {
+      "average_precision": "exact expectation over uniformly random tie-breaking (ties matter for the integer-valued degree baseline)",
+      "log_likelihood_mean": "mean Bernoulli log-likelihood of the held-out pairs under the fitted law (balanced-sample calibration)",
+      "roc_auc": "rank-based, exact midpoint credit for tied scores"
+    },
+    "n_components": 5668,
+    "n_directed_pairs_thresholded": 2700513,
+    "n_eval_negatives": 269478,
+    "n_fit_edges": 2430462,
+    "n_fit_negatives": 2428328,
+    "n_neurons": 139255,
+    "n_neurons_without_annotation_excluded": 0,
+    "n_nodes_excluded_from_eval": 7074,
+    "n_test_edges": 270051,
+    "n_undirected_edges": 2700513,
+    "negative_sampling": "uniform pairs that are not edges of the full graph (fit + test), so a held-out true connection is never scored as a negative",
+    "no_test_leakage": "the spectral graph and the hyperbolic fit use only fit-split edges; the law (R, T) is fitted on fit pairs only",
+    "prevalence_definition": "undirected connections of the thresholded graph / (analysis_nodes choose 2)",
+    "prevalence_pi_used_for_density_matching": 0.0003091302372859114,
+    "seed": 0,
+    "spectral_definition": "normalised-Laplacian eigenmaps psi_j(i) = u_j(i)/sqrt(deg_i), u_j eigenvectors of D^-1/2 A D^-1/2, trivial lambda=1 dropped",
+    "test_edges_inside_giant": 269478,
+    "test_frac": 0.1,
+    "threshold": 5
+  },
+  "question": "does a low-dimensional latent geometry (2-D hyperbolic) represent the connectome's connectivity better than the 3-D anatomical coordinates, and do higher-dimensional embeddings improve further?",
+  "ranking_by_heldout_auc": {
+    "anatomical_pca2": 0.8511784015408886,
+    "anatomical_xy": 0.8511756166128135,
+    "anatomical_xyz": 0.851382212145802,
+    "anatomical_xyz_zscored": 0.7981223195868726,
+    "degree_only": 0.8738729859171968,
+    "hyperbolic_2d": 0.8645541290635546,
+    "spectral_16": 0.8843912013151525,
+    "spectral_32": 0.9518708696385689
+  },
+  "reassembled_note": "the sampling_provenance block and SUMMARY.txt were regenerated from this file; no measured number was altered",
+  "reassembled_utc": "2026-09-17T23:28:17Z",
+  "reference": "Sulyok, Balogh & Palla, 'Network geometry of the Drosophila brain', arXiv:2602.16417 (2026): a 2-D hyperbolic embedding of the connectome scored higher than the 3-D anatomical coordinates on mapping accuracy, greedy routing and edge-prediction recall, with Euclidean embeddings (node2vec) overtaking it near d=16. This file reproduces the comparison on FlyWire v783 with a held-out AUC/AP + log-likelihood protocol instead of their metric set.",
+  "run_to_run_sensitivity": {
+    "config": {
+      "batch": 65536,
+      "dim": 2,
+      "epochs": 150,
+      "init": "degree",
+      "lr": 0.05,
+      "seed": 0
+    },
+    "interpretation": "two runs of the same hyperbolic configuration reach held-out AUC 0.8646 and 0.9012 on identical held-out pairs (spread 0.0366), which is larger than both the hyperbolic-vs-anatomical margin (+0.0132 for the delivered run) and the hyperbolic-vs-degree-only margin (-0.0093). Both runs beat the 3-D anatomical coordinates (0.8514), but the comparison against the degree-only baseline (0.8739) is not resolved by this protocol: it flips between runs.",
+    "runs": {
+      "run1_delivered": {
+        "artifact": "results/phase4/artifacts/hyperbolic_2d_coords.npy",
+        "connection_law": {
+          "R": 3.451147899174943,
+          "T": 0.977911015614465,
+          "nll_mean": 0.4324340698890691
+        },
+        "heldout": {
+          "auc": 0.8645541290635546,
+          "average_precision": 0.8375227970384397,
+          "distance_separation": {
+            "median_neg": 5.064946685448884,
+            "median_pos": 2.200768693883524
+          },
+          "log_likelihood_mean": -0.45973845382299383,
+          "n_neg": 269478,
+          "n_pos": 269478,
+          "nll_mean": 0.45973845382299383
+        },
+        "note": "this repository's script run (post-patch protocol: 132,181 analysis nodes)"
+      },
+      "run2_same_config": {
+        "artifact": "results/phase4/artifacts/hyperbolic_2d_run2_coords.npy",
+        "connection_law": {
+          "R": 3.144863070470183,
+          "T": 0.7885790819503088,
+          "nll_mean": 0.36295865197703797
+        },
+        "heldout": {
+          "auc": 0.9011944795999045,
+          "average_precision": 0.8711310254697896,
+          "distance_separation": {
+            "median_neg": 5.0223586259042845,
+            "median_pos": 1.8247581434407731
+          },
+          "log_likelihood_mean": -0.3915770108946154,
+          "n_neg": 269478,
+          "n_pos": 269478,
+          "nll_mean": 0.3915770108946154
+        },
+        "note": "separate run of the same configuration on the pre-patch protocol (132,191 nodes)"
+      }
+    },
+    "spread_auc": 0.03664035053634995,
+    "why": "the two hyperbolic fits use the same configuration; the only difference is the protocol variant (14 neurons without an annotation row removed from the analysis graph after the first fit), which changes the sampled non-edges and hence the SGD trajectory. Both are scored on the identical held-out pairs of the delivered protocol, so the spread below is a measured run-to-run sensitivity."
+  },
+  "sampling_provenance": {
+    "analysis_node_fraction": 0.9492011058848875,
+    "analysis_nodes_used_for_every_scored_number": 132181,
+    "fit_connections": 2430462,
+    "fit_negatives": 2428328,
+    "heldout_connections": 270051,
+    "heldout_negatives": 269478,
+    "law_fit_pair_cap": 400000,
+    "n_neurons": 139255,
+    "n_nodes_fitted_hyperbolic": 139255,
+    "n_nodes_fitted_spectral_16": 132181,
+    "n_nodes_unconstrained_hyperbolic": 2523,
+    "negative_to_positive_ratio": 1.0,
+    "node_subsample_fraction_for_hyperbolic_fit": 1.0,
+    "node_subsample_fraction_for_spectral_fit": 0.9492011058848875,
+    "nodes_excluded_reason": "outside the giant weakly-connected component of the fit graph, or without an annotation row (see protocol)",
+    "note": "embeddings are fitted on ALL analysis nodes (no node subsampling); the only subsampling anywhere is of the negative samples and of the pair sample used by the (R, T) maximum-likelihood fit, both reported per geometry as connection_law.n_pairs"
+  },
+  "study_only_note": "only the training-budget study was recomputed in this pass (after fixing a missing import); every other number is from the original run and was not changed",
+  "study_only_utc": "2026-09-17T23:19:49Z",
+  "timings": {
+    "anatomical": 0.0,
+    "compare": 55.7,
+    "hyperbolic_2d": 546.8,
+    "protocol": 2.6,
+    "spectral_16": 10.9,
+    "spectral_32": 37.6,
+    "total_seconds": 1352.8
+  },
+  "title": "Latent geometry discovery (PROJECT-VYBFLY.md section 10)",
+  "unverified": [
+    "GPU/torch-based hyperbolic embedding (CLOVE as used by the reference paper) is not implemented: this is an independent SGD fit of the same connection-law objective in the hyperboloid model, so the absolute embedding quality is not directly comparable with the reference study's numbers",
+    "no node2vec comparison (the reference paper's d=16 crossover refers to node2vec, not to spectral eigenmaps); spectral embeddings at 16/32 dims are used here as the 'higher-dimensional Euclidean' arm",
+    "phase 5/6 downstream use of these coordinates is out of scope for this phase"
+  ]
+}

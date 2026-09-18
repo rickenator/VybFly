@@ -1,0 +1,44 @@
+// probe_m2_d_clock_fileio - monotonic clock for throughput measurement, and writing a
+// result file (the DES summary JSON) from Vyb.
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_d_clock_fileio.vyb
+
+import io::{open_write, close, write_str, open_read, read_all}
+import time::{time_mono_millis, time_epoch_secs}
+
+main()<Int> -> {
+    t0<Int> = time_mono_millis()
+    k<Int> = 0
+    acc<Int> = 0
+    while (k < 200000) {
+        acc = acc + k
+        k = k + 1
+    }
+    t1<Int> = time_mono_millis()
+    println("ms=" + (t1 - t0).to_string())
+    println("acc=" + acc.to_string())
+    e<Int> = time_epoch_secs() else 0
+    println("epoch=" + e.to_string())
+
+    path<String> = "results/phase2/probe_m2_d.out"
+    match (open_write(path)) {
+        f -> {
+            write_str(f, "{\"ok\": true, \"acc\": " + acc.to_string() + "}\n")
+            close(f)
+        }
+        ? -> { println("open_write_failed") }
+    }
+    match (open_read(path)) {
+        f -> {
+            match (read_all(f)) {
+                s -> { println("readback=" + s) }
+                ? -> { println("read_all_failed") }
+            }
+            close(f)
+        }
+        ? -> { println("open_read_failed") }
+    }
+    println("probe-d-done")
+    return 0
+}

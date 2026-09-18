@@ -1,0 +1,41 @@
+// probe_m2_b_nested_vec - the bucketed Scheduler wants Vec<Vec<Int>> (a bucket of event
+// slots per time bucket).  Does element-level mutation of the inner Vec reach the outer?
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_b_nested_vec.vyb
+
+main()<Int> -> {
+    buckets<Vec<Vec<Int>>> = Vec()
+    i<Int> = 0
+    while (i < 4) {
+        inner<Vec<Int>> = Vec()
+        buckets.push(inner)
+        i = i + 1
+    }
+    println("outer_len=" + buckets.len().to_string())
+
+    // (a) index-then-push on the inner Vec, through an lvalue index
+    buckets.get(1).push(11)
+    println("a_inner1_len=" + buckets.get(1).len().to_string())
+
+    // (b) flat local, push, set back
+    inner2<Vec<Int>> = buckets.get(2)
+    inner2.push(22)
+    buckets.set(2, inner2)
+    println("b_inner2_len=" + buckets.get(2).len().to_string())
+
+    // (c) does 'buckets[1].push(...)' parse and behave?
+    buckets[1].push(33)
+    println("c_inner1_len=" + buckets.get(1).len().to_string())
+
+    // (d) sum via nested indexing
+    tot<Int> = 0
+    k<Int> = 0
+    while (k < buckets.len()) {
+        tot = tot + buckets.get(k).len()
+        k = k + 1
+    }
+    println("total=" + tot.to_string())
+    println("probe-b-done")
+    return 0
+}

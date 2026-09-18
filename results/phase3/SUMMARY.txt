@@ -1,0 +1,225 @@
+Phase 3 / M3 status: event-driven GPU backend (Vyb NVPTX)
+
+Gate from PROJECT-VYBFLY.md §9: CPU DES ~ GPU DES ~ timestep reference.
+
+WHAT WORKS (verified on the RTX 3090, build vyb 0.7.5)
+  * src/vyb_kernels/spike_bucket.vyb compiles as NVPTX device code and emits two .entry
+    kernels; ptxas validates it for sm_86:
+        .entry accumulate_bucket      bucket -> CSR walk -> atomic f64 accumulation
+        .entry update_and_fire        LIF update -> threshold -> scatter to the next bucket
+    Descriptor-based single-argument launches (issue #199 pattern); float parameters travel as
+    integer micro-units.
+  * src/vyb_kernels/phase3_gpu.vyb runs the whole pipeline on the GPU through the signed
+    `cuda` binding: 512-neuron ring network, 1536 edges, 30 ticks, bucket buffer recycled per
+    tick, spike counts and membrane state read back to the host. Exit 0.
+  * Device state verified by readback, not assumed: descriptor words decode to the exact host
+    values, indptr = [0,3,6,9], indices = [1,3,7,2,4,8], syn = [-4,-6,-10,4,6,10] (neuron 0
+    inhibitory by construction), v and accum are exactly 0 after initialisation.
+  * The first accumulation step is exactly right: neuron 1 receives the single edge from the
+    inhibitory neuron 0 and holds acum = -0.08 = g * syn, confirmed on-device.
+
+WHAT DOES NOT MATCH YET (the gate is therefore FAILING, recorded not hidden)
+  * The reference implementation (scripts/phase3_gpu_check.py) expects no neuron to fire at
+    tick 0 (the largest first-step accumulation is 0.24 against a 0.3 threshold); the GPU fires
+    10 neurons at tick 0. Per-step spikes: GPU [10,1,1,1,0,...] total 13 vs CPU [3,2,0,...]
+    total 5.
+  * The membrane trace does not leak: GPU v[1] = -0.082 after 30 ticks where an impulse at
+    tick 0 under leak 0.9 must decay to about -0.004 (-0.08 * 0.9^29). The descriptor readback
+    shows leak = 900000 micro-units (0.9) correctly placed in the update descriptor, so the
+    scaling is not a host-side packing error.
+  * 25 of the 30 ticks report a non-zero return from one of the two launches. The empty-bucket
+    case (gridX = 0) is guarded on the accumulation launch, so the remaining errors are
+    unattributed: the runner counts r1 and r2 together and keeps the previous r1 when the
+    launch is skipped.
+
+ISOLATION EXPERIMENT 7 (probes in src/vyb_kernels/probes/descriptor_length/, run for real)
+
+  STATUS: reproducible bug, mechanism NOT established. Filed upstream as
+  https://github.com/rickenator/Vyb/issues/270 with the sources, the exact outputs, and the
+  hypotheses that were tested and refuted. Two earlier explanations in this file were wrong and
+  are corrected here; the raw evidence is what matters.
+
+  Measured (one 64-thread block, descriptor written from the host, cuda_launch returns 0, PTX
+  assembles cleanly in every case):
+
+   kern6b  6-word descriptor, value DERIVED from the scalars stored   -> 222 x8            CORRECT
+   kern13_ok  13-word descriptor, three scalars stored DIRECTLY       -> 111/606/1212 x8   CORRECT
+   kern13  13-word descriptor, value DERIVED from the late scalars    -> 1818 0 0 0 0 0 0 0  WRONG
+   kern_store  no descriptor, lane-dependent value into out+gid*4     -> 1000..1011        CORRECT
+
+  The failing shape is exactly the one the pipeline kernel uses for `rt = t + refractory_ticks`,
+  and the failure mode is "lane 0 right, every other lane 0", which is why refractory state was
+  mis-stored and neurons were re-admitted early.
+
+  REFUTED HYPOTHESES (kept so the next reader does not re-chase them):
+   * "descriptor loads are corrupted per lane" - a 6-word descriptor is perfect on all lanes.
+   * "the last descriptor words (80, 96) do not survive" - kern13_ok reads words 80 and 96
+     correctly and stores them.
+   * "an i32 store is lowered as an 8-byte store that clobbers the next slot" - the emitted PTX
+     does show `st.global.u32 [addr]` followed by `st.global.u32 [addr+4]` carrying the high 32
+     bits of the source register, but kern_store does a lane-dependent i32 store and is correct,
+     so that lowering alone does not explain the failure.
+  What remains is the combination of a long descriptor and a computed value derived from its
+  later words; it could not be reduced further than the kern13 / kern13_ok pair.
+
+  MY OWN PROBE BUG, worth knowing generally: the first version of this probe took five parameters
+  and crashed the process. cuLaunchKernel in bindings/cuda packs exactly one 8-byte argument, so a
+  multi-parameter entry point reads garbage pointers. Every kernel in this project takes a single
+  descriptor pointer for that reason.
+
+  The earlier text that stood here claimed the tail descriptor words were simply lost; that is
+  retracted above (kern13_ok reads words 80 and 96 correctly) and the raw measurements are kept in
+  the descriptor_length/ probe directory and in Vyb issue #270.
+
+  The refractory store is `st_i32(refr + gid*4, rt)` with rt = t + refractory_ticks, both
+  operands read from the kernel descriptor via ld_i64. Four variants, each re-emitted and
+  re-run:
+
+   TEST  A  store the literal 2           -> refr = 2 2 - - 2 2 - -     CORRECT
+   TEST  B  store refractory_ticks alone  -> refr = 2 0 - - 2 0 - -     WRONG (same as before)
+   TEST  C  store t alone (t = 0)         -> uninformative (expected 0 anyway)
+   TEST  D  broadcast refractory_ticks to every lane through the `fired` array, so non-firing
+            lanes reveal what they hold   -> lanes 2,3,6,7 read 0 2 0 2    WRONG
+
+  Established: the store instruction and its addressing are fine (A is perfect), so the defect is
+  in the *value* a lane gets from a descriptor load. B proves it without any arithmetic: a raw
+  ld_i64 scalar is already corrupted per lane. D shows the corruption follows the lane and the
+  target array, not the arithmetic - consistent with a register-allocation or vectorisation
+  problem when many scalars are live at once (this kernel loads 13 descriptor words).
+  Consequence for the pipeline: threshold, leak, refractory and the pointer words themselves are
+  all read this way, so per-lane correctness of any of them is unproven until this is understood.
+  That is the concrete blocker on the M3 gate.
+  Workaround to try next (not yet tested): keep scalars out of per-lane arithmetic - store them
+  into a small shared/broadcast array first and read back per lane, or drive the scalars as
+  literal constants baked at emit time.
+
+ISOLATION EXPERIMENT 2 (run, results/phase3/selftest_output.txt)
+  src/vyb_kernels/phase3_selftest.vyb drives update_and_fire ALONE with a hand-written membrane
+  state v = [1.0, 0.5, 0.2, 0.0, 0.9, 0.35, 0, 0], accum = 0, t = 0, refractory 0, threshold
+  0.3, leak 0.9. Expected: v -> [0.9, 0.45, 0.18, 0, 0.81, 0.315, 0, 0] with neurons 0,1,4,5
+  firing, refr = 2 for those, next_count = 4.
+
+  Observed (identical on two consecutive runs - deterministic, not a race):
+    v_milli_after      = 0 0 180 0 0 0 0 0                  CORRECT (fires reset to 0, 0.18 kept)
+    fired flags        = 1 1 0 0 1 1 0 0                    CORRECT
+    next_count_after   = 4                                  CORRECT
+    refr after         = 2 0 -  -  2 0 - -                  WRONG: gid 0 and 4 hold 2, gid 1 and 5
+                                                            hold 0 although both fired
+
+  So the LIF update, the leak arithmetic, the threshold test, the reset and the bucket
+  reservation are all correct; the defect is isolated to the refractory store
+  `st_i32(refr + gid*4, rt)` where rt = t + refractory_ticks. Both operands come from
+  descriptor loads via ld_i64. Hoisting rt out of the nested conditional changed nothing, so it
+  is not a block-scoped-declaration problem. The lane pattern (correct for gid 0 and 4, zero for
+  1 and 5) is consistent with the stored value being lost on some lanes rather than a wrong
+  address, and a refused-run probe (src/vyb_kernels/probes/probe_scalar_load.vyb, which
+  core-dumped in the host runner) was an attempt to test exactly that.
+  This is the direct cause of the excess firing in the full pipeline: neurons whose refractory
+  cell reads 0 become eligible again immediately.
+
+NEXT STEPS (each is a small, checkable experiment)
+  1. Report r1 and r2 separately per tick and print the bucket size, so the failing launch and
+     the failing tick are identified instead of inferred.
+  2. Fix or work around the refractory store (e.g. compute refr into a lane-indexed temp array
+     in a separate store pass, or store via a second kernel invocation) and re-run the selftest
+     until refr = 2 2 - - 2 2 - -.
+  3. Debug the probe_scalar_load host runner core dump, then use it to confirm or refute the
+     lane-dependent-load hypothesis.
+  4. Only then re-run the equivalence gate over the full 30-tick pipeline.
+
+Artifacts: results/phase3/spike_bucket.ptx (ptxas-validated), results/phase3/spike_bucket.cubin,
+results/phase3/gpu_run.txt (raw runner output incl. diagnostics),
+results/phase3/gpu_equivalence.json (gate result: passed = false).
+
+===============================================================================================
+RESOLVED - the M3 equivalence gate now PASSES (2026-09-18)
+===============================================================================================
+
+Two independent defects had to be fixed, and the second one was mine:
+
+1. UPSTREAM (Vyb issue #270, PR #273). `st_*` in kernel mode stored the operand's own LLVM type
+   instead of the intrinsic's element type, so `st_i32(ptr, i64_value)` emitted an 8-byte store:
+   the low word at the address, the high word at address+4 - into the neighbouring slot. With a
+   computed value the high word is 0, so every lane zeroed the next lane's slot. That is what
+   corrupted the refractory store in update_and_fire. Verified fixed with the fresh checkout
+   (36a86fe4): the failing probe now reads 1818 x8, and the update selftest is exact.
+
+2. MINE, in the runner (src/vyb_kernels/phase3_gpu.vyb). When the empty-bucket guard was added,
+   the original unguarded `cuda_launch(hf_acc, ...)` line was left in place, so the accumulation
+   kernel was launched TWICE per tick. Every accumulator value was therefore exactly double
+   (measured: 0.4 at neurons 9/10 where the kernel probe says 0.4 for ONE launch... precisely
+   the observed 0.8), which pushed 10 neurons over a 0.3 threshold instead of 3, and made the
+   membrane trace look "1.5-1.75x off" without a stable factor. The same line was also the source
+   of the 21 launch errors: with an empty bucket it launched gridX = 0, which cuLaunchKernel
+   rejects.
+
+   HOW IT WAS FOUND: after update_and_fire passed its selftest, the accumulator was read between
+   the two launches at tick 0 (diag_accum_pre_update) and compared against the isolated-kernel
+   probe (src/vyb_kernels/probes/accum_probe.vyb). The values were exactly 2x, which pointed at
+   a double launch rather than at either kernel. Note that the isolated probe also caught an
+   arithmetic error in MY OWN expected values (accum[12] = -80000 is correct: -0.20 from the
+   inhibitory seed 5 plus +0.12 from seed 9; the hand-written expectation of 0 was wrong).
+
+FINAL GATE (results/phase3/gpu_equivalence.json)
+  passed: True, mismatches: []
+    gpu_n                  512            = reference         true
+    gpu_edges              1536           = reference         true
+    spikes_total           5              = reference 5       true
+    spikes_per_step        3,2,0,0,...    = reference         true
+    per_neuron_spike_counts  identical                        true
+    membrane probe first 8 0,-4,4,-2,9,9,2,0 = reference      true
+    launch_errors          0 (was 21)
+  The two kernels are also proven individually: accumulate_bucket against hand-computed ring
+  values (src/vyb_kernels/probes/accum_probe.vyb) and update_and_fire against a hand-written
+  membrane state (src/vyb_kernels/phase3_selftest.vyb).
+
+SCOPE, stated honestly: this is CPU-vs-GPU equivalence on a 512-neuron fixture whose semantics
+match the reference exactly. It establishes the M3 criterion ("CPU DES ~ GPU DES ~ timestep
+reference") at fixture scale. Running the same pipeline over the 139k-neuron canonical connectome
+is a separate step and has not been done; the GPU energy curves elsewhere in this project were
+produced by the separate CUDA payload (scripts/cuda/sparse_prop.cu), not by these kernels.
+
+
+===============================================================================================
+AFTER THE UPSTREAM FIX (Vyb PR #273 for issue #270, fresh checkout 36a86fe4, build/vyb rebuilt)
+===============================================================================================
+
+Fix: src/vre/llvm/cgen_expr.cpp - `st_*` stored the operand's own LLVM type instead of the
+intrinsic's element type, so `st_i32(ptr, i64_value)` emitted an 8-byte store: the low word at the
+address and the high word at address+4, i.e. into the NEIGHBOURING slot. With a computed value the
+high word is 0, so every lane zeroed the next lane's slot - exactly the "1818 0 0 0 0 0 0 0"
+pattern reported. The third hypothesis recorded above (two stores clobbering the next slot) was
+the correct one; my kern_store control was a FALSE NEGATIVE - it also does a lane-dependent i32
+store, but its two stores per lane happened to be ordered so each lane's own value landed last,
+masking the clobber. The PTX evidence was right; the control was not sensitive enough.
+
+VERIFIED with the fixed compiler
+  * probe kern13 (the failing case)  -> 1818 x8 (was 1818 0 0 0 0 0 0 0)                PASS
+  * kern13_ok, kern6b, kern6, kern_store                                             still PASS
+  * phase3_selftest (update_and_fire alone) -> fired:refr = 1:2 1:2 0:0 0:0 1:2 1:2 0:0 0:0,
+    v = 0 0 180 0 0 0 0 0 milli, next_count = 4, all as predicted. Previously the refractory
+    cells read 2,0,-,-,2,0,-,-.                                                        PASS
+
+THE WHOLE-PIPELINE GATE STILL FAILS, for a different and much smaller reason
+
+  gpu_run.txt: 512 neurons, 1536 edges, 30 ticks, launch_errors=21
+    GPU spikes_total = 35   per step [10,3,7,4,4,3,2,2,0,...]
+    CPU reference    =  5   per step [3,2,0,0,...]
+  An independent third computation (direct numpy, accum at tick 0 from the seed bucket) agrees
+  with the CPU reference: only 3 neurons exceed the 0.3 threshold at tick 0 - 9, 10 and 11 - and
+  the seed neurons' own accumulations are all below 0.3 (max 0.2). The GPU fires exactly 10 at
+  tick 0, i.e. the number of seeds in the bucket, so the accumulated input rather than the firing
+  rule is the suspect. The membrane residual points the same way: GPU first-8 = [0,-7,7,-3,0,8,
+  -4,12] milli vs CPU [0,-4,4,-2,9,9,2,0], magnitudes off by ~1.5-1.75x rather than by a stable
+  factor.
+
+  update_and_fire is now proven correct in isolation, so the fault is in accumulate_bucket or in
+  the runner's per-tick bookkeeping. NEXT PROBE (not yet written): isolate the accumulate kernel -
+  allocate accum plus a 16-element output, launch accumulate_bucket once with the seed bucket
+  (count=10), read accum[0..15] back and compare against the hand-computed ring values
+  (0.4 at 9, 0.4 at 10, 0.32 at 11, 0.2 at 4, 0.2 at 5, everything else <= 0.2). If the kernel
+  over-adds, the fault is in its CSR walk; if it matches, the fault is in the runner's bucket
+  handoff (the d_src readback loop, or the stale r1 kept when an empty bucket skips the
+  accumulate launch - which is also the likely source of the 21 launch errors, since r1 is not
+  reset on the skip path).
+

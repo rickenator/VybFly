@@ -1,0 +1,175 @@
+// probe_m2_f_des_smoke - unit smoke test for the M2 DES runtime (src/vyb/des.vyb).
+//
+// Hand-computed expectations for the integer LIF kernel, the bucketed scheduler (including ring
+// growth and the past-event clamp) and the Recorder's canonical view, so a failure points at the
+// runtime rather than at the network fixture.
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_f_des_smoke.vyb --module-path src/vyb
+
+import des::{
+    Sched, Delivery, EntityState, Recorder, EventSource,
+    sched_new, sched_push, sched_next_tick, sched_pending,
+    delivery_new, drain_tick,
+    ent_new, ent_init, ent_vm, ent_spike_count,
+    lif_leak, kernel_tick, rec_new, rec_finalize, rec_total, rec_count, rec_ptr,
+    rec_tick_at, rec_hash_canonical, src_from, src_pump_all, src_len,
+    event_type_stimulus, timestamp_ticks_per_ms, des_status_message
+}
+
+check(v<their<Vec<Int>>>, name<String>, got<Int>, want<Int>) -> {
+    v.push(0)
+    idx<Int> = v.len() - 1
+    if (got == want) {
+        v.set(idx, 1)
+        println("ok   " + name + " = " + got.to_string())
+    } else {
+        v.set(idx, 0)
+        println("FAIL " + name + " = " + got.to_string() + " (want " + want.to_string() + ")")
+    }
+}
+
+// ---- 1. integer leak -------------------------------------------------------------
+leak_checks(v<their<Vec<Int>>>) -> {
+    check(v, "leak/0ticks", lif_leak(-60000, -65000, 951, 0), -60000)
+    check(v, "leak/1tick", lif_leak(-60000, -65000, 951, 1), -65000 + 4755)
+    check(v, "leak/2ticks", lif_leak(-60000, -65000, 951, 2), -65000 + 4522)
+    check(v, "leak/at_rest", lif_leak(-65000, -65000, 951, 7), -65000)
+    check(v, "leak/negative_delta", lif_leak(-70000, -65000, 951, 2), -65000 - 4522)
+}
+
+// ---- 2. bucketed scheduler -------------------------------------------------------
+sched_checks(v<their<Vec<Int>>>) -> {
+    s<Sched> = sched_new(8, 1)
+    check(v, "sched/pending_empty", sched_pending(borrow(s)), 0)
+    check(v, "sched/next_empty", sched_next_tick(borrow(s)), -1)
+
+    sched_push(borrow(s), 0, 10, 1, 100)
+    sched_push(borrow(s), 0, 11, 1, 200)
+    sched_push(borrow(s), 3, 12, 2, 300)
+    check(v, "sched/pending_3", sched_pending(borrow(s)), 3)
+    check(v, "sched/next_tick_0", sched_next_tick(borrow(s)), 0)
+
+    d<Delivery> = delivery_new()
+    t0<Int> = drain_tick(borrow(s), borrow(d))
+    check(v, "sched/drain_tick_0", t0, 0)
+    check(v, "sched/drain_n_0", d.n, 2)
+    check(v, "sched/pending_after_drain", sched_pending(borrow(s)), 1)
+
+    // a bucket 100 turns ahead forces repeated ring doubling (growth path)
+    sched_push(borrow(s), 100, 13, 2, 400)
+    check(v, "sched/grows", s.grows, 4)
+    check(v, "sched/n_buckets_after_grow", s.n_buckets, 128)
+    check(v, "sched/pending_after_grow", sched_pending(borrow(s)), 2)
+    check(v, "sched/next_tick_3", sched_next_tick(borrow(s)), 3)
+    t1<Int> = drain_tick(borrow(s), borrow(d))
+    check(v, "sched/drain_tick_3", t1, 3)
+    check(v, "sched/drain_n_3", d.n, 1)
+    check(v, "sched/late_events", s.late_events, 0)
+    check(v, "sched/far_events", s.far_events, 0)
+    // a past event is clamped to the cursor and counted, never silently aliased
+    sched_push(borrow(s), 1, 14, 2, 500)
+    check(v, "sched/late_detected", s.late_events, 1)
+    t2<Int> = drain_tick(borrow(s), borrow(d))
+    check(v, "sched/clamped_delivers_at_cursor", t2, 3)
+    // the turn-100 event is still pending; the clamped event was delivered at turn 3
+    check(v, "sched/pending_after_clamped_drain", sched_pending(borrow(s)), 1)
+}
+
+// ---- 3. LIF kernel --------------------------------------------------------------
+kernel_checks(v<their<Vec<Int>>>) -> {
+    st<EntityState> = ent_new(3)
+    i<Int> = 0
+    while (i < 3) {
+        ent_init(borrow(st), i, 0, 20, 951, 5, -57000, -65000, -70000)
+        i = i + 1
+    }
+    rec<Recorder> = rec_new(3)
+    s<Sched> = sched_new(16, 1)
+    d<Delivery> = delivery_new()
+
+    // e0: one supra-threshold stimulus at t=0 -> fires immediately
+    sched_push(borrow(s), 0, 0, event_type_stimulus(), 10000)
+    // e1: subthreshold at t=0; big input at t=1 fires it (refr until 6); its t=2 input is dropped
+    sched_push(borrow(s), 0, 1, event_type_stimulus(), 5000)
+    sched_push(borrow(s), 1, 1, event_type_stimulus(), 100000)
+    sched_push(borrow(s), 2, 1, event_type_stimulus(), 5000)
+    // e2: two half-size inputs in the SAME tick sum before the single integration -> fires
+    sched_push(borrow(s), 0, 2, event_type_stimulus(), 6000)
+    sched_push(borrow(s), 0, 2, event_type_stimulus(), 6000)
+
+    t<Int> = 0
+    ticks<Int> = 0
+    while (true) {
+        t = drain_tick(borrow(s), borrow(d))
+        if (t < 0) { break }
+        kernel_tick(borrow(st), borrow(rec), borrow(d), t)
+        ticks = ticks + 1
+    }
+    check(v, "kernel/ticks", ticks, 3)
+    check(v, "kernel/e0_spikes", ent_spike_count(borrow(st), 0), 1)
+    // e1 fires once, at t=1: its t=2 input lands inside the refractory period (until 1+5=6)
+    check(v, "kernel/e1_spikes", ent_spike_count(borrow(st), 1), 1)
+    check(v, "kernel/e2_spikes", ent_spike_count(borrow(st), 2), 1)
+    check(v, "kernel/total_spikes", rec_total(borrow(rec)), 3)
+    check(v, "kernel/e0_vm_after_spike", ent_vm(borrow(st), 0), -70000)
+    check(v, "kernel/e1_vm_refractory_drop", ent_vm(borrow(st), 1), -70000)
+
+    rec_finalize(borrow(rec))
+    check(v, "rec/count0", rec_count(borrow(rec), 0), 1)
+    check(v, "rec/count1", rec_count(borrow(rec), 1), 1)
+    check(v, "rec/ptr_start0", rec_ptr(borrow(rec), 0), 0)
+    check(v, "rec/ptr_end0", rec_ptr(borrow(rec), 1), 1)
+    check(v, "rec/e1_first_tick", rec_tick_at(borrow(rec), 1), 1)
+    check(v, "rec/e1_tick", rec_tick_at(borrow(rec), 1), 1)
+    check(v, "rec/e2_tick", rec_tick_at(borrow(rec), 2), 0)
+    h1<Int> = rec_hash_canonical(borrow(rec), 3)
+    h2<Int> = rec_hash_canonical(borrow(rec), 3)
+    check(v, "rec/hash_stable", h1 - h2, 0)
+    println("canonical_spike_hash=" + h1.to_string())
+}
+
+// ---- 4. EventSource pumping -----------------------------------------------------
+source_checks(v<their<Vec<Int>>>) -> {
+    ticks<Vec<Int>> = Vec()
+    target<Vec<Int>> = Vec()
+    value<Vec<Int>> = Vec()
+    ticks.push(0)
+    target.push(0)
+    value.push(7)
+    ticks.push(5)
+    target.push(1)
+    value.push(9)
+    ticks.push(99)
+    target.push(2)
+    value.push(11)
+    src<EventSource> = src_from(event_type_stimulus(), ticks, target, value)
+    s<Sched> = sched_new(16, 1)
+    pushed<Int> = src_pump_all(borrow(s), borrow(src), 10)
+    check(v, "src/pushed_in_horizon", pushed, 2)
+    check(v, "src/pending", sched_pending(borrow(s)), 2)
+    check(v, "src/len", src_len(borrow(src)), 3)
+}
+
+main()<Int> -> {
+    println("des smoke: " + des_status_message())
+    verdicts<Vec<Int>> = Vec()
+    check(borrow(verdicts), "units/ticks_per_ms", timestamp_ticks_per_ms(), 10)
+    leak_checks(borrow(verdicts))
+    sched_checks(borrow(verdicts))
+    kernel_checks(borrow(verdicts))
+    source_checks(borrow(verdicts))
+    fails<Int> = 0
+    k<Int> = 0
+    while (k < verdicts.len()) {
+        if (verdicts.get(k) == 0) { fails = fails + 1 }
+        k = k + 1
+    }
+    println("checks=" + verdicts.len().to_string() + " failures=" + fails.to_string())
+    if (fails == 0) {
+        println("probe-m2-f-des-smoke-PASS")
+        return 0
+    }
+    println("probe-m2-f-des-smoke-FAIL")
+    return 1
+}

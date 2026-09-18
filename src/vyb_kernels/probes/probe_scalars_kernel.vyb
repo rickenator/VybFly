@@ -1,0 +1,37 @@
+// Kernel half of the lane-uniformity probe (host runner: probe_scalar_load.vyb).
+// Device code only - the entry point must carry no host references.
+//
+// Reads descriptor scalars and stores them, plus its own lane id, into three separate
+// 4-byte-stride output arrays: the exact store shape update_and_fire uses for its refractory
+// array. Every lane must report the same two values.
+//
+// ONE descriptor argument, like the real kernels: cuLaunchKernel's kernelParams is packed for a
+// single 8-byte argument (Vyb issue #199), so a multi-parameter entry point receives garbage for
+// every argument after the first and crashes the process - the first version of this probe took
+// five parameters and core-dumped for exactly that reason, which is not evidence about lanes.
+//
+// Descriptor words (i64, byte offsets): 0 out_a, 8 out_b, 16 out_lane, 24 n, 32 wa, 40 wb.
+probe_scalars(dsc<Int>) -> {
+    out_a<Int> = ld_i64(dsc + 0) as Int
+    out_b<Int> = ld_i64(dsc + 8) as Int
+    out_lane<Int> = ld_i64(dsc + 16) as Int
+    n<Int> = ld_i64(dsc + 24) as Int
+    wa<Int> = ld_i64(dsc + 32) as Int
+    wb<Int> = ld_i64(dsc + 40) as Int
+    // Extra scalar loads, matching update_and_fire's 13-word descriptor: if register pressure
+    // with many live scalars is what corrupts a lane, this is where it will show.
+    x6<Int> = ld_i64(dsc + 48) as Int
+    x7<Int> = ld_i64(dsc + 56) as Int
+    x8<Int> = ld_i64(dsc + 64) as Int
+    x9<Int> = ld_i64(dsc + 72) as Int
+    x10<Int> = ld_i64(dsc + 80) as Int
+    x11<Int> = ld_i64(dsc + 88) as Int
+    x12<Int> = ld_i64(dsc + 96) as Int
+    tail<Int> = x6 + x7 * 0 + x8 * 0 + x9 * 0 + x10 * 0 + x11 * 0 + x12
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    if (gid < n) {
+        st_i32(out_a + gid * 4, x6)
+        st_i32(out_b + gid * 4, x7)
+        st_i32(out_lane + gid * 4, x12)
+    }
+}

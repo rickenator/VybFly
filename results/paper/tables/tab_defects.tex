@@ -1,0 +1,22 @@
+{\small\setlength{\tabcolsep}{3pt}
+\resizebox{0.96\textwidth}{!}{\%
+\begin{tabular}{p{4.4cm} p{5.6cm} p{3.6cm} l}
+\toprule
+defect found while building this project & reproduction / observed behaviour & consequence here & status \\
+\midrule
+st\_* stored the operand's LLVM type, not the intrinsic element type & `st\_i32(ptr, i64)` emitted an 8-byte store whose high word landed in the neighbouring 4-byte slot & kernel-mode data corruption in the GPU pipeline & fixed upstream (PR \#273) \\
+a parenthesised operand after `*` inside an addition & the multiplication's left operand is typed as a pointer; `p + s * (q)` fails to compile outside kernel mode & blocks ordinary arithmetic expressions & open (probe saved) \\
+`Vec<Vec<T>>` is unusable & four failure modes incl. silent garbage from `.get(i).get(0)` and `.push` into a temporary & forced the DES scheduler into a structure-of-arrays design & open \\
+re-borrowing an existing borrow segfaults & `f(borrow(v))` where `v` is already borrowed (exit 139) & API shape constraint in the DES runtime & open \\
+raw io byte buffers corrupt across a module boundary & the same 16 bytes read inline give 0, 62 and via a module function give a 64-bit value & forced decoding inside the module & open \\
+optional `Vec` returns are rejected & a function declared `Vec<UInt8>?` cannot `return` a `Vec<UInt8>` & forced a rewrite of the loader & open \\
+`Vec` parameters are not mutated for the caller & out-parameters come back empty & design constraint for the loader & open \\
+device intrinsics return `CInt` & `tid\_x`/`blk\_x`/`dim\_x`/`ld\_i32` need an explicit `as Int` in assignments & documented; cost a compile cycle & open (by design?) \\
+`ptr` is a reserved struct-field name & rejected with a message that never names the token & minor ergonomics & open \\
+`String.to\_int`/`to\_float` do not exist & documented in the reference manual but absent in the compiler & the DES app ships its own integer parser & open \\
+byte-at-a-time decode throughput & $\approx 29\,\mu$s per element ($\approx$34k elements/s); a 15M-element pass takes $\approx$7 min & project-level blocker for a whole-connectome Vyb simulation; a bulk byte$ o$int read is required & open \\
+\bottomrule
+\end{tabular}
+
+}
+}

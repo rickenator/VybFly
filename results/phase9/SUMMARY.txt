@@ -1,0 +1,285 @@
+PHASE 9 / M12-M14 - CAPABILITY SCALING TESTS - SUMMARY
+==============================================================================
+
+Deliverables: src/flyscale/capability.py, scripts/phase9_capability.py,
+              results/phase9/capability.json, results/phase9/SUMMARY.txt,
+              results/phase9/artifacts/ (response matrices per scale)
+
+DATASET AND ENVIRONMENT
+  dataset: data/processed/canonical_v783
+  dataset_version: flywire-v783-canon-1
+  git_commit: (repository has no commits yet - working tree only)
+  git_working_tree_dirty: True
+  python: 3.12.3
+  platform: Linux-7.0.0-30-generic-x86_64-with-glibc2.39
+  dataset_hash: ed6ecbd438b5fe6e
+
+WHAT WAS RUN AT EVERY SCALE
+  graphs:      canonical v783 thresholded at 5 synapses (1x), then renorm.upscale to
+               2x/5x/10x with the recorded geometry (standardised anatomical xyz,
+               P(connect)=1/(1+exp((d-R)/T)) fit on the graph itself)
+       1x: N=139,255  connections=2,700,513  synapses=34,153,566
+       2x: N=278,510  connections=5,187,641  synapses=68,433,997
+       5x: N=696,275  connections=13,511,566  synapses=172,021,005
+      10x: N=1,392,550  connections=27,891,361  synapses=347,182,855
+  dynamics:    synchronous threshold cascade (flyscale.propagation), 8 steps, relative
+               threshold fixed at 3.00 x the graph's own mean synapses/connection
+  stimulus:    96 classes, each trial seeds 0.0020 x N neurons drawn from a class pool of
+               0.0040 x N stimulable neurons (sensory / visual_projection / optic)
+  readout:     binary final activation mask over 0.050 x N neurons (fixed seed);
+               nearest-centroid / template-matching decoder (analytic, no training)
+  statistics:  every threshold-based capability requires accuracy >= threshold AND a
+               one-sided exact binomial p<0.05 vs chance; accuracies that clear the
+               threshold but not the test are listed separately, never counted
+  protocol revision: v3 (superseded revisions kept under results/phase9/
+               scales_archive/ and artifacts_archive/, both described in the JSON)
+  readout dims: 1x->6963, 2x->13926, 5x->34814, 10x->69628
+
+CAPABILITY TABLE (one row per scale)
+  metric                                                1x          2x          5x         10x
+  sensory discrimination, min separable delta       0.4000      0.0500      0.0500      0.0500
+    discrimination accuracy at max delta            1.0000      1.0000      1.0000      1.0000
+    discrimination MI (bits) at overlap 0.95 (Delta=0.05)      0.0000      0.2500      0.1887      0.4300
+    discrimination MI (bits) at overlap 0.9 (Delta=0.10)      0.0000      0.1556      0.5244      0.7744
+    discrimination MI (bits) at overlap 0.6 (Delta=0.40)      0.7744      0.7744      1.0000      1.0000
+    discrimination MI (bits), identical-pool control      0.0244      0.1188      0.2744      0.0934
+    discrimination accuracy at the finest Delta      0.5000      0.7500      0.7500      0.8125
+    min separable delta == grid minimum (censored)       False        True        True        True
+  memory capacity M* (associations)                 8.0000     96.0000     96.0000     96.0000
+    memory capacity censored at grid max             False        True        True        True
+    memory capacity at accuracy>=0.95               8.0000     96.0000     96.0000     96.0000
+    memory capacity at accuracy>=0.99               8.0000     80.0000     96.0000     96.0000
+    memory capacity above chance (any level)       96.0000     96.0000     96.0000     96.0000
+    accuracy at capacity grid max                   0.8542      0.9792      1.0000      1.0000
+  temporal depth (delay steps)                      0.0000      0.0000      0.0000      0.0000
+    delayed match accuracy at delay 0               0.5833      0.3333      0.5833      0.3333
+  sequence depth (order-reversal k)                 0.0000      0.0000      0.0000      0.0000
+  generalization: novel-variant accuracy            1.0000      1.0000      1.0000      1.0000
+    generalization: matched accuracy                0.8750      1.0000      1.0000      1.0000
+    generalization gap                             -0.1250      0.0000      0.0000      0.0000
+  robustness: baseline accuracy                     0.9000      1.0000      1.0000      1.0000
+    robustness: lowest rate with significant drop, neurons           -           -           -           -
+    robustness: lowest rate with significant drop, synapses           -           -           -           -
+    robustness: max tolerated rate, neurons         0.9000      0.9000      0.9000      0.9000
+    robustness: MI retained at 90% neuron loss      1.6394      1.0000      1.0000      1.0000
+    robustness: MI retained at 90% synapse loss      0.3876      0.2365      1.0000      1.0000
+    robustness: MI half-degradation rate, neurons           -           -           -           -
+    robustness: MI half-degradation rate, synapses      0.8820      0.8310           -           -
+    robustness: half-degradation rate, neurons           -           -           -           -
+    robustness: half-degradation rate, synapses      0.9000      0.8667           -           -
+    robustness: accuracy at max neuron lesion       1.0000      1.0000      1.0000      1.0000
+    robustness: accuracy at max synapse lesion      0.7000      0.7000      1.0000      1.0000
+  complexity: participation ratio                 182.5964    268.5836    339.2364    388.5407
+    complexity: components for 90% variance       319.0000    358.0000    387.0000    400.0000
+    complexity: mean unit entropy (bits)            0.1929      0.1808      0.1688      0.1635
+    complexity: distinct-pattern ratio              1.0000      1.0000      1.0000      1.0000
+    complexity: readout unit coverage               0.7452      0.7224      0.7298      0.7335
+    complexity: stimulus-response MI (bits)         6.2984      6.5433      6.5850      6.5850
+    complexity: normalised MI                       0.9565      0.9937      1.0000      1.0000
+    complexity: MI at the class ceiling              False       False        True        True
+    complexity: avalanche size exponent             0.3466      0.5079      0.0254      0.0929
+    complexity: avalanche exponent R^2              0.3142      0.2675      0.0003      0.0036
+    complexity: branching ratio (sum ratio)         1.0053      1.0034      1.0032      1.0034
+    complexity: neurons recruited fraction          0.7492      0.7257      0.7271      0.7340
+    complexity: mean final active fraction          0.4045      0.3868      0.4008      0.4186
+
+FITTED EXPONENTS (value ~ N^alpha and ~ synapses^alpha, least squares on log-log axes)
+  metric                                         alpha_N    R2_N   alpha_E    R2_E  verdict
+  accuracy_at_full_stimulus_difference             0.000       -     0.000       -  flat/no growth
+  avalanche_size_exponent                         -0.940   0.488    -0.933   0.487  descriptive
+  avalanche_size_exponent_r2                      -2.686   0.636    -2.665   0.634  descriptive
+  branching_ratio_ratio_of_sums                   -0.001   0.553    -0.001   0.552  descriptive
+  components_for_90pct_variance                    0.096   0.942     0.096   0.941  grows
+  discrimination_accuracy_at_finest_delta          0.182   0.705     0.181   0.704  grows*
+  discrimination_bits_at_finest_delta              0.303   0.342     0.302   0.344  grows*
+  discrimination_bits_at_overlap_0.6               0.134   0.844     0.133   0.843  grows
+  discrimination_bits_at_overlap_0.9               1.014   0.957     1.005   0.956  grows
+  discrimination_bits_at_overlap_0.95              0.303   0.342     0.302   0.344  grows*
+  discrimination_bits_identical_pools_control      0.628   0.401     0.622   0.399  descriptive
+  discrimination_finest_delta_tested               0.000       -     0.000       -  descriptive
+  distinct_pattern_ratio                           0.000       -     0.000       -  flat/no growth
+  generalization_gap                                   -       -         -       -  descriptive
+  generalization_matched_accuracy                  0.050   0.576     0.050   0.574  grows*
+  generalization_novel_accuracy                    0.000       -     0.000       -  flat/no growth
+  mean_final_active_fraction                       0.018   0.322     0.018   0.324  descriptive
+  mean_recruits_per_step                           1.018   0.999     1.011   0.999  descriptive
+  mean_unit_entropy_bits                          -0.072   0.983    -0.072   0.983  flat/no growth
+  memory_capacity                                  0.932   0.576     0.924   0.574  grows*
+  memory_capacity_above_chance_only                0.000       -     0.000       -  flat/no growth
+  memory_capacity_accuracy_at_grid_max             0.062   0.687     0.062   0.686  grows*
+  memory_capacity_at_0.95                          0.932   0.576     0.924   0.574  grows*
+  memory_capacity_at_0.99                          0.959   0.637     0.951   0.636  grows*
+  min_separable_delta                             -0.780   0.576    -0.773   0.574  grows*
+  min_separable_delta_at_grid_minimum                  -       -         -       -  descriptive
+  neurons_recruited_fraction                      -0.007   0.262    -0.007   0.260  flat/no growth*
+  participation_ratio                              0.318   0.946     0.316   0.946  grows
+  readout_unit_coverage                           -0.004   0.118    -0.004   0.117  flat/no growth*
+  robustness_accuracy_at_max_neuron_lesion         0.000       -     0.000       -  flat/no growth
+  robustness_accuracy_at_max_synapses_lesion       0.187   0.844     0.186   0.843  grows
+  robustness_baseline_accuracy                     0.040   0.576     0.039   0.574  grows*
+  robustness_half_degradation_rate_neurons             -       -         -       -  descriptive
+  robustness_half_degradation_rate_synapses            -       -         -       -  descriptive
+  robustness_lowest_significant_drop_rate_neurons         -       -         -       -  descriptive
+  robustness_lowest_significant_drop_rate_synapses         -       -         -       -  descriptive
+  robustness_max_tolerated_rate_neurons            0.000       -     0.000       -  flat/no growth
+  robustness_max_tolerated_rate_synapses           0.132   0.844     0.131   0.843  grows
+  robustness_mi_half_degradation_rate_neurons          -       -         -       -  descriptive
+  robustness_mi_half_degradation_rate_synapses         -       -         -       -  descriptive
+  robustness_mi_retention_at_largest_rate_neurons    -0.185   0.576    -0.184   0.574  flat/no growth*
+  robustness_mi_retention_at_largest_rate_synapses     0.570   0.645     0.567   0.645  grows*
+  sequence_depth                                       -       -         -       -  flat/no growth
+  stimulus_response_mi_at_ceiling                      -       -         -       -  descriptive
+  stimulus_response_mi_bits                        0.018   0.695     0.017   0.693  grows*
+  stimulus_response_mi_ceiling_bits                0.000       -     0.000       -  descriptive
+  stimulus_response_normalised_mi                  0.018   0.695     0.017   0.693  grows*
+  temporal_depth_delay_zero_accuracy              -0.126   0.156    -0.126   0.157  flat/no growth*
+  temporal_depth_steps                                 -       -         -       -  flat/no growth
+  (* weak log-log fit, R^2 < 0.8: the exponent is indicative only - the per-scale values
+   above are the primary evidence)
+
+  note: the 'identical-pool control' row is the discrimination MI estimator's noise floor
+  (two identical pools must give 0 bits; anything above 0 is the 16-sample estimate's
+  spread), so discrimination MI should be read against that column, not against zero
+
+BENCHMARK VERDICTS (§9 families, headline number per scale)
+  benchmark                                                 1x          2x          5x         10x  verdict
+  sensory discrimination: min separable Delta           0.4000      0.0500      0.0500      0.0500  grows (at the grid floor on some scales - the exponent is a grid artifact) [lower is better]
+  discrimination MI (bits) at overlap 0.95 (Delta=0.05)      0.0000      0.2500      0.1887      0.4300  grows [higher is better]
+  memory capacity M* (acc>=0.9)                         8.0000     96.0000     96.0000     96.0000  grows (censored at the grid maximum on some scales) [higher is better]
+  memory capacity (acc>=0.99)                           8.0000     80.0000     96.0000     96.0000  grows [higher is better]
+  temporal depth (delay steps)                          0.0000      0.0000      0.0000      0.0000  does not grow [higher is better]
+  sequence depth (k, order vs reversal)                 0.0000      0.0000      0.0000      0.0000  does not grow [higher is better]
+  generalization: novel-variant accuracy                1.0000      1.0000      1.0000      1.0000  does not grow (no headroom: the metric is at its ceiling at every scale) [higher is better]
+  robustness: max tolerated neuron loss                 0.9000      0.9000      0.9000      0.9000  does not grow [higher is better]
+  robustness: lowest significant drop, synapses              -           -           -           -  unresolved [lower = more fragile]
+  robustness: MI retained at 90% synapse loss           0.3876      0.2365      1.0000      1.0000  grows [higher is more robust]
+  robustness: accuracy at 90% synapse loss              0.7000      0.7000      1.0000      1.0000  grows [higher is more robust]
+  complexity: participation ratio                     182.5964    268.5836    339.2364    388.5407  grows [higher is better]
+  complexity: stimulus-response MI (bits)               6.2984      6.5433      6.5850      6.5850  grows (at the log2(n_classes) ceiling on some scales) (no headroom: the metric is at its ceiling at every scale) [higher is better]
+
+DID CAPABILITY GROW WITH SCALE? (the honest answer, metric by metric)
+  grew with scale (exponent >= 0.1 with R^2 >= 0.7):
+    - discrimination_accuracy_at_finest_delta (alpha=0.182, R2=0.704939912116754)
+    - discrimination_bits_at_overlap_0.6 (alpha=0.134, R2=0.843538534453123)
+    - discrimination_bits_at_overlap_0.9 (alpha=1.014, R2=0.9570940217707754)
+    - participation_ratio (alpha=0.318, R2=0.9463963815565786)
+    - robustness_accuracy_at_max_synapses_lesion (alpha=0.187, R2=0.8435385344531238)
+    - robustness_max_tolerated_rate_synapses (alpha=0.132, R2=0.8435385344531237)
+  grew, but the evidence is marginal (small exponent, weak fit, or a grid/ceiling
+  artefact - do not quote these as scaling laws without the caveat):
+    - components_for_90pct_variance (alpha=0.096, R2=0.9420597323673412)  [small exponent or weak fit]
+    - discrimination_bits_at_finest_delta (alpha=0.303, R2=0.34218206345838353)  [small exponent or weak fit]
+    - discrimination_bits_at_overlap_0.95 (alpha=0.303, R2=0.34218206345838353)  [small exponent or weak fit]
+    - generalization_matched_accuracy (alpha=0.050, R2=0.5755281817470292)  [small exponent or weak fit]
+    - memory_capacity (alpha=0.932, R2=0.5755281817470294)  [grid-limited: see the limits below]
+    - memory_capacity_accuracy_at_grid_max (alpha=0.062, R2=0.6872683079327986)  [small exponent or weak fit]
+    - memory_capacity_at_0.95 (alpha=0.932, R2=0.5755281817470294)  [grid-limited: see the limits below]
+    - memory_capacity_at_0.99 (alpha=0.959, R2=0.6373722277891607)  [grid-limited: see the limits below]
+    - min_separable_delta (alpha=-0.780, R2=0.5755281817470292)  [grid-limited: see the limits below]
+    - robustness_baseline_accuracy (alpha=0.040, R2=0.5755281817470295)  [small exponent or weak fit]
+    - robustness_mi_retention_at_largest_rate_synapses (alpha=0.570, R2=0.6447594903740608)  [small exponent or weak fit]
+    - stimulus_response_mi_bits (alpha=0.018, R2=0.6946636642652767)  [small exponent or weak fit]
+    - stimulus_response_normalised_mi (alpha=0.018, R2=0.6946636642652795)  [small exponent or weak fit]
+  did NOT grow with scale (real negatives, headroom existed):
+    - mean_unit_entropy_bits (alpha=-0.072 with R^2=0.983)
+    - memory_capacity_above_chance_only (constant at 96 across every measured scale)
+    - neurons_recruited_fraction (alpha=-0.007 with R^2=0.262; weak log-log fit (R^2<0.8), treat the exponent as indicative only)
+    - readout_unit_coverage (alpha=-0.004 with R^2=0.118; weak log-log fit (R^2<0.8), treat the exponent as indicative only)
+    - robustness_max_tolerated_rate_neurons (constant at 0.9 across every measured scale)
+    - robustness_mi_retention_at_largest_rate_neurons (alpha=-0.185 with R^2=0.576; weak log-log fit (R^2<0.8), treat the exponent as indicative only)
+    - sequence_depth (constant at 0 across every measured scale)
+    - temporal_depth_delay_zero_accuracy (alpha=-0.126 with R^2=0.156; weak log-log fit (R^2<0.8), treat the exponent as indicative only)
+    - temporal_depth_steps (constant at 0 across every measured scale)
+  no growth detectable, but the metric was already at its measurement ceiling:
+    - accuracy_at_full_stimulus_difference (constant at 1 across every measured scale)
+    - distinct_pattern_ratio (constant at 1 across every measured scale)
+    - generalization_novel_accuracy (constant at 1 across every measured scale)
+    - robustness_accuracy_at_max_neuron_lesion (constant at 1 across every measured scale)
+  descriptive diagnostics (no growth claim applies):
+    - avalanche_size_exponent (descriptive diagnostic, no growth claim applies (values 0.0254333..0.507921))
+    - avalanche_size_exponent_r2 (descriptive diagnostic, no growth claim applies (values 0.00029663..0.31421))
+    - branching_ratio_ratio_of_sums (descriptive diagnostic, no growth claim applies (values 1.00322..1.00526))
+    - discrimination_bits_identical_pools_control (descriptive diagnostic, no growth claim applies (values 0.0243975..0.274397))
+    - discrimination_finest_delta_tested (descriptive diagnostic, no growth claim applies (values 0.05..0.05))
+    - mean_final_active_fraction (descriptive diagnostic, no growth claim applies (values 0.386782..0.418629))
+    - mean_recruits_per_step (descriptive diagnostic, no growth claim applies (values 6258.11..64773.5))
+    - min_separable_delta_at_grid_minimum (not measured at any scale)
+    - stimulus_response_mi_at_ceiling (not measured at any scale)
+    - stimulus_response_mi_ceiling_bits (descriptive diagnostic, no growth claim applies (values 6.58496..6.58496))
+    - unresolved: generalization_gap (fewer than 3 usable positive points - not fitted)
+    - unresolved: robustness_half_degradation_rate_neurons (not measured at any scale)
+    - unresolved: robustness_half_degradation_rate_synapses (fewer than 3 usable positive points - not fitted)
+    - unresolved: robustness_lowest_significant_drop_rate_neurons (not measured at any scale)
+    - unresolved: robustness_lowest_significant_drop_rate_synapses (not measured at any scale)
+    - unresolved: robustness_mi_half_degradation_rate_neurons (not measured at any scale)
+    - unresolved: robustness_mi_half_degradation_rate_synapses (fewer than 3 usable positive points - not fitted)
+  censored at 2x: memory capacity at the top of the tested grid
+  censored at 5x: memory capacity at the top of the tested grid
+  censored at 10x: memory capacity at the top of the tested grid
+
+PER-SCALE COST (wall seconds; the cascade is CPU numpy, single process)
+   scale           N  cascades  classes  discrim temporal sequence   robust   total_s
+      1x     139,255     1,068     14.5      6.1      1.7      1.4      2.2        28
+      2x     278,510     1,068     62.5     30.7      9.4      6.3     10.7       128
+      5x     696,275     1,068    139.8     76.7     20.4     19.8     29.2       300
+     10x   1,392,550     1,068    321.1    169.3     53.0     43.5     61.6       672
+  note: wall seconds were measured while other phase jobs of this project were running on the same 20-core host, so they are an upper bound on an idle machine's cost; cascades_total and seconds_per_cascade are given so the cost can be re-derived from work done rather than from a contended clock
+  wall seconds ~ N^1.318 (R2=0.964) - a runtime exponent of ~1 means the cost is linear in the neuron count, as the CSR cascade should be
+  energy: per-scale energy results exist at results/energy/curves.json (field 'per_scale'); they are another work-stream's output and are not used to derive any capability number here
+
+CAPABILITY PER WATT (§19, M14)
+  biological-equivalent power from results/energy/biological_model.json (per-neuron 1.84e-12 W, anchor drosophila_brain_heat_panda2026):
+  (capability unit per biological watt; alpha is the fit of that value against N,
+   which equals alpha_C - 1 by construction of the linear biological model)
+  capability                                          1x            2x            5x           10x  alpha_N     R2   n
+  memory_capacity                               3.12e+07      1.88e+08       7.5e+07      3.75e+07   -0.068  0.007   4
+  participation_ratio                           7.13e+08      5.25e+08      2.65e+08      1.52e+08   -0.682  0.988   4
+  stimulus_response_mi_bits                     2.46e+07      1.28e+07      5.14e+06      2.57e+06   -0.982  1.000   4
+  discrimination_bits_at_overlap_0.9                   0      3.04e+05       4.1e+05      3.02e+05    0.014  0.004   3
+  components_for_90pct_variance                 1.25e+09      6.99e+08      3.02e+08      1.56e+08   -0.904  0.999   4
+  generalization_novel_accuracy                 3.91e+06      1.95e+06      7.81e+05      3.91e+05   -1.000  1.000   4
+  caveat: P_bio(N) is linear in N by construction, so per-watt exponents below are (alpha_C - 1) by construction; the useful independent number remains alpha_C vs N
+  hardware track: hardware power was sampled by the energy work-stream for its own GPU/CUDA workload, not for this CPU cascade, so no hardware energy is attributed to the capability runs here; the §19/M14 combination over measured watts lives in results/energy/curves.json
+  hardware anchors per scale (measured by the energy work-stream for its own GPU workload):
+    1x: wall 4.095319 s, gpu mean 114.66776190476189 W, gpu joules 464.20894194949994
+    2x: wall None s, gpu mean None W, gpu joules None
+    5x: wall None s, gpu mean None W, gpu joules None
+    10x: wall None s, gpu mean None W, gpu joules None
+  NOTE: results/energy/curves.json carries capability values copied from an earlier protocol revision (1x: memory_capacity, participation_ratio, stimulus_response_mi_bits); the M14 combination must be re-read from the current results/phase9/capability.json
+    (energy work-stream anchors: workload mean 89.94102956521739 W on ['gpu:0'], idle baseline None W)
+
+ERRORS AND THINGS THAT COULD NOT BE MEASURED
+  no battery failed at any scale
+  not measured: spikes per biological second (the cascade is step-based; no step duration is asserted)
+  not measured: an independent power-vs-N exponent (the biological model is linear in N by construction, so it cannot test the energy hypothesis by itself)
+  limited by the tested grid (the value is bounded by the protocol, not the network):
+    - min_separable_delta: the smallest stimulus distance tested (Delta = 0.05) is already separable at some scales, so the fitted exponent for Delta* is bounded below by the grid, not by the network; use the MI-at-Delta=0.05 column as the censoring-free discrimination measure
+    - memory_capacity: capacity is at the top of the tested grid (96 associations) at some scales, so the fitted exponent is a lower bound; the capacity at the stricter 0.99 threshold resolves further
+  limited by a measurement ceiling (no headroom left in the metric):
+    - stimulus_response_mi_bits: the decoder's information is capped at log2(96) = 6.585 bits by the number of stimulus classes; the 5x and 10x values sit on that cap, so their difference is not a network property
+    - generalization_novel_accuracy: at the 1.0 measurement ceiling at every scale: no headroom to detect growth (a harder version of the task would be needed)
+    - robustness_accuracy_at_max_neuron_lesion: at the 1.0 measurement ceiling at every scale: no headroom to detect growth (a harder version of the task would be needed)
+    - accuracy_at_full_stimulus_difference: at the 1.0 measurement ceiling at every scale: no headroom to detect growth (a harder version of the task would be needed)
+    - distinct_pattern_ratio: at the 1.0 measurement ceiling at every scale: no headroom to detect growth (a harder version of the task would be needed)
+    - robustness_mi_retention: a retention above 1.0 is estimation noise from 10 test samples per lesion rate, not an improvement; the MI robustness numbers carry that caveat
+
+REPRODUCIBILITY CHECK
+  self-checks (flyscale.capability.self_check): {"epochs_equal_cascade": true, "masked_equals_cascade": true, "masks_equal_lesioned_graph": true, "self_check_edges": 7202, "self_check_n": 300}
+    the masked cascade used for lesioning is bit-identical to propagation.cascade, to
+    propagation.cascade on an explicitly lesioned graph, and cascade_epochs reproduces
+    cascade step for step
+  re-run check (--stage verify, 1x re-run against the stored file): identical, 359 capability fields compared, 0 differing; per-trial activation and
+    recruitment arrays identical: True, True; protocol fingerprints match: True
+
+HOW TO REPRODUCE
+  cd ~/Projects/VybFly
+  .venv/bin/python scripts/phase9_capability.py --stage all
+  stages, in order (each is resumable and writes its own output):
+    --stage replicas    # build/cache the 1x-10x graphs under results/phase9/replicas/
+    --stage calibrate   # fix the cascade threshold + robustness reference on 1x only
+    --stage run --scales 1 2 5 10   # ~1 min / 2 min / 5 min / 11 min on this shared host
+    --stage verify      # re-run 1x and compare every capability field
+    --stage aggregate   # fit the exponents, write capability.json + SUMMARY.txt
+  every protocol number, seed, geometry parameter, fit and error is recorded in
+  results/phase9/capability.json; the per-scale response matrices are in
+  results/phase9/artifacts/

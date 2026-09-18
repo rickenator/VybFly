@@ -1,0 +1,44 @@
+{
+  "auc_vs_mannwhitney": {
+    "n_cases": 196,
+    "pass": true
+  },
+  "average_precision_vs_random_tiebreak": {
+    "n_cases": 196,
+    "pass": true
+  },
+  "poincare_equals_hyperboloid": {
+    "max_abs_diff": 1.2483035621518208e-08,
+    "pass": true
+  },
+  "hyperboloid_gradient_vs_finite_difference": {
+    "max_abs_error": 1.272694727383339e-10,
+    "max_abs_gradient": 0.16773432509609165,
+    "relative_error": 7.58756281193034e-10,
+    "pass": true
+  },
+  "connection_law": {
+    "fitted_R": 0.7487093793303258,
+    "fitted_T": 0.6669805332849182,
+    "analytic_R": 0.75,
+    "analytic_T": 0.6666666666666666,
+    "R_density_matched": -5.394341652317507,
+    "prevalence_used": 0.0001,
+    "nll_mean": 0.4721861970331163,
+    "pass": true
+  },
+  "spectral_planted_blocks": {
+    "sign_purity": 1.0,
+    "eigen_residual_max": 2.7326087844239955e-07,
+    "pass": true
+  },
+  "hyperbolic_sgd_recovery": {
+    "auc_on_planted_disk": 0.7111569274625635,
+    "oracle_auc_true_positions": 0.7504107775793378,
+    "fraction_of_oracle": 0.9476901834440615,
+    "fitted_R": 1.6687096910736514,
+    "fitted_T": 0.9060412553235718,
+    "train_log_likelihood": -0.5930888610104915,
+    "pass": true
+  }
+}

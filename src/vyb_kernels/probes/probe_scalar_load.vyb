@@ -1,0 +1,91 @@
+// Host half of the lane-uniformity probe (kernel half: probe_scalars_kernel.vyb).
+//
+// Motivated by results/phase3/selftest_output.txt: update_and_fire stored the correct
+// refractory value for gid 0 and 4 but 0 for gid 1 and 5, and the stored value came from
+// descriptor-loaded scalars (t + refractory_ticks).
+//
+// Build:  VYB_STDLIB=~/Projects/Vyb/stdlib build/vyb --kernel \
+//             src/vyb_kernels/probes/probe_scalars_kernel.vyb --ptx results/phase3/probe_scalars.ptx
+// Run:    VYB_STDLIB=~/Projects/Vyb/stdlib build/vyb \
+//             src/vyb_kernels/probes/probe_scalar_load.vyb \
+//             --module-path bindings --module-path bindings/cuda
+import cuda::{cuda_init, cuda_device_count, cuda_device, cuda_ctx_retain, cuda_module_load,
+              cuda_module_func, cuda_mem_alloc, cuda_write_i32, cuda_read_i32, cuda_launch,
+              cuda_sync}
+import io::{open_read, read_all}
+
+desc_word(dst<Int>, off<Int>, value<Int>)<Int> -> {
+    low<Int> = value % 4294967296
+    high<Int> = value / 4294967296
+    cuda_write_i32(dst + off, low as CInt)
+    cuda_write_i32(dst + off + 4, high as CInt)
+    return 0
+}
+
+main()<Int> -> {
+    n<Int> = 64
+    cuda_init()
+    if (cuda_device_count() < 1) { println("ERROR no device"); return 8 }
+    dev<Int> = cuda_device(0) as Int
+    cuda_ctx_retain(dev)
+
+    ptx<String> = ""
+    match (open_read("results/phase3/probe_scalars.ptx")) {
+        f -> {
+            match (read_all(f)) {
+                s -> { ptx = s }
+                ? -> { println("ERROR read ptx"); return 13 }
+            }
+        }
+        ? -> { println("ERROR open ptx"); return 13 }
+    }
+    hmod<Int> = cuda_module_load(ptx)
+    if (hmod == 0) { println("ERROR module load"); return 2 }
+    hf<Int> = cuda_module_func(hmod, "probe_scalars")
+    if (hf == 0) { println("ERROR missing entry"); return 3 }
+
+    d_dsc<Int> = cuda_mem_alloc(64)
+    d_a<Int> = cuda_mem_alloc(n * 4)
+    d_b<Int> = cuda_mem_alloc(n * 4)
+    d_l<Int> = cuda_mem_alloc(n * 4)
+    desc_word(d_dsc, 0, d_a)
+    desc_word(d_dsc, 8, d_b)
+    desc_word(d_dsc, 16, d_l)
+    desc_word(d_dsc, 24, n)
+    desc_word(d_dsc, 32, 111)
+    desc_word(d_dsc, 40, 222)
+    desc_word(d_dsc, 48, 606)
+    desc_word(d_dsc, 56, 707)
+    desc_word(d_dsc, 64, 808)
+    desc_word(d_dsc, 72, 909)
+    desc_word(d_dsc, 80, 1010)
+    desc_word(d_dsc, 88, 1111)
+    desc_word(d_dsc, 96, 1212)
+
+    r<CInt> = cuda_launch(hf, 1, 1, 1, 64 as CInt, 1, 1, d_dsc)
+    ri<Int> = r as Int
+    if (cuda_sync() != 0) { println("ERROR sync"); return 4 }
+    println("launch_rc=" + ri.to_string())
+
+    a<String> = ""
+    b<String> = ""
+    l<String> = ""
+    i<Int> = 0
+    while (i < 8) {
+        va<Int> = cuda_read_i32(d_a + i * 4) as Int
+        vb<Int> = cuda_read_i32(d_b + i * 4) as Int
+        vl<Int> = cuda_read_i32(d_l + i * 4) as Int
+        a = a + va.to_string() + " "
+        b = b + vb.to_string() + " "
+        l = l + vl.to_string() + " "
+        i = i + 1
+    }
+    println("word0_by_lane=" + a)
+    println("word1_by_lane=" + b)
+    println("(out_a=7th load expect 606, out_b=8th load expect 707, lane slot=13th load expect 1212)")
+    println("lane_id_by_slot=" + l)
+    println("expect word0_by_lane=606 x8  (x6 read after 13 scalar loads)")
+    println("expect lane_id_by_slot=0 1 2 3 4 5 6 7")
+    println("probe-scalars-done")
+    return 0
+}

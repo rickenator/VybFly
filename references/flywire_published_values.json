@@ -1,0 +1,207 @@
+{
+  "description": "Published values used as the Phase 0 acceptance gate. Unless a check says otherwise, values come from the FlyWire network-statistics paper (Lin, Yang, Dorkenwald et al., Nature 634:153-165, 2024, doi:10.1038/s41586-024-07968-y), which analysed connectome snapshot v630 (127,978 neurons) with connections thresholded at 5 synapses. The canonical dataset here is v783 (139,255 neurons), so every comparison states its version relationship and a tolerance that accounts for it. Version-independent checks (convention validation) carry tight tolerances; version-sensitive checks carry wider ones and are marked advisory.",
+  "sources": {
+    "network_paper": {
+      "citation": "Lin A., Yang R., Dorkenwald S. et al. Network statistics of the whole-brain connectome of Drosophila. Nature 634, 153-165 (2024)",
+      "doi": "10.1038/s41586-024-07968-y",
+      "connectome_version": "v630 (127,978 neurons)",
+      "conventions": "connections thresholded at five synapses per connection; autoregressive connections are there; reciprocity excludes autapses",
+      "url": "https://www.nature.com/articles/s41586-024-07968-y"
+    },
+    "flagship_paper": {
+      "citation": "Dorkenwald S. et al. Neuronal wiring diagram of an adult brain. Nature 634, 124-138 (2024)",
+      "doi": "10.1038/s41586-024-07558-y",
+      "connectome_version": "v783 (139,255 neurons, 54.5M synapses)"
+    },
+    "data_release": {
+      "doi": "10.5281/zenodo.10676866",
+      "note": "FlyWire Whole-brain Connectome Connectivity Data, version 783, CC-BY-4.0"
+    },
+    "codex": {
+      "url": "https://codex.flywire.ai/?dataset=flywire_fafb",
+      "note": "v783 dataset card reports 139,255 neurons and 3,732,460 connections; see the unresolved_convention_note check"
+    }
+  },
+  "checks": [
+    {
+      "name": "n_neurons",
+      "ours_path": "canonical_counts.n_neurons",
+      "published": 139255,
+      "tolerance_abs": 0,
+      "source": "flagship paper / v783 release",
+      "advisory": false,
+      "comment": "exact: the proofread root-id array defines the neuron set"
+    },
+    {
+      "name": "mean_synapses_per_connection",
+      "ours_path": "blocks.threshold_robustness.5.mean_synapses_per_connection",
+      "published": 12.6,
+      "tolerance_abs": 0.5,
+      "source": "network paper (v630), 'the average connection consists of 12.6 synapses'",
+      "advisory": false,
+      "comment": "strongest available validation that the 5-synapse convention and neuropil-level aggregation are correct"
+    },
+    {
+      "name": "connection_reciprocity",
+      "ours_path": "blocks.threshold_robustness.5.reciprocity",
+      "published": 0.138,
+      "tolerance_abs": 0.02,
+      "source": "network paper Table 2 (v630)",
+      "advisory": false,
+      "comment": "p_rec = P[beta->alpha | alpha->beta], autapses excluded, 5-synapse threshold"
+    },
+    {
+      "name": "clustering_coefficient",
+      "ours_path": "blocks.clustering.no_aut.global_transitivity_undirected",
+      "published": 0.0477,
+      "tolerance_abs": 0.012,
+      "source": "network paper Table 2 (v630); the same paper also quotes 0.0463",
+      "advisory": false,
+      "comment": "global clustering on the undirected autapse-free projection; tolerance spans both quoted values"
+    },
+    {
+      "name": "n_connections_v630_convention",
+      "ours_path": "blocks.counts.no_aut.n_pairs",
+      "published": 2613129,
+      "tolerance_rel": 0.06,
+      "source": "network paper (v630, 5-synapse threshold, 127,978 neurons)",
+      "advisory": false,
+      "comment": "v783 has 8.8% more neurons, so a few percent more connections is expected"
+    },
+    {
+      "name": "mean_out_degree",
+      "ours_path": "derived.mean_out_degree",
+      "published": 20.5,
+      "tolerance_abs": 3.0,
+      "source": "network paper (v630): 'average in/out-degree of an intrinsic neuron is 20.5'",
+      "advisory": false,
+      "comment": "ours is computed over all neurons with any connection, not intrinsic neurons only"
+    },
+    {
+      "name": "scc_size_absolute",
+      "ours_path": "blocks.components.strong.largest_component_size",
+      "published": 119404,
+      "tolerance_rel": 0.05,
+      "source": "network paper (v630): giant SCC = 93.3% of 127,978 neurons = 119,404",
+      "advisory": false,
+      "comment": "compared in absolute neurons, not as a fraction: v783 adds ~11k sparsely connected neurons that sit outside the giant SCC, which shifts the fraction without changing the component itself"
+    },
+    {
+      "name": "wcc_size_absolute",
+      "ours_path": "blocks.components.weak.largest_component_size",
+      "published": 126442,
+      "tolerance_rel": 0.06,
+      "source": "network paper (v630): giant WCC = 98.8% of 127,978 neurons = 126,442",
+      "advisory": false,
+      "comment": "absolute comparison for the same reason as scc_size_absolute"
+    },
+    {
+      "name": "scc_fraction",
+      "ours_path": "blocks.components.strong.largest_component_fraction",
+      "published": 0.933,
+      "tolerance_abs": 0.09,
+      "source": "network paper (v630): giant SCC holds 93.3% of neurons",
+      "advisory": true,
+      "comment": "version-sensitive: v783 has a larger denominator, so this fraction is expected to be lower than v630's while the absolute component is the same size"
+    },
+    {
+      "name": "wcc_fraction",
+      "ours_path": "blocks.components.weak.largest_component_fraction",
+      "published": 0.988,
+      "tolerance_abs": 0.06,
+      "source": "network paper (v630): giant WCC holds 98.8% of neurons",
+      "advisory": true,
+      "comment": "version-sensitive, see scc_fraction"
+    },
+    {
+      "name": "mean_undirected_path_wcc",
+      "ours_path": "blocks.paths.no_aut.undirected.mean_path_length",
+      "published": 3.91,
+      "tolerance_abs": 0.4,
+      "source": "network paper (v630): average shortest undirected path in the giant WCC = 3.91 hops",
+      "advisory": false,
+      "comment": "sampled BFS from 1000 sources drawn from the largest weak component"
+    },
+    {
+      "name": "mean_directed_path_scc",
+      "ours_path": "blocks.paths.largest_scc.directed.mean_path_length",
+      "published": 4.42,
+      "tolerance_abs": 0.5,
+      "source": "network paper (v630): average shortest directed path in the giant SCC = 4.42 hops",
+      "advisory": false,
+      "comment": ""
+    },
+    {
+      "name": "max_directed_path_scc",
+      "ours_path": "blocks.paths.largest_scc.directed.max_path_length",
+      "published": 13,
+      "tolerance_abs": 4,
+      "source": "network paper (v630): every neuron reachable within 13 hops in the giant SCC",
+      "advisory": true,
+      "comment": "sampled eccentricity, not a full diameter computation"
+    },
+    {
+      "name": "in_out_degree_correlation",
+      "ours_path": "derived.in_out_degree_pearson",
+      "published": 0.76,
+      "tolerance_abs": 0.12,
+      "source": "network paper (v630): Pearson R = 0.76, P < 0.001",
+      "advisory": false,
+      "comment": "computed by the gate script over neurons with any connection"
+    },
+    {
+      "name": "n_neuropils",
+      "ours_path": "blocks.neuropil.n_neuropils",
+      "published": 78,
+      "tolerance_abs": 10,
+      "source": "network paper: 78 anatomically defined brain regions/neuropils",
+      "advisory": true,
+      "comment": "release neuropil labels carry _L/_R hemisphere suffixes (79 distinct labels in v783); the hemisphere-merged count is recorded separately in derived.merged_neuropils"
+    },
+    {
+      "name": "rich_club_size_at_degree_37",
+      "ours_path": "derived.rich_club_size_at_degree_37",
+      "published": 40218,
+      "tolerance_rel": 0.15,
+      "source": "network paper (v630): neurons with total degree > 37 form the rich club, 40,218 neurons (~30%)",
+      "advisory": true,
+      "comment": "counted on the 5-synapse threshold view; v783 has more neurons"
+    },
+    {
+      "name": "connection_probability",
+      "ours_path": "derived.connection_probability",
+      "published": 0.000161,
+      "tolerance_rel": 0.2,
+      "source": "network paper (v630): overall connection probability 0.000161",
+      "advisory": true,
+      "comment": "E / (N (N-1)) on the 5-synapse threshold view"
+    },
+    {
+      "name": "rich_club_connection_probability",
+      "ours_path": "derived.rich_club_connection_probability",
+      "published": 0.000870,
+      "tolerance_rel": 0.3,
+      "source": "network paper (v630): connection probability inside the rich club 0.000870",
+      "advisory": true,
+      "comment": "5.4x the overall connection probability"
+    },
+    {
+      "name": "rich_club_degree_cutoff_null_normalised",
+      "ours_path": "blocks.rich_club.no_aut.degree_threshold_for_rich_club",
+      "published": 37,
+      "tolerance_abs": 15,
+      "source": "network paper (v630): Phi_norm > 1.01 regime spans total degree 37-93, peak at 75",
+      "advisory": true,
+      "comment": "only produced by --heavy; our null uses 3 rewiring reps instead of the paper's 100"
+    },
+    {
+      "name": "codex_connection_count",
+      "ours_path": "blocks.threshold_robustness.4.n_connections",
+      "published": 3732460,
+      "tolerance_rel": 0.01,
+      "source": "codex v783 dataset card",
+      "advisory": true,
+      "comment": "UNRESOLVED CONVENTION - deliberately tight so it reports FAIL: no synapse threshold reproduces 3,732,460 from the v783 release (threshold 4 gives 3,537,227, i.e. 5% below; threshold 5 gives 2,700,513). Recorded so the discrepancy stays visible; the paper's own numbers are the convention we validate against."
+    }
+  ]
+}

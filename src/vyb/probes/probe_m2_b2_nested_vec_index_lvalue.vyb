@@ -1,0 +1,20 @@
+// probe_m2_b2_nested_vec_index_lvalue - Vec<Vec<Int>>: is `outer[i].push(x)` (an lvalue
+// index into the inner Vec) supported?  If yes, the scheduler can append into a bucket
+// without the deep-copy write-back dance.
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_b2_nested_vec_index_lvalue.vyb
+
+main()<Int> -> {
+    buckets<Vec<Vec<Int>>> = Vec()
+    i<Int> = 0
+    while (i < 4) {
+        inner<Vec<Int>> = Vec()
+        buckets.push(inner)
+        i = i + 1
+    }
+    buckets[1].push(33)
+    println("inner1_len=" + buckets.get(1).len().to_string())
+    println("probe-b2-done")
+    return 0
+}

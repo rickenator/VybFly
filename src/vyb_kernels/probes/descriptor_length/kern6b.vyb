@@ -1,0 +1,17 @@
+// The same shape as the failing 13-word kernel, but only 6 descriptor words: a value DERIVED
+// from the loaded scalars is stored, rather than the scalars themselves.
+probe6b(dsc<Int>) -> {
+    out_a<Int> = ld_i64(dsc + 0) as Int
+    out_b<Int> = ld_i64(dsc + 8) as Int
+    out_lane<Int> = ld_i64(dsc + 16) as Int
+    n<Int> = ld_i64(dsc + 24) as Int
+    wa<Int> = ld_i64(dsc + 32) as Int
+    wb<Int> = ld_i64(dsc + 40) as Int
+    derived<Int> = wa * 0 + wb
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    if (gid < n) {
+        st_i32(out_a + gid * 4, derived)
+        st_i32(out_b + gid * 4, wa)
+        st_i32(out_lane + gid * 4, gid)
+    }
+}

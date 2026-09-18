@@ -1,0 +1,88 @@
+// phase0_counts - Vyb-native Phase 0 loader check (docs/VYB-PORT.md milestone V1).
+//
+// Reads the flat-binary canonical dataset directly (no Python, no third-party library) and
+// emits the loader-level invariants as key=value lines. scripts/vyb_v1_check.py recomputes
+// every one of them from the same bytes and fails on any mismatch.
+//
+// Run (godzilla):
+//   VYB_STDLIB=~/Projects/Vyb/stdlib \
+//   ~/Projects/Vyb/build/vyb src/vyb/phase0_counts.vyb --module-path src/vyb
+//
+// @env: VYB_STDLIB=stdlib
+
+import flyload::{load_i32, load_i64, summarise_i32, summarise_i64}
+
+// Canonical dataset geometry (bin/meta.json, FlyWire v783 release).
+n_neurons()<Int> -> { return 139255 }
+n_pairs()<Int> -> { return 15091983 }
+n_indptr()<Int> -> { return 139256 }
+
+bin_dir()<String> -> {
+    return "data/processed/canonical_v783/bin/"
+}
+
+main()<Int> -> {
+    dir<String> = bin_dir()
+
+    // 1. Neuron root ids (i64): count and one-pass statistics.
+    rid<Vec<Int>> = load_i64(dir + "neurons.root_id.i64", n_neurons())
+    println("n_neurons=" + n_neurons().to_string())
+    println("root_ids=" + rid.len().to_string())
+    rs<Vec<Int>> = summarise_i64(dir + "neurons.root_id.i64", n_neurons())
+    println("root_id_seen=" + rs.get(3).to_string())
+    println("root_id_max=" + rs.get(1).to_string())
+    println("root_id_min=" + rs.get(2).to_string())
+    println("root_id_sum=" + rs.get(0).to_string())
+
+    // 2. CSR row pointers (i64): the out-degree distribution over the full pair graph.
+    indptr<Vec<Int>> = load_i64(dir + "csr.out.indptr.i64", n_indptr())
+    println("n_indptr_entries=" + indptr.len().to_string())
+    println("indptr_head0=" + indptr.get(0).to_string())
+    println("indptr_tail=" + indptr.get(n_neurons()).to_string())
+    deg_sum<Int> = 0
+    deg_max<Int> = 0
+    deg_zero<Int> = 0
+    k<Int> = 0
+    if (indptr.len() == n_indptr()) {
+        while (k < n_neurons()) {
+            d<Int> = indptr.get(k + 1) - indptr.get(k)
+            deg_sum = deg_sum + d
+            if (d > deg_max) { deg_max = d }
+            if (d == 0) { deg_zero = deg_zero + 1 }
+            k = k + 1
+        }
+    }
+    println("out_degree_sum=" + deg_sum.to_string())
+    println("out_degree_max=" + deg_max.to_string())
+    println("out_degree_zero_neurons=" + deg_zero.to_string())
+
+    // 3. Connections: count, total synapses, and the published 5-synapse-threshold view.
+    syn_path<String> = dir + "pairs.syn.i32"
+    s<Vec<Int>> = summarise_i32(syn_path, n_pairs(), 5)
+    println("n_connections=" + n_pairs().to_string())
+    println("synapse_total=" + s.get(0).to_string())
+    println("connections_thr5=" + s.get(1).to_string())
+    println("synapses_thr5=" + s.get(2).to_string())
+    println("max_connection_strength=" + s.get(3).to_string())
+    println("min_connection_strength=" + s.get(4).to_string())
+    println("syn_elements_seen=" + s.get(5).to_string())
+
+    // 4. Presynaptic indices (i32): element count, sum, max and min are order-sensitive
+    //    enough to catch a mis-decoded byte order or a dropped chunk. Single pass per array:
+    //    at the measured Vyb decode throughput (~29 us/element) an extra full pass over 15M
+    //    elements costs ~7 minutes, so the loader reduces instead of materialising.
+    ps<Vec<Int>> = summarise_i32(dir + "pairs.pre.i32", n_pairs(), 0)
+    println("pre_elements_seen=" + ps.get(5).to_string())
+    println("pre_sum=" + ps.get(0).to_string())
+    println("pre_max=" + ps.get(3).to_string())
+    println("pre_min=" + ps.get(4).to_string())
+
+    // 5. Postsynaptic indices.
+    qs<Vec<Int>> = summarise_i32(dir + "pairs.post.i32", n_pairs(), 0)
+    println("post_elements_seen=" + qs.get(5).to_string())
+    println("post_sum=" + qs.get(0).to_string())
+    println("post_max=" + qs.get(3).to_string())
+
+    println("vyb-phase0-counts-ok")
+    return 0
+}

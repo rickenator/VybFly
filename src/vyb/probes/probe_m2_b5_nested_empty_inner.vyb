@@ -1,0 +1,26 @@
+// probe_m2_b5_nested_empty_inner - the loop that seeds a Vec<Vec<Int>> with empty inner
+// Vecs, then only reads the outer.  Isolates whether seeding is already unsafe.
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_b5_nested_empty_inner.vyb
+
+main()<Int> -> {
+    buckets<Vec<Vec<Int>>> = Vec()
+    i<Int> = 0
+    while (i < 4) {
+        inner<Vec<Int>> = Vec()
+        buckets.push(inner)
+        i = i + 1
+    }
+    println("outer_len=" + buckets.len().to_string())
+    tot<Int> = 0
+    k<Int> = 0
+    while (k < buckets.len()) {
+        b<Vec<Int>> = buckets.get(k)
+        tot = tot + b.len()
+        k = k + 1
+    }
+    println("total=" + tot.to_string())
+    println("probe-b5-done")
+    return 0
+}

@@ -1,0 +1,34 @@
+// probe_m2_k_borrow_propagation - workaround for probe_m2_i: pass an existing their<T> straight to
+// another their<T> parameter instead of wrapping it in a second borrow().  If this works, the rule
+// is "one borrow, propagated" (borrow() only at the owning call site).
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_k_borrow_propagation.vyb
+
+struct Box {
+    xs<Vec<Int>>
+}
+
+push_one(v<their<Vec<Int>>>, x<Int>) -> {
+    v.push(x)
+}
+
+push_one_box(b<their<Box>>, x<Int>) -> {
+    b.xs.push(x)
+}
+
+outer(v<their<Vec<Int>>>, b<their<Box>>) -> {
+    push_one(v, 7)
+    push_one_box(b, 9)
+    println("outer_len=" + v.len().to_string() + " box_len=" + b.xs.len().to_string())
+}
+
+main()<Int> -> {
+    v<Vec<Int>> = Vec()
+    v.push(1)
+    b<Box> = Box { xs = Vec() }
+    outer(borrow(v), borrow(b))
+    println("final_len=" + v.len().to_string() + " box_len=" + b.xs.len().to_string())
+    println("probe-k-done")
+    return 0
+}

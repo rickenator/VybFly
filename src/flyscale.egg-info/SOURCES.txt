@@ -1,0 +1,10 @@
+pyproject.toml
+src/flyscale/__init__.py
+src/flyscale/connectome.py
+src/flyscale/io.py
+src/flyscale.egg-info/PKG-INFO
+src/flyscale.egg-info/SOURCES.txt
+src/flyscale.egg-info/dependency_links.txt
+src/flyscale.egg-info/requires.txt
+src/flyscale.egg-info/top_level.txt
+tests/test_canonical.py

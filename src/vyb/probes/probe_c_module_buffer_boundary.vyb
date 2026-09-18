@@ -1,0 +1,27 @@
+import probemod::{read_no_close, read_decode_i64, i64_le}
+import io::{open_read, close, read_bytes_at}
+
+main()<Int> -> {
+    dir<String> = "data/processed/canonical_v783/bin/"
+    p<String> = dir + "csr.out.indptr.i64"
+
+    a<Vec<UInt8>> = read_no_close(p, 0, 16)
+    println("C1 len=" + a.len().to_string())
+    if (a.len() >= 16) { println("C1 v0=" + i64_le(a, 0).to_string() + " v1=" + i64_le(a, 8).to_string()) }
+
+    vi<Vec<Int>> = read_decode_i64(p, 0, 16)
+    println("C2 n=" + vi.len().to_string())
+    if (vi.len() >= 2) { println("C2 v0=" + vi.get(0).to_string() + " v1=" + vi.get(1).to_string()) }
+
+    match (open_read(p)) {
+        f -> {
+            match (read_bytes_at(f, 0, 16)) {
+                b -> { println("inline v0=" + i64_le(b, 0).to_string() + " v1=" + i64_le(b, 8).to_string()) }
+                ? -> { println("inline read failed") }
+            }
+            close(f)
+        }
+        ? -> { println("inline open failed") }
+    }
+    return 0
+}

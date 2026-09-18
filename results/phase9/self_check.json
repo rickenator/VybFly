@@ -1,0 +1,7 @@
+{
+  "epochs_equal_cascade": true,
+  "masked_equals_cascade": true,
+  "masks_equal_lesioned_graph": true,
+  "self_check_edges": 7202,
+  "self_check_n": 300
+}

@@ -1,0 +1,18 @@
+{\small\setlength{\tabcolsep}{3pt}
+\resizebox{0.96\textwidth}{!}{\%
+\begin{tabular}{l r r r r r r r}
+\toprule
+scale & neurons & GPU joules & J per spike & J per synaptic event & wall seconds & biological W & capacity per watt \\
+\midrule
+1$\times$ & 139\,255 & 437.5953 & 8.89e-6 & 4.16e-7 & 3.9577 & 2.56e-7 & 0.07 \\
+2$\times$ & 278\,510 & 500.2563 & 5.2e-6 & 2.5e-7 & 3.3559 & 5.12e-7 & 0.615 \\
+5$\times$ & 696\,275 & 945.7088 & 3.92e-6 & 1.81e-7 & 6.0537 & 1.28e-6 & 0.612 \\
+10$\times$ & 1\,392\,550 & 2022 & 4.19e-6 & 1.89e-7 & 11.1316 & 2.56e-6 & 0.526 \\
+\midrule
+\multicolumn{8}{l}{\footnotesize hardware column measured on an RTX 3090 (GPU device only; CPU/DRAM power unavailable);} \\
+\multicolumn{8}{l}{\footnotesize biological column is $P_0 N/N_0$ from the cited calorimetry anchor - a property of $N$, never summed with the hardware column} \\
+\bottomrule
+\end{tabular}
+
+}
+}

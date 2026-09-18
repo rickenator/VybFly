@@ -1,0 +1,31 @@
+{\small\setlength{\tabcolsep}{3pt}
+\resizebox{0.96\textwidth}{!}{\%
+\begin{tabular}{l c p{7.4cm}}
+\toprule
+check & class & measured vs published \\
+\midrule
+n\_neurons & required & \ding{55}~exact: the proofread root-id array defines the neuron set \\
+mean\_synapses\_per\_connection & required & \ding{55}~strongest available validation that the 5-synapse convention and neuropil-level aggregation are correct \\
+connection\_reciprocity & required & \ding{55}~p\_rec = P[beta->alpha | alpha->beta], autapses excluded, 5-synapse threshold \\
+clustering\_coefficient & required & \ding{55}~global clustering on the undirected autapse-free projection; tolerance spans both quoted values \\
+n\_connections\_v630\_convention & required & \ding{55}~v783 has 8.8\% more neurons, so a few percent more connections is expected \\
+mean\_out\_degree & required & \ding{55}~ours is computed over all neurons with any connection, not intrinsic neurons only \\
+scc\_size\_absolute & required & \ding{55}~compared in absolute neurons, not as a fraction: v783 adds ~11k sparsely connected neurons that sit outside the giant SCC, which shifts the fraction w \\
+wcc\_size\_absolute & required & \ding{55}~absolute comparison for the same reason as scc\_size\_absolute \\
+scc\_fraction & advisory & \ding{55}~version-sensitive: v783 has a larger denominator, so this fraction is expected to be lower than v630's while the absolute component is the same size \\
+wcc\_fraction & advisory & \ding{55}~version-sensitive, see scc\_fraction \\
+mean\_undirected\_path\_wcc & required & \ding{55}~sampled BFS from 1000 sources drawn from the largest weak component \\
+mean\_directed\_path\_scc & required & \ding{55}~ \\
+max\_directed\_path\_scc & advisory & \ding{55}~sampled eccentricity, not a full diameter computation \\
+in\_out\_degree\_correlation & required & \ding{55}~computed by the gate script over neurons with any connection \\
+n\_neuropils & advisory & \ding{55}~release neuropil labels carry \_L/\_R hemisphere suffixes (79 distinct labels in v783); the hemisphere-merged count is recorded separately in derived. \\
+rich\_club\_size\_at\_degree\_37 & advisory & \ding{55}~counted on the 5-synapse threshold view; v783 has more neurons \\
+connection\_probability & advisory & \ding{55}~E / (N (N-1)) on the 5-synapse threshold view \\
+rich\_club\_connection\_probability & advisory & \ding{55}~5.4x the overall connection probability \\
+rich\_club\_degree\_cutoff\_null\_normalised & advisory & \ding{55}~only produced by --heavy; our null uses 3 rewiring reps instead of the paper's 100 \\
+codex\_connection\_count & advisory & \ding{55}~UNRESOLVED CONVENTION: no synapse threshold reproduces 3,732,460 from the v783 release exactly (threshold 4 gives 3,537,227, threshold 5 gives 2,700,5 \\
+\bottomrule
+\end{tabular}
+
+}
+}

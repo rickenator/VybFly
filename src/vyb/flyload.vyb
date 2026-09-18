@@ -1,0 +1,252 @@
+# flyload - read the FlyScale flat-binary canonical dataset from Vyb.
+#
+# The Python layer (scripts/export_bin.py) only packages bytes; all decoding happens
+# here, with no third-party library. Format and rationale: docs/VYB-PORT.md.
+#
+# Arrays are header-less little-endian; element type and count come from bin/meta.json.
+# Reads are chunked through `io.read_bytes_at` (pread), so a 60 MB array never has to be
+# resident as bytes as well as decoded.
+#
+# Three Vyb constraints verified on 2026-09-17 (build Vyb 0.7.5, probes /tmp/probe_{a..d}.vyb)
+# shape this module. They cost real debugging time, so they are recorded rather than re-learnt:
+#
+#  1. A function declared to return `Vec<UInt8>?` cannot `return` a `Vec<UInt8>` value: the
+#     compiler emits "Unsupported or invalid cast from type { ptr, i64, i64 } to
+#     { { ptr, i64, i64 }, i1 }". An optional Vec can only come straight out of an io
+#     intrinsic, so failures are signalled with a short buffer instead.
+#  2. The byte buffer returned by `io.read_bytes_at` MUST NOT cross a module boundary: a
+#     module function returning it hands the caller a buffer of the right length but with
+#     garbage contents (probe: an inline read gave 0 and 62; the same read returned through
+#     a module function gave 101106528132824 and 0). Passing a `File` into a helper has the
+#     same failure mode. Every open/read/decode therefore stays INSIDE the function that
+#     uses the bytes.
+#  3. A `Vec` passed as a function parameter is NOT mutated for the caller (the callee works
+#     on a copy -- "Vec assignment deep-copies on borrow"), so out-parameters do not work:
+#     `load_i64` with an `out<Vec<Int>>` argument returned an empty Vec. Results are always
+#     built with `push` inside the function and returned by value.
+
+import io::{open_read, close, read_bytes_at}
+
+share(all)
+chunk_elems_i32()<Int> -> {
+    return 262144
+}
+
+share(all)
+chunk_elems_i64()<Int> -> {
+    return 131072
+}
+
+# Little-endian unsigned 32-bit assembly at byte offset i.
+share(all)
+u32_le(b<Vec<UInt8>>, i<Int>)<Int> -> {
+    return (b.get(i) as Int)
+        | ((b.get(i + 1) as Int) << 8)
+        | ((b.get(i + 2) as Int) << 16)
+        | ((b.get(i + 3) as Int) << 24)
+}
+
+# Little-endian signed 64-bit assembly at byte offset i (root ids are ~7.2e16).
+share(all)
+i64_le(b<Vec<UInt8>>, i<Int>)<Int> -> {
+    return (b.get(i) as Int)
+        | ((b.get(i + 1) as Int) << 8)
+        | ((b.get(i + 2) as Int) << 16)
+        | ((b.get(i + 3) as Int) << 24)
+        | ((b.get(i + 4) as Int) << 32)
+        | ((b.get(i + 5) as Int) << 40)
+        | ((b.get(i + 6) as Int) << 48)
+        | ((b.get(i + 7) as Int) << 56)
+}
+
+# Load a whole i32 array as Vec<Int>. A truncated or unreadable array yields a shorter Vec,
+# which callers check against the expected element count.
+share(all)
+load_i32(path<String>, count<Int>)<Vec<Int>> -> {
+    out<Vec<Int>> = Vec()
+    i<Int> = 0
+    chunk<Int> = chunk_elems_i32()
+    alive<Int> = 1
+    while (i < count) {
+        n<Int> = count - i
+        if (n > chunk) { n = chunk }
+        if (alive == 1) {
+            match (open_read(path)) {
+                f -> {
+                    match (read_bytes_at(f, i * 4, n * 4)) {
+                        buf -> {
+                            if (buf.len() >= n * 4) {
+                                j<Int> = 0
+                                while (j < n) {
+                                    out.push(u32_le(buf, j * 4))
+                                    j = j + 1
+                                }
+                            } else {
+                                alive = 0
+                            }
+                        }
+                        ? -> { alive = 0 }
+                    }
+                    close(f)
+                }
+                ? -> { alive = 0 }
+            }
+        }
+        i = i + n
+    }
+    return out
+}
+
+# Load a whole i64 array as Vec<Int>.
+share(all)
+load_i64(path<String>, count<Int>)<Vec<Int>> -> {
+    out<Vec<Int>> = Vec()
+    i<Int> = 0
+    chunk<Int> = chunk_elems_i64()
+    alive<Int> = 1
+    while (i < count) {
+        n<Int> = count - i
+        if (n > chunk) { n = chunk }
+        if (alive == 1) {
+            match (open_read(path)) {
+                f -> {
+                    match (read_bytes_at(f, i * 8, n * 8)) {
+                        buf -> {
+                            if (buf.len() >= n * 8) {
+                                j<Int> = 0
+                                while (j < n) {
+                                    out.push(i64_le(buf, j * 8))
+                                    j = j + 1
+                                }
+                            } else {
+                                alive = 0
+                            }
+                        }
+                        ? -> { alive = 0 }
+                    }
+                    close(f)
+                }
+                ? -> { alive = 0 }
+            }
+        }
+        i = i + n
+    }
+    return out
+}
+
+# One-pass reduction of an i32 array, returning
+#   [total, count >= thr, total of those, max, min, elements seen]
+share(all)
+summarise_i32(path<String>, count<Int>, thr<Int>)<Vec<Int>> -> {
+    sums<Vec<Int>> = Vec()
+    total<Int> = 0
+    thr_count<Int> = 0
+    thr_total<Int> = 0
+    mx<Int> = 0
+    mn<Int> = 0
+    seen<Int> = 0
+    i<Int> = 0
+    chunk<Int> = chunk_elems_i32()
+    alive<Int> = 1
+    while (i < count) {
+        n<Int> = count - i
+        if (n > chunk) { n = chunk }
+        if (alive == 1) {
+            match (open_read(path)) {
+                f -> {
+                    match (read_bytes_at(f, i * 4, n * 4)) {
+                        buf -> {
+                            if (buf.len() >= n * 4) {
+                                j<Int> = 0
+                                while (j < n) {
+                                    v<Int> = u32_le(buf, j * 4)
+                                    total = total + v
+                                    if (v >= thr) {
+                                        thr_count = thr_count + 1
+                                        thr_total = thr_total + v
+                                    }
+                                    if (seen == 0) {
+                                        mn = v
+                                        mx = v
+                                    } else {
+                                        if (v > mx) { mx = v }
+                                        if (v < mn) { mn = v }
+                                    }
+                                    seen = seen + 1
+                                    j = j + 1
+                                }
+                            } else {
+                                alive = 0
+                            }
+                        }
+                        ? -> { alive = 0 }
+                    }
+                    close(f)
+                }
+                ? -> { alive = 0 }
+            }
+        }
+        i = i + n
+    }
+    sums.push(total)
+    sums.push(thr_count)
+    sums.push(thr_total)
+    sums.push(mx)
+    sums.push(mn)
+    sums.push(seen)
+    return sums
+}
+
+# Reduction of an i64 array: [total, max, min, elements seen]
+share(all)
+summarise_i64(path<String>, count<Int>)<Vec<Int>> -> {
+    sums<Vec<Int>> = Vec()
+    total<Int> = 0
+    mx<Int> = 0
+    mn<Int> = 0
+    seen<Int> = 0
+    i<Int> = 0
+    chunk<Int> = chunk_elems_i64()
+    alive<Int> = 1
+    while (i < count) {
+        n<Int> = count - i
+        if (n > chunk) { n = chunk }
+        if (alive == 1) {
+            match (open_read(path)) {
+                f -> {
+                    match (read_bytes_at(f, i * 8, n * 8)) {
+                        buf -> {
+                            if (buf.len() >= n * 8) {
+                                j<Int> = 0
+                                while (j < n) {
+                                    v<Int> = i64_le(buf, j * 8)
+                                    total = total + v
+                                    if (seen == 0) {
+                                        mn = v
+                                        mx = v
+                                    } else {
+                                        if (v > mx) { mx = v }
+                                        if (v < mn) { mn = v }
+                                    }
+                                    seen = seen + 1
+                                    j = j + 1
+                                }
+                            } else {
+                                alive = 0
+                            }
+                        }
+                        ? -> { alive = 0 }
+                    }
+                    close(f)
+                }
+                ? -> { alive = 0 }
+            }
+        }
+        i = i + n
+    }
+    sums.push(total)
+    sums.push(mx)
+    sums.push(mn)
+    sums.push(seen)
+    return sums
+}

@@ -1,0 +1,1302 @@
+{
+  "agreement_tolerances": {
+    "per_neuron_rate_pearson_r": 0.99,
+    "spike_count_relative_delta": 0.01,
+    "vm_trace_max_abs": 1e-09
+  },
+  "arguments": {
+    "alpha": 1.0,
+    "artifacts": "~/Projects/VybFly/results/phase1/artifacts",
+    "canonical": "~/Projects/VybFly/data/processed/canonical_v783",
+    "delay_kind": "distance",
+    "delay_max_steps": 5,
+    "delay_speed_um_per_ms": 50.0,
+    "drive_amplitude": 0.9,
+    "drive_rate_hz": 20.0,
+    "dt_ms": 1.0,
+    "g_syn": 0.15,
+    "inhibitory_gain": 1.0,
+    "modulatory_scale": 0.25,
+    "out": "~/Projects/VybFly/results/phase1/lif_baseline.json",
+    "probe_seconds": 0.3,
+    "random_amplitude": 0.6,
+    "random_n": 20000,
+    "random_rate_hz": 5.0,
+    "scan_g_syn": "0.05,0.15,0.25,0.5",
+    "seconds": 1.0,
+    "seed": 20260917,
+    "skip_gather": false,
+    "skip_scan": false,
+    "t_ref_ms": 2.0,
+    "tau_ms": 20.0,
+    "threshold": 5
+  },
+  "artifacts": [
+    "results/phase1/artifacts/delay_histogram_steps.npy",
+    "results/phase1/artifacts/spike_counts_level1_dense_timestep_csr.npy",
+    "results/phase1/artifacts/spikes_level1_dense_timestep_csr.npz",
+    "results/phase1/artifacts/spike_counts_level1_dense_timestep_gather.npy",
+    "results/phase1/artifacts/spikes_level1_dense_timestep_gather.npz",
+    "results/phase1/artifacts/spike_counts_level1_sparse_events.npy",
+    "results/phase1/artifacts/spikes_level1_sparse_events.npz",
+    "results/phase1/artifacts/spike_counts_rand20k_dense_timestep_csr.npy",
+    "results/phase1/artifacts/spikes_rand20k_dense_timestep_csr.npz",
+    "results/phase1/artifacts/spike_counts_rand20k_dense_timestep_gather.npy",
+    "results/phase1/artifacts/spikes_rand20k_dense_timestep_gather.npz",
+    "results/phase1/artifacts/spike_counts_rand20k_sparse_events.npy",
+    "results/phase1/artifacts/spikes_rand20k_sparse_events.npz",
+    "results/phase1/artifacts/spike_counts_subthreshold_dense_timestep_csr.npy",
+    "results/phase1/artifacts/spikes_subthreshold_dense_timestep_csr.npz",
+    "results/phase1/artifacts/probe_subthreshold_dense_timestep_csr.npy",
+    "results/phase1/artifacts/spike_counts_subthreshold_dense_timestep_gather.npy",
+    "results/phase1/artifacts/spikes_subthreshold_dense_timestep_gather.npz",
+    "results/phase1/artifacts/probe_subthreshold_dense_timestep_gather.npy",
+    "results/phase1/artifacts/spike_counts_subthreshold_sparse_events.npy",
+    "results/phase1/artifacts/spikes_subthreshold_sparse_events.npz",
+    "results/phase1/artifacts/probe_subthreshold_sparse_events.npy"
+  ],
+  "canonical_dataset": {
+    "built_utc": "2026-09-17T20:51:55Z",
+    "canonical_version": "flywire-v783-canon-1",
+    "conventions": {
+      "autapses": "kept; use mask_autapses()",
+      "clustering_input": "see flyscale.metrics.graph_variants",
+      "indexing": "neurons sorted by root_id; idx = position",
+      "nt_order": [
+        "gaba",
+        "ach",
+        "glut",
+        "oct",
+        "ser",
+        "da"
+      ],
+      "pair_graph": "published rows aggregated over neuropil; all pair weights 1"
+    },
+    "counts": {
+      "n_annotated_neurons": 139241,
+      "n_autapse_pairs": 0,
+      "n_edges_in_reciprocal_pairs": 4014518,
+      "n_edges_rows": 16847997,
+      "n_neurons": 139255,
+      "n_neuropils": 79,
+      "n_pairs": 15091983,
+      "n_raw_rows_streamed": 16847997,
+      "n_raw_rows_with_unmatched_root_id": 0,
+      "n_reciprocal_pairs": 2007259,
+      "n_synapses_autapse": 0,
+      "n_synapses_pairs": 54492922,
+      "reciprocity": 0.26600334760514904
+    },
+    "directory": "~/Projects/VybFly/data/processed/canonical_v783",
+    "source": {
+      "annotations": "flyconnectome/flywire_annotations Supplemental_file1 (Schlegel et al. 2024)",
+      "connections_file": "proofread_connections_783.feather",
+      "connections_sha256_head16": "6f7bab19a105407e",
+      "dataset": "FlyWire FAFB v783 (FAFB v783 (CB))",
+      "zenodo_doi": "10.5281/zenodo.10676866"
+    }
+  },
+  "command": "scripts/phase1_lif.py --seconds 1.0",
+  "driven_vs_silent_sensory_note": "the \u00a720 Level-1 stimulus drives photoreceptors and olfactory receptor neurons only; the remaining sensory neurons (mechanosensory, gustatory, hygrosensory) are left silent so that the recorded response has a defined input set",
+  "engine_agreement_gate": {
+    "all_protocols_agree": true,
+    "passed": true,
+    "protocols": [
+      {
+        "agreement": true,
+        "checks": {
+          "dense_timestep_csr_vs_dense_timestep_gather": {
+            "rate_correlation_above_tolerance": true,
+            "spike_count_within_tolerance": true
+          },
+          "dense_timestep_csr_vs_sparse_events": {
+            "rate_correlation_above_tolerance": true,
+            "spike_count_within_tolerance": true
+          }
+        },
+        "n_spikes_per_engine": {
+          "dense_timestep_csr_vs_dense_timestep_gather": 366872,
+          "dense_timestep_csr_vs_sparse_events": 366872
+        },
+        "protocol": "level1_light_odour"
+      },
+      {
+        "agreement": true,
+        "checks": {
+          "dense_timestep_csr_vs_dense_timestep_gather": {
+            "rate_correlation_above_tolerance": true,
+            "spike_count_within_tolerance": true
+          },
+          "dense_timestep_csr_vs_sparse_events": {
+            "rate_correlation_above_tolerance": true,
+            "spike_count_within_tolerance": true
+          }
+        },
+        "n_spikes_per_engine": {
+          "dense_timestep_csr_vs_dense_timestep_gather": 479259,
+          "dense_timestep_csr_vs_sparse_events": 479259
+        },
+        "protocol": "random20k_poisson"
+      }
+    ],
+    "statement": "CPU DES (sparse events) == dense timestep reference within the stated tolerances, on identical stimulus event streams",
+    "subthreshold_vm_traces_pass": true,
+    "tolerances": {
+      "per_neuron_rate_pearson_r": 0.99,
+      "spike_count_relative_delta": 0.01,
+      "vm_trace_max_abs": 1e-09
+    }
+  },
+  "environment": {
+    "cpu_count": 20,
+    "numpy": "2.5.3",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "scipy": "1.18.1"
+  },
+  "failures": [],
+  "generated_utc": "2026-09-17T22:49:34Z",
+  "git": {
+    "commit": null,
+    "commit_note": "repository has no commits yet (files staged only)",
+    "n_modified_or_untracked_paths": 122,
+    "working_tree_dirty": true
+  },
+  "graph": {
+    "delay_rule": {
+      "base_ms": 1.0,
+      "kind": "distance",
+      "max_steps": 5,
+      "measured_delay_histogram_steps": {
+        "1": 1744358,
+        "2": 911741,
+        "3": 43394,
+        "4": 1020
+      },
+      "measured_mean_delay_steps": 1.3709,
+      "model": "delay_steps = clip(round((base_ms + dist_um/speed_um_per_ms)/dt_ms), 1, max_steps), dist = Euclidean distance between soma positions (nm -> um); a specified model, not a measurement",
+      "speed_um_per_ms": 50.0,
+      "uniform_steps": 1
+    },
+    "mean_abs_edge_input_after_scale": 0.14802756,
+    "mean_abs_edge_weight_anatomical": 1.0,
+    "mean_edges_per_neuron": 19.3926,
+    "mean_out_degree": 19.3926,
+    "mean_synapses_per_connection": 12.6471,
+    "n_connections": 2700513,
+    "n_neurons": 139255,
+    "n_neurons_with_no_outgoing_edges": 9904,
+    "n_synapses_in_connections": 34153566,
+    "neuron_model": {
+      "dt_ms": 1.0,
+      "lam_per_step": 0.95,
+      "refractory_steps": 2,
+      "t_ref_ms": 2.0,
+      "tau_m_ms": 20.0,
+      "v_reset": 0.0,
+      "v_rest": 0.0,
+      "v_thresh": 1.0
+    },
+    "sign_balance": {
+      "excitatory_edges": 1628904,
+      "excitatory_synapses": 20162755,
+      "inhibitory_edges": 1071609,
+      "inhibitory_synapses": 13990811
+    },
+    "synapse_threshold_used": 5,
+    "transmitter_edges": {
+      "ach": 1582068,
+      "da": 15538,
+      "gaba": 623512,
+      "glut": 448097,
+      "oct": 9459,
+      "ser": 21839
+    },
+    "weight_rule": {
+      "alpha": 1.0,
+      "g_syn": 0.15,
+      "inhibitory_gain": 1.0,
+      "input_offset_to_first_spike_note": "a neuron spikes when the sum of delivered weights reaches 1.0; a constant input I per step holds V at I*tau/dt in steady state",
+      "modulatory_scale": 0.25,
+      "modulatory_transmitters": [
+        "oct",
+        "ser",
+        "da"
+      ],
+      "normalize_mean_weight": true,
+      "sign_convention_note": "ach excitatory; gaba inhibitory; glut inhibitory (most adult-fly glutamatergic neurons are inhibitory); oct/ser/da modulatory, treated as weak excitatory and scaled by modulatory_scale; inhibitory edges are additionally multiplied by inhibitory_gain, which is a model parameter, not an anatomical measurement",
+      "sign_map": {
+        "ach": 1.0,
+        "da": 1.0,
+        "gaba": -1.0,
+        "glut": -1.0,
+        "oct": 1.0,
+        "ser": 1.0
+      },
+      "weight_from_synapses": "w_anat = syn_count**1.0 / mean(syn_count**alpha)  (mean edge weight = 1)"
+    }
+  },
+  "level1_stimulus_sets": {
+    "olfactory_receptor_neurons": {
+      "n_cell_types": 53,
+      "n_neurons": 2276,
+      "top_cell_types": [
+        {
+          "cell_type": "ORN_DA1",
+          "n": 126
+        },
+        {
+          "cell_type": "ORN_VA1d",
+          "n": 97
+        },
+        {
+          "cell_type": "ORN_VA1v",
+          "n": 94
+        },
+        {
+          "cell_type": "ORN_DL3",
+          "n": 79
+        },
+        {
+          "cell_type": "ORN_VL1",
+          "n": 78
+        },
+        {
+          "cell_type": "ORN_VM4",
+          "n": 75
+        },
+        {
+          "cell_type": "ORN_VL2a",
+          "n": 71
+        },
+        {
+          "cell_type": "ORN_DL1",
+          "n": 69
+        },
+        {
+          "cell_type": "ORN_DM1",
+          "n": 68
+        },
+        {
+          "cell_type": "ORN_VM5d",
+          "n": 67
+        },
+        {
+          "cell_type": "ORN_V",
+          "n": 67
+        },
+        {
+          "cell_type": "ORN_VA2",
+          "n": 67
+        },
+        {
+          "cell_type": "ORN_DM3",
+          "n": 61
+        },
+        {
+          "cell_type": "ORN_VA6",
+          "n": 60
+        },
+        {
+          "cell_type": "ORN_DM2",
+          "n": 54
+        }
+      ]
+    },
+    "other_sensory": {
+      "n_cell_types": 114,
+      "n_neurons": 3510,
+      "top_cell_types": [
+        {
+          "cell_type": "BM_InOm",
+          "n": 1113
+        },
+        {
+          "cell_type": "NA",
+          "n": 308
+        },
+        {
+          "cell_type": "JO-FV",
+          "n": 170
+        },
+        {
+          "cell_type": "LB3",
+          "n": 122
+        },
+        {
+          "cell_type": "JO-B1_a",
+          "n": 106
+        },
+        {
+          "cell_type": "BM_Taste",
+          "n": 72
+        },
+        {
+          "cell_type": "JO-EV1",
+          "n": 70
+        },
+        {
+          "cell_type": "TPMN1",
+          "n": 63
+        },
+        {
+          "cell_type": "claw_tpGRN",
+          "n": 60
+        },
+        {
+          "cell_type": "BM_vOcci_vPoOr",
+          "n": 52
+        },
+        {
+          "cell_type": "JO-EV3",
+          "n": 46
+        },
+        {
+          "cell_type": "JO-ED2_a",
+          "n": 45
+        },
+        {
+          "cell_type": "BM_Ant",
+          "n": 41
+        },
+        {
+          "cell_type": "JO-EV2",
+          "n": 40
+        },
+        {
+          "cell_type": "JO-A5",
+          "n": 37
+        }
+      ]
+    },
+    "photoreceptors": {
+      "n_cell_types": 3,
+      "n_neurons": 11118,
+      "top_cell_types": [
+        {
+          "cell_type": "R1-6",
+          "n": 8452
+        },
+        {
+          "cell_type": "R7",
+          "n": 1342
+        },
+        {
+          "cell_type": "R8",
+          "n": 1324
+        }
+      ]
+    }
+  },
+  "notes": [
+    "Weights: w_anat = syn_count**alpha normalised so the mean edge weight is 1; the input per spike is g_syn * sign(transmitter) * modulatory_scale. 'alpha' and 'g_syn' are model parameters, not measured quantities.",
+    "Signs: ach excitatory, gaba and glut inhibitory (most adult-fly glutamatergic neurons are inhibitory), and oct/ser/da modulatory (weak excitatory, scaled). The mapping is recorded in graph.weight_rule.sign_map.",
+    "Delays: per-edge integer timesteps from the soma-to-soma distance with a specified conduction speed. The connectome contains no measured delays, so the delay rule is a model, and its measured histogram is included under graph.delay_rule.",
+    "The dense engines iterate all 139,255 neurons and all 2.7M edges on every step; the sparse engine only expands and updates active neurons, so its state-update count is the quantity that should fall as activity sparsens (\u00a79).",
+    "A synapse-count-weighted model is not a model of learned synaptic strength (an explicit non-goal of the scope document).",
+    "Engine-equivalence traps that are now covered by tests/test_lif.py, and that any Phase 2/3 runtime must also avoid: (a) the synaptic operator has to be indexed [post, pre] - building the CSR with row = pre silently reverses every edge, which is almost invisible on a random toy graph and completely changes real connectome dynamics; (b) the per-step touched-target list must be deduplicated before the accumulated bucket is read back, otherwise a neuron that receives from two sources in the same bucket is charged twice.",
+    "n_synaptic_events_delivered counts presynaptic spikes times out-degree, so it is identical in every engine by construction and is not itself evidence of agreement; the quantity that differs between engines is the neuron state-update count (steps x population for the dense engines versus active neurons only for the event engine)."
+  ],
+  "operating_point_scan": {
+    "default_g_syn": 0.15,
+    "ladder": [
+      0.05,
+      0.15,
+      0.25,
+      0.5
+    ],
+    "measured_trend": {
+      "fraction_active_by_g_syn": {
+        "0.05": 0.086252,
+        "0.15": 0.129805,
+        "0.25": 0.222728,
+        "0.5": 0.359908
+      },
+      "mean_rate_hz_by_g_syn": {
+        "0.05": 0.654009,
+        "0.15": 2.586406,
+        "0.25": 7.331198,
+        "0.5": 20.766594
+      },
+      "n_spikes_by_g_syn": {
+        "0.05": 45537,
+        "0.15": 180085,
+        "0.25": 510453,
+        "0.5": 1445926
+      },
+      "synaptic_events_per_second_by_g_syn": {
+        "0.05": 8212074.0,
+        "0.15": 25171210.0,
+        "0.25": 57319750.0,
+        "0.5": 114486002.0
+      }
+    },
+    "purpose": "documents the g_syn operating point: the same Level-1 stimulus at several synaptic gains, 0.5 s each, dense engine only. The default g_syn = 0.15 is an intermediate point of the ladder - sparse enough to keep the event-driven engine cheap, but with clear recurrent recruitment beyond the driven sensory neurons. The ladder is recorded so the choice can be re-derived rather than trusted; it is a recorded operating point, not an optimised one.",
+    "runs": {
+      "0.05": {
+        "fraction_neurons_active": 0.086252,
+        "g_syn": 0.05,
+        "mean_rate_hz_over_active_neurons": 7.582549,
+        "mean_rate_hz_over_all_neurons": 0.654009,
+        "n_spikes": 45537,
+        "spikes_per_100_steps_deciles": [
+          0,
+          2922,
+          4006,
+          4125,
+          6302,
+          9193,
+          4955,
+          4922,
+          4958,
+          4154
+        ],
+        "synaptic_events_per_biological_second": 8212074.0,
+        "wall_seconds": 5.639
+      },
+      "0.15": {
+        "fraction_neurons_active": 0.129805,
+        "g_syn": 0.15,
+        "mean_rate_hz_over_active_neurons": 19.925315,
+        "mean_rate_hz_over_all_neurons": 2.586406,
+        "n_spikes": 180085,
+        "spikes_per_100_steps_deciles": [
+          0,
+          2926,
+          4035,
+          4157,
+          20604,
+          32177,
+          29288,
+          29198,
+          30211,
+          27489
+        ],
+        "synaptic_events_per_biological_second": 25171210.0,
+        "wall_seconds": 4.387
+      },
+      "0.25": {
+        "fraction_neurons_active": 0.222728,
+        "g_syn": 0.25,
+        "mean_rate_hz_over_active_neurons": 32.915463,
+        "mean_rate_hz_over_all_neurons": 7.331198,
+        "n_spikes": 510453,
+        "spikes_per_100_steps_deciles": [
+          0,
+          3039,
+          19627,
+          63788,
+          67991,
+          69069,
+          78349,
+          74534,
+          65569,
+          68487
+        ],
+        "synaptic_events_per_biological_second": 57319750.0,
+        "wall_seconds": 5.164
+      },
+      "0.5": {
+        "fraction_neurons_active": 0.359908,
+        "g_syn": 0.5,
+        "mean_rate_hz_over_active_neurons": 57.699715,
+        "mean_rate_hz_over_all_neurons": 20.766594,
+        "n_spikes": 1445926,
+        "spikes_per_100_steps_deciles": [
+          0,
+          92773,
+          158525,
+          151723,
+          157668,
+          171097,
+          179286,
+          188316,
+          200070,
+          146468
+        ],
+        "synaptic_events_per_biological_second": 114486002.0,
+        "wall_seconds": 5.142
+      }
+    },
+    "steps": 500
+  },
+  "operator_self_check": {
+    "direction_check": {
+      "checked": true,
+      "n_neurons_with_current": 40,
+      "n_unique_targets": 40,
+      "only_targets_received_current": true,
+      "out_degree": 40,
+      "source": 134052,
+      "source_received_current": false
+    },
+    "full_edge_list_max_abs_difference": 1.0658141036401503e-14,
+    "n_random_spike_vectors": 3,
+    "n_sources_per_vector": 5000,
+    "ok": true,
+    "per_delay": {
+      "1": {
+        "max_abs_csr_minus_scatter": 0.0,
+        "max_abs_signal": 29.034402252461714,
+        "n_edges": 1744358
+      },
+      "2": {
+        "max_abs_csr_minus_scatter": 0.0,
+        "max_abs_signal": 21.906266732147397,
+        "n_edges": 911741
+      },
+      "3": {
+        "max_abs_csr_minus_scatter": 0.0,
+        "max_abs_signal": 6.9620891022038505,
+        "n_edges": 43394
+      },
+      "4": {
+        "max_abs_csr_minus_scatter": 0.0,
+        "max_abs_signal": 0.8420925489888814,
+        "n_edges": 1020
+      }
+    },
+    "tolerance": 1e-12,
+    "wall_seconds": 0.544
+  },
+  "phase": 1,
+  "protocols": {
+    "level1_light_odour": {
+      "comparisons": {
+        "dense_timestep_csr_vs_dense_timestep_gather": {
+          "agreement": true,
+          "checks": {
+            "rate_correlation_above_tolerance": true,
+            "spike_count_within_tolerance": true
+          },
+          "engine_a": "dense_timestep_csr",
+          "engine_b": "dense_timestep_gather",
+          "identical_spike_fraction_of_a": 1.0,
+          "identical_spikes": 366872,
+          "max_abs_rate_difference_hz": 0.0,
+          "mean_abs_rate_difference_hz": 0.0,
+          "n_active_neurons_a": 20243,
+          "n_active_neurons_b": 20243,
+          "n_active_neurons_in_either": 20243,
+          "n_neurons_active_in_one_only": 0,
+          "n_spikes_a": 366872,
+          "n_spikes_b": 366872,
+          "per_neuron_rate_pearson_r_all": 1.0,
+          "per_neuron_rate_pearson_r_neurons_active_in_either": 1.0,
+          "per_step_spike_count_pearson_r": 1.0,
+          "simulated_seconds": 1.0,
+          "speedup_b_over_a": 0.633,
+          "spike_based_checks_applicable": true,
+          "spike_count_delta": 0,
+          "spike_count_delta_fraction": 0.0,
+          "spikes_a_not_in_b": 0,
+          "spikes_b_not_in_a": 0,
+          "steps": 1000,
+          "tolerances": {
+            "per_neuron_rate_pearson_r": 0.99,
+            "spike_count_relative_delta": 0.01,
+            "vm_trace_max_abs": 1e-09
+          },
+          "wall_seconds_a": 11.964,
+          "wall_seconds_b": 18.901
+        },
+        "dense_timestep_csr_vs_sparse_events": {
+          "agreement": true,
+          "checks": {
+            "rate_correlation_above_tolerance": true,
+            "spike_count_within_tolerance": true
+          },
+          "engine_a": "dense_timestep_csr",
+          "engine_b": "sparse_events",
+          "identical_spike_fraction_of_a": 1.0,
+          "identical_spikes": 366872,
+          "max_abs_rate_difference_hz": 0.0,
+          "mean_abs_rate_difference_hz": 0.0,
+          "n_active_neurons_a": 20243,
+          "n_active_neurons_b": 20243,
+          "n_active_neurons_in_either": 20243,
+          "n_neurons_active_in_one_only": 0,
+          "n_spikes_a": 366872,
+          "n_spikes_b": 366872,
+          "per_neuron_rate_pearson_r_all": 1.0,
+          "per_neuron_rate_pearson_r_neurons_active_in_either": 1.0,
+          "per_step_spike_count_pearson_r": 1.0,
+          "simulated_seconds": 1.0,
+          "speedup_b_over_a": 2.879,
+          "spike_based_checks_applicable": true,
+          "spike_count_delta": 0,
+          "spike_count_delta_fraction": 0.0,
+          "spikes_a_not_in_b": 0,
+          "spikes_b_not_in_a": 0,
+          "steps": 1000,
+          "tolerances": {
+            "per_neuron_rate_pearson_r": 0.99,
+            "spike_count_relative_delta": 0.01,
+            "vm_trace_max_abs": 1e-09
+          },
+          "wall_seconds_a": 11.964,
+          "wall_seconds_b": 4.156
+        }
+      },
+      "failures": {},
+      "response_profile": {
+        "dense_timestep_csr": {
+          "bin_width_steps": 100,
+          "engine": "dense_timestep_csr",
+          "fraction_of_spikes_from_recruited_neurons": 0.876259,
+          "n_recruited_neurons": 8051,
+          "n_spikes_from_driven_neurons": 45397,
+          "n_spikes_from_recruited_neurons": 321475,
+          "spikes_per_bin": [
+            0,
+            7082,
+            8157,
+            8004,
+            54164,
+            64912,
+            57320,
+            55927,
+            56426,
+            54880
+          ]
+        },
+        "dense_timestep_gather": {
+          "bin_width_steps": 100,
+          "engine": "dense_timestep_gather",
+          "fraction_of_spikes_from_recruited_neurons": 0.876259,
+          "n_recruited_neurons": 8051,
+          "n_spikes_from_driven_neurons": 45397,
+          "n_spikes_from_recruited_neurons": 321475,
+          "spikes_per_bin": [
+            0,
+            7082,
+            8157,
+            8004,
+            54164,
+            64912,
+            57320,
+            55927,
+            56426,
+            54880
+          ]
+        },
+        "sparse_events": {
+          "bin_width_steps": 100,
+          "engine": "sparse_events",
+          "fraction_of_spikes_from_recruited_neurons": 0.876259,
+          "n_recruited_neurons": 8051,
+          "n_spikes_from_driven_neurons": 45397,
+          "n_spikes_from_recruited_neurons": 321475,
+          "spikes_per_bin": [
+            0,
+            7082,
+            8157,
+            8004,
+            54164,
+            64912,
+            57320,
+            55927,
+            56426,
+            54880
+          ]
+        }
+      },
+      "runs": {
+        "dense_timestep_csr": {
+          "dt_ms": 1.0,
+          "engine": "dense_timestep_csr",
+          "fraction_neurons_active": 0.145366,
+          "mean_rate_hz_over_active_neurons": 18.123401,
+          "mean_rate_hz_over_all_neurons": 2.634534,
+          "method": "csr",
+          "n_neuron_state_updates": 139255000,
+          "n_neurons": 139255,
+          "n_spikes": 366872,
+          "n_spiking_neurons": 20243,
+          "n_synaptic_events_delivered": 25724796,
+          "neuron_state_updates_per_biological_second": 139255000.0,
+          "seed": null,
+          "simulated_seconds": 1.0,
+          "spikes_per_biological_second": 366872.0,
+          "spiking_fraction_of_population": 0.145366,
+          "steps": 1000,
+          "synaptic_events_per_biological_second": 25724796.0,
+          "v_thresh_used": 1.0,
+          "wall_seconds": 11.964,
+          "wall_seconds_per_simulated_second": 11.964,
+          "work_model": "O(steps * (edges + neurons)): every neuron and every edge is touched on every timestep, independent of activity"
+        },
+        "dense_timestep_gather": {
+          "dt_ms": 1.0,
+          "engine": "dense_timestep_gather",
+          "fraction_neurons_active": 0.145366,
+          "mean_rate_hz_over_active_neurons": 18.123401,
+          "mean_rate_hz_over_all_neurons": 2.634534,
+          "method": "gather",
+          "n_neuron_state_updates": 139255000,
+          "n_neurons": 139255,
+          "n_spikes": 366872,
+          "n_spiking_neurons": 20243,
+          "n_synaptic_events_delivered": 25724796,
+          "neuron_state_updates_per_biological_second": 139255000.0,
+          "seed": null,
+          "simulated_seconds": 1.0,
+          "spikes_per_biological_second": 366872.0,
+          "spiking_fraction_of_population": 0.145366,
+          "steps": 1000,
+          "synaptic_events_per_biological_second": 25724796.0,
+          "v_thresh_used": 1.0,
+          "wall_seconds": 18.901,
+          "wall_seconds_per_simulated_second": 18.901,
+          "work_model": "O(steps * (edges + neurons)): every neuron and every edge is touched on every timestep, independent of activity"
+        },
+        "sparse_events": {
+          "dt_ms": 1.0,
+          "engine": "sparse_events",
+          "fraction_neurons_active": 0.145366,
+          "mean_rate_hz_over_active_neurons": 18.123401,
+          "mean_rate_hz_over_all_neurons": 2.634534,
+          "n_neuron_state_updates": 11025401,
+          "n_neurons": 139255,
+          "n_neurons_ever_woken": 94880,
+          "n_neurons_never_touched": 44375,
+          "n_spikes": 366872,
+          "n_spiking_neurons": 20243,
+          "n_synaptic_events_delivered": 25724796,
+          "neuron_state_updates_per_biological_second": 11025401.0,
+          "seed": null,
+          "simulated_seconds": 1.0,
+          "spikes_per_biological_second": 366872.0,
+          "spiking_fraction_of_population": 0.145366,
+          "steps": 1000,
+          "synaptic_events_per_biological_second": 25724796.0,
+          "v_thresh_used": 1.0,
+          "wall_seconds": 4.156,
+          "wall_seconds_per_simulated_second": 4.156,
+          "work_model": "O(sum over active neurons * out-degree): silent neurons are never touched, their state is recovered analytically"
+        }
+      },
+      "stimulus": {
+        "components": {
+          "components": [
+            {
+              "amplitude_per_event": 0.9,
+              "expected_events": 111180.0,
+              "kind": "poisson",
+              "mean_events_per_step": 111.22,
+              "n_events": 111220,
+              "n_target_neurons": 11118,
+              "rate_hz": 20.0,
+              "steps": 1000,
+              "window_steps": [
+                100,
+                600
+              ]
+            },
+            {
+              "amplitude_per_event": 0.9,
+              "expected_events": 22760.0,
+              "kind": "poisson",
+              "mean_events_per_step": 22.707,
+              "n_events": 22707,
+              "n_target_neurons": 2276,
+              "rate_hz": 20.0,
+              "steps": 1000,
+              "window_steps": [
+                400,
+                900
+              ]
+            }
+          ],
+          "kind": "combined",
+          "n_events": 133927
+        },
+        "description": "\u00a720 Level 1: Poisson light pulse on photoreceptors (R1-6/R7/R8) during 100-600 ms, Poisson odour pulse on olfactory receptor neurons (ORN_*) during 400-900 ms",
+        "drive_seed": 20260917,
+        "external_events": 133927
+      },
+      "wall_seconds_all_engines": 35.026
+    },
+    "random20k_poisson": {
+      "comparisons": {
+        "dense_timestep_csr_vs_dense_timestep_gather": {
+          "agreement": true,
+          "checks": {
+            "rate_correlation_above_tolerance": true,
+            "spike_count_within_tolerance": true
+          },
+          "engine_a": "dense_timestep_csr",
+          "engine_b": "dense_timestep_gather",
+          "identical_spike_fraction_of_a": 1.0,
+          "identical_spikes": 479259,
+          "max_abs_rate_difference_hz": 0.0,
+          "mean_abs_rate_difference_hz": 0.0,
+          "n_active_neurons_a": 11384,
+          "n_active_neurons_b": 11384,
+          "n_active_neurons_in_either": 11384,
+          "n_neurons_active_in_one_only": 0,
+          "n_spikes_a": 479259,
+          "n_spikes_b": 479259,
+          "per_neuron_rate_pearson_r_all": 1.0,
+          "per_neuron_rate_pearson_r_neurons_active_in_either": 1.0,
+          "per_step_spike_count_pearson_r": 1.0,
+          "simulated_seconds": 1.0,
+          "speedup_b_over_a": 0.497,
+          "spike_based_checks_applicable": true,
+          "spike_count_delta": 0,
+          "spike_count_delta_fraction": 0.0,
+          "spikes_a_not_in_b": 0,
+          "spikes_b_not_in_a": 0,
+          "steps": 1000,
+          "tolerances": {
+            "per_neuron_rate_pearson_r": 0.99,
+            "spike_count_relative_delta": 0.01,
+            "vm_trace_max_abs": 1e-09
+          },
+          "wall_seconds_a": 12.953,
+          "wall_seconds_b": 26.038
+        },
+        "dense_timestep_csr_vs_sparse_events": {
+          "agreement": true,
+          "checks": {
+            "rate_correlation_above_tolerance": true,
+            "spike_count_within_tolerance": true
+          },
+          "engine_a": "dense_timestep_csr",
+          "engine_b": "sparse_events",
+          "identical_spike_fraction_of_a": 1.0,
+          "identical_spikes": 479259,
+          "max_abs_rate_difference_hz": 0.0,
+          "mean_abs_rate_difference_hz": 0.0,
+          "n_active_neurons_a": 11384,
+          "n_active_neurons_b": 11384,
+          "n_active_neurons_in_either": 11384,
+          "n_neurons_active_in_one_only": 0,
+          "n_spikes_a": 479259,
+          "n_spikes_b": 479259,
+          "per_neuron_rate_pearson_r_all": 1.0,
+          "per_neuron_rate_pearson_r_neurons_active_in_either": 1.0,
+          "per_step_spike_count_pearson_r": 1.0,
+          "simulated_seconds": 1.0,
+          "speedup_b_over_a": 1.171,
+          "spike_based_checks_applicable": true,
+          "spike_count_delta": 0,
+          "spike_count_delta_fraction": 0.0,
+          "spikes_a_not_in_b": 0,
+          "spikes_b_not_in_a": 0,
+          "steps": 1000,
+          "tolerances": {
+            "per_neuron_rate_pearson_r": 0.99,
+            "spike_count_relative_delta": 0.01,
+            "vm_trace_max_abs": 1e-09
+          },
+          "wall_seconds_a": 12.953,
+          "wall_seconds_b": 11.057
+        }
+      },
+      "failures": {},
+      "response_profile": {
+        "dense_timestep_csr": {
+          "bin_width_steps": 100,
+          "engine": "dense_timestep_csr",
+          "fraction_of_spikes_from_recruited_neurons": 0.855358,
+          "n_recruited_neurons": 7096,
+          "n_spikes_from_driven_neurons": 69321,
+          "n_spikes_from_recruited_neurons": 409938,
+          "spikes_per_bin": [
+            393,
+            47014,
+            54452,
+            53704,
+            53139,
+            54155,
+            54296,
+            54952,
+            52298,
+            54856
+          ]
+        },
+        "dense_timestep_gather": {
+          "bin_width_steps": 100,
+          "engine": "dense_timestep_gather",
+          "fraction_of_spikes_from_recruited_neurons": 0.855358,
+          "n_recruited_neurons": 7096,
+          "n_spikes_from_driven_neurons": 69321,
+          "n_spikes_from_recruited_neurons": 409938,
+          "spikes_per_bin": [
+            393,
+            47014,
+            54452,
+            53704,
+            53139,
+            54155,
+            54296,
+            54952,
+            52298,
+            54856
+          ]
+        },
+        "sparse_events": {
+          "bin_width_steps": 100,
+          "engine": "sparse_events",
+          "fraction_of_spikes_from_recruited_neurons": 0.855358,
+          "n_recruited_neurons": 7096,
+          "n_spikes_from_driven_neurons": 69321,
+          "n_spikes_from_recruited_neurons": 409938,
+          "spikes_per_bin": [
+            393,
+            47014,
+            54452,
+            53704,
+            53139,
+            54155,
+            54296,
+            54952,
+            52298,
+            54856
+          ]
+        }
+      },
+      "runs": {
+        "dense_timestep_csr": {
+          "dt_ms": 1.0,
+          "engine": "dense_timestep_csr",
+          "fraction_neurons_active": 0.081749,
+          "mean_rate_hz_over_active_neurons": 42.09935,
+          "mean_rate_hz_over_all_neurons": 3.441593,
+          "method": "csr",
+          "n_neuron_state_updates": 139255000,
+          "n_neurons": 139255,
+          "n_spikes": 479259,
+          "n_spiking_neurons": 11384,
+          "n_synaptic_events_delivered": 38571324,
+          "neuron_state_updates_per_biological_second": 139255000.0,
+          "seed": null,
+          "simulated_seconds": 1.0,
+          "spikes_per_biological_second": 479259.0,
+          "spiking_fraction_of_population": 0.081749,
+          "steps": 1000,
+          "synaptic_events_per_biological_second": 38571324.0,
+          "v_thresh_used": 1.0,
+          "wall_seconds": 12.953,
+          "wall_seconds_per_simulated_second": 12.953,
+          "work_model": "O(steps * (edges + neurons)): every neuron and every edge is touched on every timestep, independent of activity"
+        },
+        "dense_timestep_gather": {
+          "dt_ms": 1.0,
+          "engine": "dense_timestep_gather",
+          "fraction_neurons_active": 0.081749,
+          "mean_rate_hz_over_active_neurons": 42.09935,
+          "mean_rate_hz_over_all_neurons": 3.441593,
+          "method": "gather",
+          "n_neuron_state_updates": 139255000,
+          "n_neurons": 139255,
+          "n_spikes": 479259,
+          "n_spiking_neurons": 11384,
+          "n_synaptic_events_delivered": 38571324,
+          "neuron_state_updates_per_biological_second": 139255000.0,
+          "seed": null,
+          "simulated_seconds": 1.0,
+          "spikes_per_biological_second": 479259.0,
+          "spiking_fraction_of_population": 0.081749,
+          "steps": 1000,
+          "synaptic_events_per_biological_second": 38571324.0,
+          "v_thresh_used": 1.0,
+          "wall_seconds": 26.038,
+          "wall_seconds_per_simulated_second": 26.038,
+          "work_model": "O(steps * (edges + neurons)): every neuron and every edge is touched on every timestep, independent of activity"
+        },
+        "sparse_events": {
+          "dt_ms": 1.0,
+          "engine": "sparse_events",
+          "fraction_neurons_active": 0.081749,
+          "mean_rate_hz_over_active_neurons": 42.09935,
+          "mean_rate_hz_over_all_neurons": 3.441593,
+          "n_neuron_state_updates": 16674485,
+          "n_neurons": 139255,
+          "n_neurons_ever_woken": 97070,
+          "n_neurons_never_touched": 42185,
+          "n_spikes": 479259,
+          "n_spiking_neurons": 11384,
+          "n_synaptic_events_delivered": 38571324,
+          "neuron_state_updates_per_biological_second": 16674485.0,
+          "seed": null,
+          "simulated_seconds": 1.0,
+          "spikes_per_biological_second": 479259.0,
+          "spiking_fraction_of_population": 0.081749,
+          "steps": 1000,
+          "synaptic_events_per_biological_second": 38571324.0,
+          "v_thresh_used": 1.0,
+          "wall_seconds": 11.057,
+          "wall_seconds_per_simulated_second": 11.057,
+          "work_model": "O(sum over active neurons * out-degree): silent neurons are never touched, their state is recovered analytically"
+        }
+      },
+      "stimulus": {
+        "components": {
+          "amplitude_per_event": 0.6,
+          "expected_events": 100000.0,
+          "kind": "poisson",
+          "mean_events_per_step": 100.042,
+          "n_events": 100042,
+          "n_target_neurons": 20000,
+          "rate_hz": 5.0,
+          "steps": 1000,
+          "window_steps": [
+            0,
+            1000
+          ]
+        },
+        "description": "engine-agreement protocol suggested for the \u00a79 gate: 20000 uniformly random neurons driven with the same known Poisson input in every engine",
+        "drive_seed": 20260919,
+        "external_events": 100042,
+        "target_neurons_seed": 20260918
+      },
+      "wall_seconds_all_engines": 50.055
+    }
+  },
+  "reproducibility": {
+    "check": "sparse_events re-run on the same drive and seed",
+    "identical_spike_train": true,
+    "n_spikes_first": 366872,
+    "n_spikes_second": 366872,
+    "wall_seconds": 4.189
+  },
+  "scope_doc": "PROJECT-VYBFLY.md \u00a77 (with the \u00a79 agreement gate and \u00a720 Level 1 stimuli); execution model per \u00a718",
+  "seed": 20260917,
+  "subthreshold_probe_equivalence": {
+    "comparisons": {
+      "dense_timestep_csr_vs_dense_timestep_gather": {
+        "agreement": true,
+        "checks": {
+          "rate_correlation_above_tolerance": null,
+          "spike_count_within_tolerance": true,
+          "vm_traces_within_probe_tolerance": true
+        },
+        "engine_a": "dense_timestep_csr",
+        "engine_b": "dense_timestep_gather",
+        "identical_spike_fraction_of_a": 0.0,
+        "identical_spikes": 0,
+        "max_abs_rate_difference_hz": 0.0,
+        "mean_abs_rate_difference_hz": 0.0,
+        "n_active_neurons_a": 0,
+        "n_active_neurons_b": 0,
+        "n_active_neurons_in_either": 0,
+        "n_neurons_active_in_one_only": 0,
+        "n_spikes_a": 0,
+        "n_spikes_b": 0,
+        "per_neuron_rate_pearson_r_all": null,
+        "per_neuron_rate_pearson_r_neurons_active_in_either": null,
+        "per_step_spike_count_pearson_r": null,
+        "probe": {
+          "max_abs_vm_a": 1.5363809924644551,
+          "max_abs_vm_b": 1.5363809924644551,
+          "max_abs_vm_difference": 0.0,
+          "n_probe_steps": 12,
+          "probe_steps": [
+            0,
+            25,
+            50,
+            75,
+            100,
+            125,
+            150,
+            175,
+            200,
+            225,
+            250,
+            275
+          ],
+          "rms_vm_difference": 0.0
+        },
+        "simulated_seconds": 0.3,
+        "speedup_b_over_a": 0.865,
+        "spike_based_checks_applicable": false,
+        "spike_count_delta": 0,
+        "spike_count_delta_fraction": 0.0,
+        "spikes_a_not_in_b": 0,
+        "spikes_b_not_in_a": 0,
+        "steps": 300,
+        "tolerances": {
+          "per_neuron_rate_pearson_r": 0.99,
+          "spike_count_relative_delta": 0.01,
+          "vm_trace_max_abs": 1e-09
+        },
+        "wall_seconds_a": 0.443,
+        "wall_seconds_b": 0.512
+      },
+      "dense_timestep_csr_vs_sparse_events": {
+        "agreement": true,
+        "checks": {
+          "rate_correlation_above_tolerance": null,
+          "spike_count_within_tolerance": true,
+          "vm_traces_within_probe_tolerance": true
+        },
+        "engine_a": "dense_timestep_csr",
+        "engine_b": "sparse_events",
+        "identical_spike_fraction_of_a": 0.0,
+        "identical_spikes": 0,
+        "max_abs_rate_difference_hz": 0.0,
+        "mean_abs_rate_difference_hz": 0.0,
+        "n_active_neurons_a": 0,
+        "n_active_neurons_b": 0,
+        "n_active_neurons_in_either": 0,
+        "n_neurons_active_in_one_only": 0,
+        "n_spikes_a": 0,
+        "n_spikes_b": 0,
+        "per_neuron_rate_pearson_r_all": null,
+        "per_neuron_rate_pearson_r_neurons_active_in_either": null,
+        "per_step_spike_count_pearson_r": null,
+        "probe": {
+          "max_abs_vm_a": 1.5363809924644551,
+          "max_abs_vm_b": 1.5363809924644551,
+          "max_abs_vm_difference": 4.440892098500626e-16,
+          "n_probe_steps": 12,
+          "probe_steps": [
+            0,
+            25,
+            50,
+            75,
+            100,
+            125,
+            150,
+            175,
+            200,
+            225,
+            250,
+            275
+          ],
+          "rms_vm_difference": 6.817264432476273e-18
+        },
+        "simulated_seconds": 0.3,
+        "speedup_b_over_a": 16.558,
+        "spike_based_checks_applicable": false,
+        "spike_count_delta": 0,
+        "spike_count_delta_fraction": 0.0,
+        "spikes_a_not_in_b": 0,
+        "spikes_b_not_in_a": 0,
+        "steps": 300,
+        "tolerances": {
+          "per_neuron_rate_pearson_r": 0.99,
+          "spike_count_relative_delta": 0.01,
+          "vm_trace_max_abs": 1e-09
+        },
+        "wall_seconds_a": 0.443,
+        "wall_seconds_b": 0.027
+      }
+    },
+    "failures": {},
+    "max_abs_vm": 1.5363809924644551,
+    "pass": true,
+    "probe_drive": {
+      "amplitude_per_event": 0.6,
+      "expected_events": 30000.0,
+      "kind": "poisson",
+      "mean_events_per_step": 100.147,
+      "n_events": 30044,
+      "n_target_neurons": 20000,
+      "rate_hz": 5.0,
+      "steps": 300,
+      "window_steps": [
+        0,
+        300
+      ]
+    },
+    "probe_steps": [
+      0,
+      25,
+      50,
+      75,
+      100,
+      125,
+      150,
+      175,
+      200,
+      225,
+      250,
+      275
+    ],
+    "purpose": "no spike can be emitted (threshold set to 1e9), so the two engines must reproduce the same subthreshold Vm trajectory up to floating-point rounding; this isolates engine numerics from spike-timing amplification",
+    "runs": {
+      "dense_timestep_csr": {
+        "dt_ms": 1.0,
+        "engine": "dense_timestep_csr",
+        "fraction_neurons_active": 0.0,
+        "mean_rate_hz_over_active_neurons": 0.0,
+        "mean_rate_hz_over_all_neurons": 0.0,
+        "method": "csr",
+        "n_neuron_state_updates": 41776500,
+        "n_neurons": 139255,
+        "n_spikes": 0,
+        "n_spiking_neurons": 0,
+        "n_synaptic_events_delivered": 0,
+        "neuron_state_updates_per_biological_second": 139255000.0,
+        "seed": null,
+        "simulated_seconds": 0.3,
+        "spikes_per_biological_second": 0.0,
+        "spiking_fraction_of_population": 0.0,
+        "steps": 300,
+        "synaptic_events_per_biological_second": 0.0,
+        "v_thresh_used": 1000000000.0,
+        "wall_seconds": 0.443,
+        "wall_seconds_per_simulated_second": 1.476,
+        "work_model": "O(steps * (edges + neurons)): every neuron and every edge is touched on every timestep, independent of activity"
+      },
+      "dense_timestep_gather": {
+        "dt_ms": 1.0,
+        "engine": "dense_timestep_gather",
+        "fraction_neurons_active": 0.0,
+        "mean_rate_hz_over_active_neurons": 0.0,
+        "mean_rate_hz_over_all_neurons": 0.0,
+        "method": "gather",
+        "n_neuron_state_updates": 41776500,
+        "n_neurons": 139255,
+        "n_spikes": 0,
+        "n_spiking_neurons": 0,
+        "n_synaptic_events_delivered": 0,
+        "neuron_state_updates_per_biological_second": 139255000.0,
+        "seed": null,
+        "simulated_seconds": 0.3,
+        "spikes_per_biological_second": 0.0,
+        "spiking_fraction_of_population": 0.0,
+        "steps": 300,
+        "synaptic_events_per_biological_second": 0.0,
+        "v_thresh_used": 1000000000.0,
+        "wall_seconds": 0.512,
+        "wall_seconds_per_simulated_second": 1.706,
+        "work_model": "O(steps * (edges + neurons)): every neuron and every edge is touched on every timestep, independent of activity"
+      },
+      "sparse_events": {
+        "dt_ms": 1.0,
+        "engine": "sparse_events",
+        "fraction_neurons_active": 0.0,
+        "mean_rate_hz_over_active_neurons": 0.0,
+        "mean_rate_hz_over_all_neurons": 0.0,
+        "n_neuron_state_updates": 30044,
+        "n_neurons": 139255,
+        "n_neurons_ever_woken": 15573,
+        "n_neurons_never_touched": 123682,
+        "n_spikes": 0,
+        "n_spiking_neurons": 0,
+        "n_synaptic_events_delivered": 0,
+        "neuron_state_updates_per_biological_second": 100146.7,
+        "seed": null,
+        "simulated_seconds": 0.3,
+        "spikes_per_biological_second": 0.0,
+        "spiking_fraction_of_population": 0.0,
+        "steps": 300,
+        "synaptic_events_per_biological_second": 0.0,
+        "v_thresh_used": 1000000000.0,
+        "wall_seconds": 0.027,
+        "wall_seconds_per_simulated_second": 0.089,
+        "work_model": "O(sum over active neurons * out-degree): silent neurons are never touched, their state is recovered analytically"
+      }
+    },
+    "steps": 300,
+    "v_thresh_used": 1000000000.0,
+    "wall_seconds": 1.018
+  },
+  "title": "FlyScale Phase 1: smallest defensible whole-connectome LIF model (dense timestep reference vs sparse event engine)",
+  "units_note": "voltages are dimensionless threshold units: v_rest = 0, v_reset = 0, threshold 1.0, tau_m = 20.0 ms, dt = 1.0 ms. An edge of anatomical weight 1 delivers g_syn = 0.15 units of input current on each presynaptic spike, so a neuron spikes once its integrated input exceeds 1.0.",
+  "wall_seconds_total": 120.134
+}

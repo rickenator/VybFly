@@ -1,0 +1,239 @@
+{
+  "model": "deterministic threshold cascade (flyscale.propagation)",
+  "reference": {
+    "absolute_threshold": 12.647065946359081,
+    "active_curve": [
+      1393,
+      2832,
+      18279,
+      50821,
+      98801,
+      112911,
+      114850,
+      115042,
+      115085,
+      115091,
+      115091
+    ],
+    "active_fraction_curve": [
+      0.01000323,
+      0.02033679,
+      0.13126279,
+      0.36494919,
+      0.70949697,
+      0.81082187,
+      0.82474597,
+      0.82612474,
+      0.82643352,
+      0.82647661,
+      0.82647661
+    ],
+    "active_mask_hash": 115091,
+    "active_set_fraction": 0.82647661,
+    "final_active": 115091,
+    "final_active_fraction": 0.82647661,
+    "latency_steps_to_half": 4,
+    "n_neurons": 139255,
+    "n_seeds": 1393,
+    "newly_active": [
+      1393,
+      1439,
+      15447,
+      32542,
+      47980,
+      14110,
+      1939,
+      192,
+      43,
+      6,
+      0
+    ],
+    "peak_newly_active": 47980,
+    "relative_threshold": 1.0,
+    "seed_fraction": 0.01000323,
+    "steps": 10
+  },
+  "replicas": {
+    "0.1": {
+      "cascade": {
+        "absolute_threshold": 44.69651336723871,
+        "active_curve": [
+          1202,
+          2843,
+          11886,
+          13582,
+          13640,
+          13641
+        ],
+        "active_fraction_curve": [
+          0.07696741,
+          0.18204521,
+          0.76109368,
+          0.86969328,
+          0.87340718,
+          0.87347122
+        ],
+        "active_mask_hash": 13641,
+        "active_set_fraction": 0.87347122,
+        "final_active": 13641,
+        "final_active_fraction": 0.87347122,
+        "latency_steps_to_half": 2,
+        "n_neurons": 15617,
+        "n_seeds": 1202,
+        "newly_active": [
+          1202,
+          1641,
+          9043,
+          1696,
+          58,
+          1
+        ],
+        "peak_newly_active": 9043,
+        "relative_threshold": 1.0,
+        "seed_fraction": 0.07696741,
+        "steps": 5
+      },
+      "comparison": {
+        "active_set_jaccard": 0.901555,
+        "active_set_precision": 0.998974,
+        "active_set_recall": 0.902391,
+        "curve_L1": 1.58980714,
+        "curve_max_abs_delta": 0.62983089,
+        "final_fraction_ratio": 1.056861,
+        "latency_delta_steps": -2,
+        "mapped_nodes": 139255,
+        "peak_delta": -38937,
+        "reference_final_fraction": 0.82647661,
+        "replica_final_fraction": 0.87347122
+      }
+    },
+    "0.25": {
+      "cascade": {
+        "absolute_threshold": 35.21394610105592,
+        "active_curve": [
+          1317,
+          2465,
+          15573,
+          25411,
+          27574,
+          27805,
+          27841,
+          27844,
+          27846,
+          27846
+        ],
+        "active_fraction_curve": [
+          0.03653462,
+          0.06838105,
+          0.43200732,
+          0.70492122,
+          0.76492455,
+          0.77133267,
+          0.77233134,
+          0.77241456,
+          0.77247004,
+          0.77247004
+        ],
+        "active_mask_hash": 27846,
+        "active_set_fraction": 0.77247004,
+        "final_active": 27846,
+        "final_active_fraction": 0.77247004,
+        "latency_steps_to_half": 2,
+        "n_neurons": 36048,
+        "n_seeds": 1317,
+        "newly_active": [
+          1317,
+          1148,
+          13108,
+          9838,
+          2163,
+          231,
+          36,
+          3,
+          2,
+          0
+        ],
+        "peak_newly_active": 13108,
+        "relative_threshold": 1.0,
+        "seed_fraction": 0.03653462,
+        "steps": 9
+      },
+      "comparison": {
+        "active_set_jaccard": 0.820874,
+        "active_set_precision": 0.999282,
+        "active_set_recall": 0.821359,
+        "curve_L1": 1.02430385,
+        "curve_max_abs_delta": 0.33997203,
+        "final_fraction_ratio": 0.934654,
+        "latency_delta_steps": -2,
+        "mapped_nodes": 139255,
+        "peak_delta": -34872,
+        "reference_final_fraction": 0.82647661,
+        "replica_final_fraction": 0.77247004
+      }
+    },
+    "0.5": {
+      "cascade": {
+        "absolute_threshold": 20.603158993231425,
+        "active_curve": [
+          1363,
+          2910,
+          26804,
+          51905,
+          58115,
+          58524,
+          58555,
+          58556,
+          58556
+        ],
+        "active_fraction_curve": [
+          0.01936932,
+          0.04135344,
+          0.38090637,
+          0.73761173,
+          0.82586082,
+          0.83167304,
+          0.83211357,
+          0.83212778,
+          0.83212778
+        ],
+        "active_mask_hash": 58556,
+        "active_set_fraction": 0.83212778,
+        "final_active": 58556,
+        "final_active_fraction": 0.83212778,
+        "latency_steps_to_half": 3,
+        "n_neurons": 70369,
+        "n_seeds": 1363,
+        "newly_active": [
+          1363,
+          1547,
+          23894,
+          25101,
+          6210,
+          409,
+          31,
+          1,
+          0
+        ],
+        "peak_newly_active": 25101,
+        "relative_threshold": 1.0,
+        "seed_fraction": 0.01936932,
+        "steps": 8
+      },
+      "comparison": {
+        "active_set_jaccard": 0.916164,
+        "active_set_precision": 0.997695,
+        "active_set_recall": 0.918107,
+        "curve_L1": 0.80896878,
+        "curve_max_abs_delta": 0.37266254,
+        "final_fraction_ratio": 1.006838,
+        "latency_delta_steps": -1,
+        "mapped_nodes": 139255,
+        "peak_delta": -22879,
+        "reference_final_fraction": 0.82647661,
+        "replica_final_fraction": 0.83212778
+      }
+    }
+  },
+  "stimulus": "1% of neurons, sensory super_classes preferred, identical relative threshold across scales"
+}

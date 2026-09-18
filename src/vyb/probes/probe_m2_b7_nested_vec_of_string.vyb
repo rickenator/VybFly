@@ -1,0 +1,25 @@
+// probe_m2_b7_nested_vec_of_string - Vec<Vec<String>> write-back, to see whether the b1
+// crash is specific to the Int element type.
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_b7_nested_vec_of_string.vyb
+
+main()<Int> -> {
+    buckets<Vec<Vec<String>>> = Vec()
+    i<Int> = 0
+    while (i < 3) {
+        inner<Vec<String>> = Vec()
+        inner.push("seed" + i.to_string())
+        buckets.push(inner)
+        i = i + 1
+    }
+    b1<Vec<String>> = buckets.get(1)
+    b1.push("x")
+    buckets.set(1, b1)
+    b2<Vec<String>> = buckets.get(1)
+    println("inner1_len=" + b2.len().to_string())
+    println("inner1_0=" + b2.get(0))
+    println("inner1_1=" + b2.get(1))
+    println("probe-b7-done")
+    return 0
+}

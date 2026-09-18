@@ -1,0 +1,20 @@
+// probe_m2_e_module_borrow - cross-module borrow mutation of a module-defined struct.
+//
+// Run: VYB_STDLIB=~/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_e_module_borrow.vyb --module-path src/vyb/probes
+
+import probe_m2_e_mod::{Sched, Pair, mk, push_ev, mk_pair}
+
+main()<Int> -> {
+    s<Sched> = mk(4)
+    push_ev(borrow(s), 10, 7)
+    push_ev(borrow(s), 11, 9)
+    println("n=" + s.n.to_string())
+    println("arena_len=" + s.arena.len().to_string())
+    println("arena0=" + s.arena.get(0).to_string())
+    println("head0=" + s.heads.get(0).to_string())
+    p<Pair> = mk_pair(3, 4)
+    println("pair=" + p.t.to_string() + "," + p.v.to_string())
+    println("probe-e-done")
+    return 0
+}

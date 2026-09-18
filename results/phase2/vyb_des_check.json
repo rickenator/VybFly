@@ -1,0 +1,750 @@
+{
+  "comparisons": [
+    {
+      "counts_file_consistent": true,
+      "counts_file_mismatches": [],
+      "entities": 640,
+      "entities_with_spikes": 640,
+      "field_comparison": {
+        "all_match": true,
+        "events_scheduled": {
+          "match": true,
+          "reference": 22766285,
+          "vyb": 22766285
+        },
+        "spike_hash": {
+          "match": true,
+          "reference": 8255019552550552538,
+          "vyb": 8255019552550552538,
+          "vyb_recomputed_from_spike_file": 8255019552550552538
+        },
+        "spikes": {
+          "match": true,
+          "reference": 771379,
+          "vyb": 771379
+        },
+        "stimulus_events": {
+          "match": true,
+          "reference": 64000,
+          "vyb": 64000
+        },
+        "synaptic_events": {
+          "match": true,
+          "reference": 22702285,
+          "vyb": 22702285
+        },
+        "ticks_processed": {
+          "match": true,
+          "reference": 19841,
+          "vyb": 19841
+        }
+      },
+      "histogram_mismatches": [],
+      "horizon_ticks": 20000,
+      "mismatches": [],
+      "n_mismatched_entities": 0,
+      "per_tick_histogram_identical": true,
+      "reference_fnv_hash": 8255019552550552538,
+      "reference_output": {
+        "path": "results/phase2/ref_spikes_main.csv",
+        "sha256": "56168f319e5ff08bec1e5d680dfcd796217a957789e602bedbe55aac68689653"
+      },
+      "reference_spikes": 771379,
+      "reference_stats": {
+        "events_scheduled": 22766285,
+        "horizon_ticks": 20000,
+        "max_batch": 1875,
+        "name": "main",
+        "spikes": 771379,
+        "stimulus_events": 64000,
+        "stream": 0,
+        "synaptic_events": 22702285,
+        "ticks_processed": 19841,
+        "wall_ms": 23058
+      },
+      "replication": "main",
+      "sorted_tick_entity_lists_identical": true,
+      "spike_counts_match": true,
+      "spike_tick_sequences_identical": true,
+      "stimulus_stream": 0,
+      "vyb_file_structure": {
+        "entities": 640,
+        "entity_major_ascending": true,
+        "spikes": 771379,
+        "tick_ascending_per_entity": true
+      },
+      "vyb_fnv_hash": 8255019552550552538,
+      "vyb_output": {
+        "path": "results/phase2/vyb_spikes_main.csv",
+        "sha256": "56168f319e5ff08bec1e5d680dfcd796217a957789e602bedbe55aac68689653"
+      },
+      "vyb_reported": {
+        "determinism_ok": 1,
+        "events_processed": 22766285,
+        "events_scheduled": 22766285,
+        "horizon_ticks": 20000,
+        "max_batch": 1875,
+        "name": "main",
+        "sim_ms": 5697,
+        "spike_hash": 8255019552550552538,
+        "spikes": 771379,
+        "stimulus_events": 64000,
+        "stream": 0,
+        "synaptic_events": 22702285,
+        "ticks_processed": 19841,
+        "wall_ms": 5702
+      },
+      "vyb_spikes": 771379
+    },
+    {
+      "counts_file_consistent": true,
+      "counts_file_mismatches": [],
+      "entities": 640,
+      "entities_with_spikes": 436,
+      "field_comparison": {
+        "all_match": true,
+        "events_scheduled": {
+          "match": true,
+          "reference": 88176,
+          "vyb": 88176
+        },
+        "spike_hash": {
+          "match": true,
+          "reference": -943723657370235180,
+          "vyb": -943723657370235180,
+          "vyb_recomputed_from_spike_file": -943723657370235180
+        },
+        "spikes": {
+          "match": true,
+          "reference": 3064,
+          "vyb": 3064
+        },
+        "stimulus_events": {
+          "match": true,
+          "reference": 1676,
+          "vyb": 1676
+        },
+        "synaptic_events": {
+          "match": true,
+          "reference": 86500,
+          "vyb": 86500
+        },
+        "ticks_processed": {
+          "match": true,
+          "reference": 382,
+          "vyb": 382
+        }
+      },
+      "histogram_mismatches": [],
+      "horizon_ticks": 500,
+      "mismatches": [],
+      "n_mismatched_entities": 0,
+      "per_tick_histogram_identical": true,
+      "reference_fnv_hash": -943723657370235180,
+      "reference_output": {
+        "path": "results/phase2/ref_spikes_det_a.csv",
+        "sha256": "079a01d9e90f533b553149ab862f66880d429dac3810a7d105510d5e434217da"
+      },
+      "reference_spikes": 3064,
+      "reference_stats": {
+        "events_scheduled": 88176,
+        "horizon_ticks": 500,
+        "max_batch": 644,
+        "name": "det_a",
+        "spikes": 3064,
+        "stimulus_events": 1676,
+        "stream": 0,
+        "synaptic_events": 86500,
+        "ticks_processed": 382,
+        "wall_ms": 221
+      },
+      "replication": "det_a",
+      "sorted_tick_entity_lists_identical": true,
+      "spike_counts_match": true,
+      "spike_tick_sequences_identical": true,
+      "stimulus_stream": 0,
+      "vyb_file_structure": {
+        "entities": 640,
+        "entity_major_ascending": true,
+        "spikes": 3064,
+        "tick_ascending_per_entity": true
+      },
+      "vyb_fnv_hash": -943723657370235180,
+      "vyb_output": {
+        "path": "results/phase2/vyb_spikes_det_a.csv",
+        "sha256": "079a01d9e90f533b553149ab862f66880d429dac3810a7d105510d5e434217da"
+      },
+      "vyb_reported": {
+        "determinism_ok": 1,
+        "events_processed": 88176,
+        "events_scheduled": 88176,
+        "horizon_ticks": 500,
+        "max_batch": 644,
+        "name": "det_a",
+        "sim_ms": 28,
+        "spike_hash": -943723657370235180,
+        "spikes": 3064,
+        "stimulus_events": 1676,
+        "stream": 0,
+        "synaptic_events": 86500,
+        "ticks_processed": 382,
+        "wall_ms": 29
+      },
+      "vyb_spikes": 3064
+    },
+    {
+      "counts_file_consistent": true,
+      "counts_file_mismatches": [],
+      "entities": 640,
+      "entities_with_spikes": 436,
+      "field_comparison": {
+        "all_match": true,
+        "events_scheduled": {
+          "match": true,
+          "reference": 88176,
+          "vyb": 88176
+        },
+        "spike_hash": {
+          "match": true,
+          "reference": -943723657370235180,
+          "vyb": -943723657370235180,
+          "vyb_recomputed_from_spike_file": -943723657370235180
+        },
+        "spikes": {
+          "match": true,
+          "reference": 3064,
+          "vyb": 3064
+        },
+        "stimulus_events": {
+          "match": true,
+          "reference": 1676,
+          "vyb": 1676
+        },
+        "synaptic_events": {
+          "match": true,
+          "reference": 86500,
+          "vyb": 86500
+        },
+        "ticks_processed": {
+          "match": true,
+          "reference": 382,
+          "vyb": 382
+        }
+      },
+      "histogram_mismatches": [],
+      "horizon_ticks": 500,
+      "mismatches": [],
+      "n_mismatched_entities": 0,
+      "per_tick_histogram_identical": true,
+      "reference_fnv_hash": -943723657370235180,
+      "reference_output": {
+        "path": "results/phase2/ref_spikes_det_b.csv",
+        "sha256": "079a01d9e90f533b553149ab862f66880d429dac3810a7d105510d5e434217da"
+      },
+      "reference_spikes": 3064,
+      "reference_stats": {
+        "events_scheduled": 88176,
+        "horizon_ticks": 500,
+        "max_batch": 644,
+        "name": "det_b",
+        "spikes": 3064,
+        "stimulus_events": 1676,
+        "stream": 0,
+        "synaptic_events": 86500,
+        "ticks_processed": 382,
+        "wall_ms": 122
+      },
+      "replication": "det_b",
+      "sorted_tick_entity_lists_identical": true,
+      "spike_counts_match": true,
+      "spike_tick_sequences_identical": true,
+      "stimulus_stream": 0,
+      "vyb_file_structure": {
+        "entities": 640,
+        "entity_major_ascending": true,
+        "spikes": 3064,
+        "tick_ascending_per_entity": true
+      },
+      "vyb_fnv_hash": -943723657370235180,
+      "vyb_output": {
+        "path": "results/phase2/vyb_spikes_det_b.csv",
+        "sha256": "079a01d9e90f533b553149ab862f66880d429dac3810a7d105510d5e434217da"
+      },
+      "vyb_reported": {
+        "determinism_ok": 1,
+        "events_processed": 88176,
+        "events_scheduled": 88176,
+        "horizon_ticks": 500,
+        "max_batch": 644,
+        "name": "det_b",
+        "sim_ms": 75,
+        "spike_hash": -943723657370235180,
+        "spikes": 3064,
+        "stimulus_events": 1676,
+        "stream": 0,
+        "synaptic_events": 86500,
+        "ticks_processed": 382,
+        "wall_ms": 76
+      },
+      "vyb_spikes": 3064
+    },
+    {
+      "counts_file_consistent": true,
+      "counts_file_mismatches": [],
+      "entities": 640,
+      "entities_with_spikes": 163,
+      "field_comparison": {
+        "all_match": true,
+        "events_scheduled": {
+          "match": true,
+          "reference": 24695,
+          "vyb": 24695
+        },
+        "spike_hash": {
+          "match": true,
+          "reference": -8830484365616964128,
+          "vyb": -8830484365616964128,
+          "vyb_recomputed_from_spike_file": -8830484365616964128
+        },
+        "spikes": {
+          "match": true,
+          "reference": 841,
+          "vyb": 841
+        },
+        "stimulus_events": {
+          "match": true,
+          "reference": 835,
+          "vyb": 835
+        },
+        "synaptic_events": {
+          "match": true,
+          "reference": 23860,
+          "vyb": 23860
+        },
+        "ticks_processed": {
+          "match": true,
+          "reference": 185,
+          "vyb": 185
+        }
+      },
+      "histogram_mismatches": [],
+      "horizon_ticks": 500,
+      "mismatches": [],
+      "n_mismatched_entities": 0,
+      "per_tick_histogram_identical": true,
+      "reference_fnv_hash": -8830484365616964128,
+      "reference_output": {
+        "path": "results/phase2/ref_spikes_alt.csv",
+        "sha256": "3cd5c34142f0df9197b67408c004bfffecf15c68f2b82f61aa829a57139f7790"
+      },
+      "reference_spikes": 841,
+      "reference_stats": {
+        "events_scheduled": 24695,
+        "horizon_ticks": 500,
+        "max_batch": 333,
+        "name": "alt",
+        "spikes": 841,
+        "stimulus_events": 835,
+        "stream": 1,
+        "synaptic_events": 23860,
+        "ticks_processed": 185,
+        "wall_ms": 65
+      },
+      "replication": "alt",
+      "sorted_tick_entity_lists_identical": true,
+      "spike_counts_match": true,
+      "spike_tick_sequences_identical": true,
+      "stimulus_stream": 1,
+      "vyb_file_structure": {
+        "entities": 640,
+        "entity_major_ascending": true,
+        "spikes": 841,
+        "tick_ascending_per_entity": true
+      },
+      "vyb_fnv_hash": -8830484365616964128,
+      "vyb_output": {
+        "path": "results/phase2/vyb_spikes_alt.csv",
+        "sha256": "3cd5c34142f0df9197b67408c004bfffecf15c68f2b82f61aa829a57139f7790"
+      },
+      "vyb_reported": {
+        "determinism_ok": 1,
+        "events_processed": 24695,
+        "events_scheduled": 24695,
+        "horizon_ticks": 500,
+        "max_batch": 333,
+        "name": "alt",
+        "sim_ms": 17,
+        "spike_hash": -8830484365616964128,
+        "spikes": 841,
+        "stimulus_events": 835,
+        "stream": 1,
+        "synaptic_events": 23860,
+        "ticks_processed": 185,
+        "wall_ms": 17
+      },
+      "vyb_spikes": 841
+    }
+  ],
+  "fixture": {
+    "files": {
+      "edges.csv": {
+        "sha256": "b1459428e219defa2deb7887223ac7e63a8e49c4ee806696372d2849bdd30028"
+      },
+      "neurons.csv": {
+        "sha256": "cab50391b17a0e3d038a1383f7e010c473bf78028093869753a07f6cd2426cab"
+      },
+      "replications.csv": {
+        "sha256": "8ee34707bdd0813093169e05a06ca8b38ea4f6e9aec6dbcdd729e5a4555e65c8"
+      },
+      "stimulus_s0.csv": {
+        "sha256": "3345bb826e97e0a6df334415d02ea55e20c3e6ccd861310d34da613a51a86c12"
+      },
+      "stimulus_s1.csv": {
+        "sha256": "82bb4d95e5311fb56f5148cad060fa5ac276c0b81e7dfb4a6329f5cc66b3b06b"
+      }
+    },
+    "meta": {
+      "counts": {
+        "n_edges": 18909,
+        "n_excitatory": 520,
+        "n_inhibitory": 120,
+        "n_neurons": 640,
+        "n_stimulus_s0": 64000,
+        "n_stimulus_s1": 32000,
+        "short_ticks": 500,
+        "ticks": 20000
+      },
+      "degree": {
+        "max_in_degree": 47,
+        "max_out_degree": 48,
+        "mean_out_degree": 29.5453,
+        "min_out_degree": 12
+      },
+      "delays": {
+        "max": 8,
+        "min": 1
+      },
+      "files": {
+        "edges.csv": {
+          "bytes": 416691,
+          "sha256": "b1459428e219defa2deb7887223ac7e63a8e49c4ee806696372d2849bdd30028"
+        },
+        "neurons.csv": {
+          "bytes": 27242,
+          "sha256": "cab50391b17a0e3d038a1383f7e010c473bf78028093869753a07f6cd2426cab"
+        },
+        "replications.csv": {
+          "bytes": 568,
+          "sha256": "8ee34707bdd0813093169e05a06ca8b38ea4f6e9aec6dbcdd729e5a4555e65c8"
+        },
+        "stimulus_s0.csv": {
+          "bytes": 977275,
+          "sha256": "3345bb826e97e0a6df334415d02ea55e20c3e6ccd861310d34da613a51a86c12"
+        },
+        "stimulus_s1.csv": {
+          "bytes": 488231,
+          "sha256": "82bb4d95e5311fb56f5148cad060fa5ac276c0b81e7dfb4a6329f5cc66b3b06b"
+        }
+      },
+      "generator": "scripts/make_tiny_net.py",
+      "generator_version": "m2-tiny-net-1",
+      "params": {
+        "e_fraction": 0.8,
+        "e_weight": 1100,
+        "e_weight_jitter": 0.2,
+        "i_weight": -1500,
+        "i_weight_jitter": 0.2,
+        "max_delay": 8,
+        "max_out_degree": 48,
+        "min_delay": 1,
+        "min_out_degree": 12,
+        "neurons": 640,
+        "refr_ticks": 5,
+        "seeds": {
+          "network": 388817,
+          "stimulus_s0": 388818,
+          "stimulus_s1": 388819
+        },
+        "short_ticks": 500,
+        "stim_fraction": 0.25,
+        "stim_jitter_ticks": 4,
+        "stim_period_ticks": 50,
+        "stim_weight": 30000,
+        "tau_ticks": 20,
+        "ticks": 20000,
+        "vreset": -70000,
+        "vrest": -65000,
+        "vth": -57000
+      },
+      "replications": [
+        {
+          "name": "main",
+          "stream": 0,
+          "ticks": 20000
+        },
+        {
+          "name": "det_a",
+          "stream": 0,
+          "ticks": 500
+        },
+        {
+          "name": "det_b",
+          "stream": 0,
+          "ticks": 500
+        },
+        {
+          "name": "alt",
+          "stream": 1,
+          "ticks": 500
+        }
+      ],
+      "seeds": {
+        "network": 388817,
+        "stimulus_s0": 388818,
+        "stimulus_s1": 388819
+      },
+      "units": {
+        "decay": "k/1000 per tick, iterated",
+        "tick_ms": 0.1,
+        "voltage": "1e-6 mV (integer micro-units)"
+      },
+      "weights": {
+        "max": 1320,
+        "mean": 640.31,
+        "min": -1800
+      }
+    },
+    "root": "~/Projects/VybFly/data/processed/tiny_net"
+  },
+  "gate": "PROJECT-VYBFLY.md 8 / milestone M2 - Vyb discrete-event runtime vs independent reference",
+  "generated_utc": "2026-09-17T22:40:18Z",
+  "host": {
+    "cpu_count": 20,
+    "hostname": "ASUS-Z590-E",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "reference": [
+    {
+      "bio_ms": 2000.0,
+      "events_per_bio_second": 11383142.5,
+      "events_scheduled": 22766285,
+      "fnv_hash": 8255019552550552538,
+      "horizon_ticks": 20000,
+      "max_batch": 1875,
+      "name": "main",
+      "spike_file_lines": 771379,
+      "spikes": 771379,
+      "spikes_per_bio_second": 385689.5,
+      "stimulus_events": 64000,
+      "stream": 0,
+      "synaptic_events": 22702285,
+      "ticks_processed": 19841,
+      "wall_ms": 23058
+    },
+    {
+      "bio_ms": 50.0,
+      "events_per_bio_second": 1763520.0,
+      "events_scheduled": 88176,
+      "fnv_hash": -943723657370235180,
+      "horizon_ticks": 500,
+      "max_batch": 644,
+      "name": "det_a",
+      "spike_file_lines": 3064,
+      "spikes": 3064,
+      "spikes_per_bio_second": 61280.0,
+      "stimulus_events": 1676,
+      "stream": 0,
+      "synaptic_events": 86500,
+      "ticks_processed": 382,
+      "wall_ms": 221
+    },
+    {
+      "bio_ms": 50.0,
+      "events_per_bio_second": 1763520.0,
+      "events_scheduled": 88176,
+      "fnv_hash": -943723657370235180,
+      "horizon_ticks": 500,
+      "max_batch": 644,
+      "name": "det_b",
+      "spike_file_lines": 3064,
+      "spikes": 3064,
+      "spikes_per_bio_second": 61280.0,
+      "stimulus_events": 1676,
+      "stream": 0,
+      "synaptic_events": 86500,
+      "ticks_processed": 382,
+      "wall_ms": 122
+    },
+    {
+      "bio_ms": 50.0,
+      "events_per_bio_second": 493900.0,
+      "events_scheduled": 24695,
+      "fnv_hash": -8830484365616964128,
+      "horizon_ticks": 500,
+      "max_batch": 333,
+      "name": "alt",
+      "spike_file_lines": 841,
+      "spikes": 841,
+      "spikes_per_bio_second": 16820.0,
+      "stimulus_events": 835,
+      "stream": 1,
+      "synaptic_events": 23860,
+      "ticks_processed": 185,
+      "wall_ms": 65
+    }
+  ],
+  "reference_cross_replication_determinism": {
+    "ref_det_a_eq_det_b_byte_identical": true,
+    "reference_det_hashes_equal": true,
+    "vyb_det_a_eq_det_b_byte_identical": true,
+    "vyb_det_hashes_equal": true,
+    "vyb_hash_matches_reference_hash_det_a": true,
+    "vyb_summary_det_a_hash": -943723657370235180,
+    "vyb_summary_det_b_hash": -943723657370235180,
+    "vyb_summary_determinism_ok": 1
+  },
+  "residual_mismatches": [],
+  "semantics_contract": {
+    "batching": "within a tick all arrivals for one entity are summed before the single integration (order-independent)",
+    "delay_rule": "every synaptic delay >= 1 tick, so a spike can never re-enter its own tick",
+    "firing": "fire iff t >= refractory_until and vm >= threshold; then vm <- vreset, refractory_until <- t + refr_ticks",
+    "integration": "lazy: an entity integrates only when an event arrives for it",
+    "leak": "per-tick integer leak, truncating toward zero each step: vm <- vrest + trunc((vm-vrest)*decay_k/1000)",
+    "refractory": "arrivals with t < refractory_until are dropped and still advance last_update",
+    "tie_breaking": "events are processed in ascending tick order; targets within a tick may be updated in any order because a fired entity only schedules events at t+delay (delay>=1), so no within-tick causal chain exists, and all arithmetic is exact integer arithmetic, so accumulation order cannot change a result. The gate compares the canonical entity-major / tick-ascending spike record, the sorted (tick, entity) multiset, the per-tick histogram and a 64-bit rolling hash, all of which are order-independent by construction.",
+    "time": "integer ticks, 1 tick = 0.1 ms simulated; events with tick >= horizon are never created or processed",
+    "tolerance": "none - integer arithmetic end to end; any difference is a real mismatch",
+    "voltages": "integer micro-units (1e-6 mV); weights in the same scale, sign = excitatory/inhibitory"
+  },
+  "verdict": "PASS",
+  "vyb": {
+    "application": "src/vyb/phase2_des.vyb (LIF application)",
+    "binary": {
+      "binary": "~/Projects/Vyb/build/vyb",
+      "exists": true,
+      "mtime_iso": "2026-09-12T00:21:32-0700",
+      "size_bytes": 172058648,
+      "version": "Vyb 0.7.5 (build=Debug, sanitize=none)"
+    },
+    "invocation": "VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb src/vyb/phase2_des.vyb --module-path src/vyb",
+    "module_path": "~/Projects/VybFly/src/vyb",
+    "runtime_module": "src/vyb/des.vyb (main-less share(all) DES runtime)",
+    "stdlib": "~/Projects/Vyb/stdlib"
+  },
+  "vyb_summary": {
+    "bio_ms": 2000,
+    "bio_ms_per_wall_second": 350,
+    "det_a_spike_hash": -943723657370235180,
+    "det_a_spikes": 3064,
+    "det_b_spike_hash": -943723657370235180,
+    "det_b_spikes": 3064,
+    "determinism_ok": 1,
+    "experiment": "m2-tiny-lif-des",
+    "fixture": "data/processed/tiny_net/",
+    "host": "ASUS-Z590-E",
+    "load_ms": 443,
+    "max_bucket_len": 1875,
+    "max_delay_ticks": 8,
+    "milestone": "M2 - Vyb discrete-event runtime (PROJECT-VYBFLY.md 8)",
+    "n_edges": 18909,
+    "n_neurons": 640,
+    "n_replications": 4,
+    "primary_events_per_bio_second": 11383142,
+    "primary_events_per_wall_second": 3996188,
+    "primary_events_scheduled": 22766285,
+    "primary_horizon_ticks": 20000,
+    "primary_sim_ms": 5697,
+    "primary_spikes": 771379,
+    "primary_spikes_per_wall_second": 135400,
+    "primary_wall_ms": 5702,
+    "replications": [
+      {
+        "determinism_ok": 1,
+        "events_processed": 22766285,
+        "events_scheduled": 22766285,
+        "horizon_ticks": 20000,
+        "max_batch": 1875,
+        "name": "main",
+        "sim_ms": 5697,
+        "spike_hash": 8255019552550552538,
+        "spikes": 771379,
+        "stimulus_events": 64000,
+        "stream": 0,
+        "synaptic_events": 22702285,
+        "ticks_processed": 19841,
+        "wall_ms": 5702
+      },
+      {
+        "determinism_ok": 1,
+        "events_processed": 88176,
+        "events_scheduled": 88176,
+        "horizon_ticks": 500,
+        "max_batch": 644,
+        "name": "det_a",
+        "sim_ms": 28,
+        "spike_hash": -943723657370235180,
+        "spikes": 3064,
+        "stimulus_events": 1676,
+        "stream": 0,
+        "synaptic_events": 86500,
+        "ticks_processed": 382,
+        "wall_ms": 29
+      },
+      {
+        "determinism_ok": 1,
+        "events_processed": 88176,
+        "events_scheduled": 88176,
+        "horizon_ticks": 500,
+        "max_batch": 644,
+        "name": "det_b",
+        "sim_ms": 75,
+        "spike_hash": -943723657370235180,
+        "spikes": 3064,
+        "stimulus_events": 1676,
+        "stream": 0,
+        "synaptic_events": 86500,
+        "ticks_processed": 382,
+        "wall_ms": 76
+      },
+      {
+        "determinism_ok": 1,
+        "events_processed": 24695,
+        "events_scheduled": 24695,
+        "horizon_ticks": 500,
+        "max_batch": 333,
+        "name": "alt",
+        "sim_ms": 17,
+        "spike_hash": -8830484365616964128,
+        "spikes": 841,
+        "stimulus_events": 835,
+        "stream": 1,
+        "synaptic_events": 23860,
+        "ticks_processed": 185,
+        "wall_ms": 17
+      }
+    ],
+    "scheduler_bucket_width_ticks": 1,
+    "scheduler_buckets": 20024,
+    "schema": "flyscale.phase2.des_summary/1",
+    "short_horizon_ticks": 500,
+    "tick_micros": 100,
+    "total_bucket_turns_advanced": 21496,
+    "total_events_all_replications": 22967332,
+    "total_far_events": 0,
+    "total_late_events": 0,
+    "total_recycles": 22887353,
+    "total_ring_grows": 0,
+    "total_spikes_all_replications": 778348,
+    "vyb_invocation": "VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb src/vyb/phase2_des.vyb --module-path src/vyb",
+    "vyb_module_path": "src/vyb",
+    "vyb_stdlib": "VYB_STDLIB=~/Projects/Vyb/stdlib",
+    "wall_ms_total": 8494
+  },
+  "vyb_summary_consistency": {
+    "determinism_ok": true,
+    "hashes_match": true,
+    "late_or_far_events_zero": true,
+    "spikes_match": true
+  }
+}

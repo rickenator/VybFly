@@ -1,0 +1,10 @@
+devices>=1
+launch_rc=0
+v_milli_after=0 0 180 0 0 0 0 0 
+fired:refr_after=1:2 1:0 0:0 0:0 1:2 1:0 0:0 0:0 
+next_count_after=4
+expect v_milli_after=900 450 180 0 810 315 0 0
+expect fired:refr_after=1:2 1:2 0:0 0:0 1:2 1:2 0:0 0:0
+expect next_count_after=4
+phase3-selftest-done
+0

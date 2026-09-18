@@ -1,0 +1,194 @@
+{
+  "bin_dir": "~/Projects/VybFly/data/processed/canonical_v783/bin",
+  "checks": [
+    {
+      "key": "n_neurons",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 139255,
+      "vyb": 139255
+    },
+    {
+      "key": "n_indptr_entries",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 139256,
+      "vyb": 139256
+    },
+    {
+      "key": "indptr_head0",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 0,
+      "vyb": 0
+    },
+    {
+      "key": "indptr_tail",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 15091983,
+      "vyb": 15091983
+    },
+    {
+      "key": "out_degree_sum",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 15091983,
+      "vyb": 15091983
+    },
+    {
+      "key": "out_degree_max",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 9783,
+      "vyb": 9783
+    },
+    {
+      "key": "out_degree_zero_neurons",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 1250,
+      "vyb": 1250
+    },
+    {
+      "key": "n_connections",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 15091983,
+      "vyb": 15091983
+    },
+    {
+      "key": "synapse_total",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 54492922,
+      "vyb": 54492922
+    },
+    {
+      "key": "connections_thr5",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 2700513,
+      "vyb": 2700513
+    },
+    {
+      "key": "synapses_thr5",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 34153566,
+      "vyb": 34153566
+    },
+    {
+      "key": "max_connection_strength",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 2405,
+      "vyb": 2405
+    },
+    {
+      "key": "min_connection_strength",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 1,
+      "vyb": 1
+    },
+    {
+      "key": "syn_elements_seen",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 15091983,
+      "vyb": 15091983
+    },
+    {
+      "key": "pre_elements_seen",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 15091983,
+      "vyb": 15091983
+    },
+    {
+      "key": "pre_sum",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 1052032192241,
+      "vyb": 1052032192241
+    },
+    {
+      "key": "pre_max",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 139254,
+      "vyb": 139254
+    },
+    {
+      "key": "pre_min",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 0,
+      "vyb": 0
+    },
+    {
+      "key": "post_elements_seen",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 15091983,
+      "vyb": 15091983
+    },
+    {
+      "key": "post_sum",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 1052758150656,
+      "vyb": 1052758150656
+    },
+    {
+      "key": "post_max",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 139254,
+      "vyb": 139254
+    },
+    {
+      "key": "root_ids",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 139255,
+      "vyb": 139255
+    },
+    {
+      "key": "root_id_seen",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 139255,
+      "vyb": 139255
+    },
+    {
+      "key": "root_id_max",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 720575940661339777,
+      "vyb": 720575940661339777
+    },
+    {
+      "key": "root_id_min",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": 720575940596125868,
+      "vyb": 720575940596125868
+    },
+    {
+      "key": "root_id_sum",
+      "kind": "integer invariant",
+      "match": true,
+      "python_reference": -6485149204353021866,
+      "vyb": -6485149204353021866
+    }
+  ],
+  "failures": [],
+  "gate": "Vyb-native loader (V1) vs Python reference",
+  "matched": 26,
+  "passed": true,
+  "total": 26,
+  "vyb_output": "~/Projects/VybFly/results/phase0/vyb_counts.txt",
+  "vyb_reported_ok": true
+}

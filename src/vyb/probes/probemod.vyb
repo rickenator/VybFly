@@ -1,0 +1,58 @@
+import io::{open_read, close, read_bytes_at}
+
+share(all)
+i64_le(b<Vec<UInt8>>, i<Int>)<Int> -> {
+    return (b.get(i) as Int)
+        | ((b.get(i + 1) as Int) << 8)
+        | ((b.get(i + 2) as Int) << 16)
+        | ((b.get(i + 3) as Int) << 24)
+        | ((b.get(i + 4) as Int) << 32)
+        | ((b.get(i + 5) as Int) << 40)
+        | ((b.get(i + 6) as Int) << 48)
+        | ((b.get(i + 7) as Int) << 56)
+}
+
+// C1: return the intrinsic-allocated buffer WITHOUT closing the fd first.
+share(all)
+read_no_close(path<String>, off<Int>, n<Int>)<Vec<UInt8>> -> {
+    empty<Vec<UInt8>> = Vec()
+    match (open_read(path)) {
+        f -> {
+            match (read_bytes_at(f, off, n)) {
+                buf -> {
+                    return buf
+                }
+                ? -> {
+                    close(f)
+                    return empty
+                }
+            }
+        }
+        ? -> {
+            return empty
+        }
+    }
+}
+
+// C2: close, decode inside the module, return a caller-owned Vec<Int>.
+share(all)
+read_decode_i64(path<String>, off<Int>, n<Int>)<Vec<Int>> -> {
+    out<Vec<Int>> = Vec()
+    match (open_read(path)) {
+        f -> {
+            match (read_bytes_at(f, off, n)) {
+                buf -> {
+                    k<Int> = 0
+                    while (k + 8 <= buf.len()) {
+                        out.push(i64_le(buf, k))
+                        k = k + 8
+                    }
+                }
+                ? -> { }
+            }
+            close(f)
+        }
+        ? -> { }
+    }
+    return out
+}

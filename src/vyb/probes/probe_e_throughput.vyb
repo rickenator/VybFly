@@ -1,0 +1,6 @@
+import flyload::{summarise_i32}
+main()<Int> -> {
+    s<Vec<Int>> = summarise_i32("data/processed/canonical_v783/bin/pairs.syn.i32", 5000000, 5)
+    println("seen=" + s.get(5).to_string() + " total=" + s.get(0).to_string() + " thr5=" + s.get(1).to_string())
+    return 0
+}

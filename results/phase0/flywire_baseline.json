@@ -1,0 +1,1763 @@
+{
+  "blocks": {
+    "celltype": {
+      "cell_type": {
+        "no_aut": {
+          "diagonal_fraction_asymmetry": null,
+          "n_types": 8841,
+          "top_pairs": [
+            {
+              "post": "Tm1",
+              "pre": "L2",
+              "row_fraction": 0.24234,
+              "synapses": 172142
+            },
+            {
+              "post": "Pm01",
+              "pre": "Mi1",
+              "row_fraction": 0.13376,
+              "synapses": 159920
+            },
+            {
+              "post": "Tm2",
+              "pre": "L2",
+              "row_fraction": 0.20649,
+              "synapses": 146676
+            },
+            {
+              "post": "Pm03",
+              "pre": "Tm1",
+              "row_fraction": 0.15698,
+              "synapses": 146526
+            },
+            {
+              "post": "Pm02",
+              "pre": "Tm1",
+              "row_fraction": 0.1392,
+              "synapses": 129930
+            },
+            {
+              "post": "Pm03",
+              "pre": "Mi1",
+              "row_fraction": 0.10636,
+              "synapses": 127163
+            },
+            {
+              "post": "Mi1",
+              "pre": "L1",
+              "row_fraction": 0.30173,
+              "synapses": 122475
+            },
+            {
+              "post": "Pm08",
+              "pre": "Mi1",
+              "row_fraction": 0.09768,
+              "synapses": 116779
+            },
+            {
+              "post": "L5",
+              "pre": "L1",
+              "row_fraction": 0.27732,
+              "synapses": 112567
+            },
+            {
+              "post": "Pm08",
+              "pre": "Tm1",
+              "row_fraction": 0.09935,
+              "synapses": 92731
+            },
+            {
+              "post": "T1",
+              "pre": "L2",
+              "row_fraction": 0.1211,
+              "synapses": 86025
+            },
+            {
+              "post": "T3",
+              "pre": "Mi1",
+              "row_fraction": 0.068,
+              "synapses": 81304
+            },
+            {
+              "post": "L2",
+              "pre": "C3",
+              "row_fraction": 0.29129,
+              "synapses": 79088
+            },
+            {
+              "post": "Tm4",
+              "pre": "L2",
+              "row_fraction": 0.10826,
+              "synapses": 76899
+            },
+            {
+              "post": "Pm05",
+              "pre": "Mi1",
+              "row_fraction": 0.06362,
+              "synapses": 76061
+            }
+          ],
+          "total_synapses": 34153566
+        }
+      },
+      "super_class": {
+        "no_aut": {
+          "diagonal_fraction_asymmetry": null,
+          "n_types": 11,
+          "top_pairs": [
+            {
+              "post": "central",
+              "pre": "central",
+              "row_fraction": 0.8556,
+              "synapses": 12523676
+            },
+            {
+              "post": "optic",
+              "pre": "optic",
+              "row_fraction": 0.83055,
+              "synapses": 11599963
+            },
+            {
+              "post": "visual_projection",
+              "pre": "optic",
+              "row_fraction": 0.16175,
+              "synapses": 2259102
+            },
+            {
+              "post": "central",
+              "pre": "visual_projection",
+              "row_fraction": 0.63946,
+              "synapses": 1511577
+            },
+            {
+              "post": "descending",
+              "pre": "central",
+              "row_fraction": 0.08384,
+              "synapses": 1227150
+            },
+            {
+              "post": "central",
+              "pre": "ascending",
+              "row_fraction": 0.72244,
+              "synapses": 686443
+            },
+            {
+              "post": "optic",
+              "pre": "visual_centrifugal",
+              "row_fraction": 0.66433,
+              "synapses": 576871
+            },
+            {
+              "post": "central",
+              "pre": "sensory",
+              "row_fraction": 0.57358,
+              "synapses": 458086
+            },
+            {
+              "post": "visual_projection",
+              "pre": "visual_projection",
+              "row_fraction": 0.13752,
+              "synapses": 325080
+            },
+            {
+              "post": "optic",
+              "pre": "visual_projection",
+              "row_fraction": 0.13284,
+              "synapses": 314001
+            },
+            {
+              "post": "visual_projection",
+              "pre": "central",
+              "row_fraction": 0.01861,
+              "synapses": 272333
+            },
+            {
+              "post": "central",
+              "pre": "descending",
+              "row_fraction": 0.48045,
+              "synapses": 252545
+            },
+            {
+              "post": "optic",
+              "pre": "sensory",
+              "row_fraction": 0.29797,
+              "synapses": 237973
+            },
+            {
+              "post": "visual_centrifugal",
+              "pre": "central",
+              "row_fraction": 0.01469,
+              "synapses": 214961
+            },
+            {
+              "post": "visual_projection",
+              "pre": "visual_centrifugal",
+              "row_fraction": 0.24459,
+              "synapses": 212393
+            }
+          ],
+          "total_synapses": 34153566
+        }
+      }
+    },
+    "clustering": {
+      "central": {
+        "global_transitivity_undirected": 0.044879,
+        "mean_degree_for_clustering": 39.321981,
+        "mean_directed_clustering_fagiolo": 0.0136,
+        "mean_local_clustering_undirected": 0.145663,
+        "mean_local_clustering_undirected_nonzero": 0.16062,
+        "n_triangles_undirected": 7073838.0
+      },
+      "full": {
+        "global_transitivity_undirected": 0.044762,
+        "mean_degree_for_clustering": 38.352725,
+        "mean_directed_clustering_fagiolo": 0.013489,
+        "mean_local_clustering_undirected": 0.151745,
+        "mean_local_clustering_undirected_nonzero": 0.161433,
+        "n_triangles_undirected": 7118227.0
+      },
+      "largest_scc": {
+        "global_transitivity_undirected": 0.045076,
+        "mean_degree_for_clustering": 40.909449,
+        "mean_directed_clustering_fagiolo": 0.013912,
+        "mean_local_clustering_undirected": 0.141201,
+        "mean_local_clustering_undirected_nonzero": 0.164465,
+        "n_triangles_undirected": 7030063.0
+      },
+      "no_aut": {
+        "global_transitivity_undirected": 0.044762,
+        "mean_degree_for_clustering": 38.352725,
+        "mean_directed_clustering_fagiolo": 0.013489,
+        "mean_local_clustering_undirected": 0.151745,
+        "mean_local_clustering_undirected_nonzero": 0.161433,
+        "n_triangles_undirected": 7118227.0
+      },
+      "recurrent": {
+        "global_transitivity_undirected": 0.044879,
+        "mean_degree_for_clustering": 39.321981,
+        "mean_directed_clustering_fagiolo": 0.0136,
+        "mean_local_clustering_undirected": 0.145663,
+        "mean_local_clustering_undirected_nonzero": 0.16062,
+        "n_triangles_undirected": 7073838.0
+      }
+    },
+    "components": {
+      "strong": {
+        "components_gt_100_nodes": 1,
+        "components_gt_2_nodes": 12,
+        "fraction_nodes_in_components_gt_100": 0.859976,
+        "largest_10_sizes": [
+          119756,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          3,
+          3,
+          3
+        ],
+        "largest_component_fraction": 0.859976,
+        "largest_component_size": 119756,
+        "n_components": 19411
+      },
+      "weak": {
+        "components_gt_100_nodes": 1,
+        "components_gt_2_nodes": 222,
+        "fraction_nodes_in_components_gt_100": 0.95137,
+        "largest_10_sizes": [
+          132483,
+          17,
+          16,
+          11,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10
+        ],
+        "largest_component_fraction": 0.95137,
+        "largest_component_size": 132483,
+        "n_components": 5318
+      }
+    },
+    "counts": {
+      "central": {
+        "n_neurons_with_edge": 128036,
+        "n_pairs": 2672526,
+        "n_synapses": 33698319
+      },
+      "full": {
+        "n_neurons_with_edge": 134181,
+        "n_pairs": 2700513,
+        "n_synapses": 34153566
+      },
+      "largest_scc": {
+        "n_neurons_with_edge": 119756,
+        "n_pairs": 2634252,
+        "n_synapses": 33231067
+      },
+      "no_aut": {
+        "n_neurons_with_edge": 134181,
+        "n_pairs": 2700513,
+        "n_synapses": 34153566
+      },
+      "recurrent": {
+        "n_neurons_with_edge": 128036,
+        "n_pairs": 2672526,
+        "n_synapses": 33698319
+      }
+    },
+    "degrees": {
+      "central": {
+        "density": 0.000137817213,
+        "in_degree": {
+          "count": 139255,
+          "fraction_zero": 0.135672,
+          "gini": 0.655116,
+          "hill_alpha_tail10pct": 2.5857,
+          "max": 5080.0,
+          "mean": 19.191598,
+          "median": 9.0,
+          "min": 0.0,
+          "p90": 43.0,
+          "p99": 166.0,
+          "p999": 541.746,
+          "std": 49.398512
+        },
+        "mean_degree": 41.746478,
+        "out_degree": {
+          "count": 139255,
+          "fraction_zero": 0.081333,
+          "gini": 0.585356,
+          "hill_alpha_tail10pct": 2.9193,
+          "max": 6396.0,
+          "mean": 19.191598,
+          "median": 11.0,
+          "min": 0.0,
+          "p90": 41.0,
+          "p99": 133.0,
+          "p999": 444.984,
+          "std": 45.312081
+        },
+        "total_degree": {
+          "count": 139255,
+          "fraction_zero": 0.080564,
+          "gini": 0.595951,
+          "hill_alpha_tail10pct": 2.7284,
+          "max": 11476.0,
+          "mean": 38.383196,
+          "median": 21.0,
+          "min": 0.0,
+          "p90": 81.0,
+          "p99": 290.0,
+          "p999": 872.746,
+          "std": 88.497717
+        },
+        "weighted_in_degree": {
+          "count": 139255,
+          "fraction_zero": 0.135672,
+          "gini": 0.718468,
+          "hill_alpha_tail10pct": 2.279,
+          "max": 67616.0,
+          "mean": 241.990011,
+          "median": 90.0,
+          "min": 0.0,
+          "p90": 477.0,
+          "p99": 2702.0,
+          "p999": 8972.492,
+          "std": 802.091898
+        },
+        "weighted_out_degree": {
+          "count": 139255,
+          "fraction_zero": 0.081333,
+          "gini": 0.671398,
+          "hill_alpha_tail10pct": 2.4777,
+          "max": 92587.0,
+          "mean": 241.990011,
+          "median": 104.0,
+          "min": 0.0,
+          "p90": 506.0,
+          "p99": 2343.0,
+          "p999": 7381.492,
+          "std": 729.094206
+        }
+      },
+      "full": {
+        "density": 0.00013926045,
+        "in_degree": {
+          "count": 139255,
+          "fraction_zero": 0.100987,
+          "gini": 0.646681,
+          "hill_alpha_tail10pct": 2.5866,
+          "max": 5080.0,
+          "mean": 19.392575,
+          "median": 9.0,
+          "min": 0.0,
+          "p90": 43.0,
+          "p99": 166.0,
+          "p999": 541.746,
+          "std": 49.383734
+        },
+        "mean_degree": 40.251794,
+        "out_degree": {
+          "count": 139255,
+          "fraction_zero": 0.071121,
+          "gini": 0.583233,
+          "hill_alpha_tail10pct": 2.9059,
+          "max": 6399.0,
+          "mean": 19.392575,
+          "median": 11.0,
+          "min": 0.0,
+          "p90": 42.0,
+          "p99": 134.0,
+          "p999": 446.73,
+          "std": 45.634199
+        },
+        "total_degree": {
+          "count": 139255,
+          "fraction_zero": 0.036437,
+          "gini": 0.589361,
+          "hill_alpha_tail10pct": 2.7241,
+          "max": 11479.0,
+          "mean": 38.78515,
+          "median": 21.0,
+          "min": 0.0,
+          "p90": 81.0,
+          "p99": 291.0,
+          "p999": 872.746,
+          "std": 88.716927
+        },
+        "weighted_in_degree": {
+          "count": 139255,
+          "fraction_zero": 0.100987,
+          "gini": 0.710572,
+          "hill_alpha_tail10pct": 2.2553,
+          "max": 67616.0,
+          "mean": 245.259172,
+          "median": 92.0,
+          "min": 0.0,
+          "p90": 480.6,
+          "p99": 2716.3,
+          "p999": 8972.492,
+          "std": 802.927778
+        },
+        "weighted_out_degree": {
+          "count": 139255,
+          "fraction_zero": 0.071121,
+          "gini": 0.669283,
+          "hill_alpha_tail10pct": 2.4876,
+          "max": 92957.0,
+          "mean": 245.259172,
+          "median": 105.0,
+          "min": 0.0,
+          "p90": 517.0,
+          "p99": 2363.0,
+          "p999": 7401.984,
+          "std": 733.214653
+        }
+      },
+      "largest_scc": {
+        "density": 0.000135843494,
+        "in_degree": {
+          "count": 139255,
+          "fraction_zero": 0.140024,
+          "gini": 0.658019,
+          "hill_alpha_tail10pct": 2.6075,
+          "max": 5076.0,
+          "mean": 18.91675,
+          "median": 9.0,
+          "min": 0.0,
+          "p90": 42.0,
+          "p99": 164.0,
+          "p999": 535.984,
+          "std": 49.098023
+        },
+        "mean_degree": 43.993654,
+        "out_degree": {
+          "count": 139255,
+          "fraction_zero": 0.140024,
+          "gini": 0.599165,
+          "hill_alpha_tail10pct": 2.9718,
+          "max": 6396.0,
+          "mean": 18.91675,
+          "median": 11.0,
+          "min": 0.0,
+          "p90": 41.0,
+          "p99": 133.0,
+          "p999": 444.984,
+          "std": 45.369321
+        },
+        "total_degree": {
+          "count": 139255,
+          "fraction_zero": 0.140024,
+          "gini": 0.605232,
+          "hill_alpha_tail10pct": 2.7384,
+          "max": 11472.0,
+          "mean": 37.8335,
+          "median": 21.0,
+          "min": 0.0,
+          "p90": 80.0,
+          "p99": 288.0,
+          "p999": 867.476,
+          "std": 88.284364
+        },
+        "weighted_in_degree": {
+          "count": 139255,
+          "fraction_zero": 0.140024,
+          "gini": 0.720561,
+          "hill_alpha_tail10pct": 2.2796,
+          "max": 67611.0,
+          "mean": 238.634641,
+          "median": 88.0,
+          "min": 0.0,
+          "p90": 471.0,
+          "p99": 2668.0,
+          "p999": 8951.38,
+          "std": 797.361361
+        },
+        "weighted_out_degree": {
+          "count": 139255,
+          "fraction_zero": 0.140024,
+          "gini": 0.682918,
+          "hill_alpha_tail10pct": 2.4961,
+          "max": 92587.0,
+          "mean": 238.634641,
+          "median": 102.0,
+          "min": 0.0,
+          "p90": 503.0,
+          "p99": 2336.92,
+          "p999": 7381.492,
+          "std": 729.140072
+        }
+      },
+      "no_aut": {
+        "density": 0.00013926045,
+        "in_degree": {
+          "count": 139255,
+          "fraction_zero": 0.100987,
+          "gini": 0.646681,
+          "hill_alpha_tail10pct": 2.5866,
+          "max": 5080.0,
+          "mean": 19.392575,
+          "median": 9.0,
+          "min": 0.0,
+          "p90": 43.0,
+          "p99": 166.0,
+          "p999": 541.746,
+          "std": 49.383734
+        },
+        "mean_degree": 40.251794,
+        "out_degree": {
+          "count": 139255,
+          "fraction_zero": 0.071121,
+          "gini": 0.583233,
+          "hill_alpha_tail10pct": 2.9059,
+          "max": 6399.0,
+          "mean": 19.392575,
+          "median": 11.0,
+          "min": 0.0,
+          "p90": 42.0,
+          "p99": 134.0,
+          "p999": 446.73,
+          "std": 45.634199
+        },
+        "total_degree": {
+          "count": 139255,
+          "fraction_zero": 0.036437,
+          "gini": 0.589361,
+          "hill_alpha_tail10pct": 2.7241,
+          "max": 11479.0,
+          "mean": 38.78515,
+          "median": 21.0,
+          "min": 0.0,
+          "p90": 81.0,
+          "p99": 291.0,
+          "p999": 872.746,
+          "std": 88.716927
+        },
+        "weighted_in_degree": {
+          "count": 139255,
+          "fraction_zero": 0.100987,
+          "gini": 0.710572,
+          "hill_alpha_tail10pct": 2.2553,
+          "max": 67616.0,
+          "mean": 245.259172,
+          "median": 92.0,
+          "min": 0.0,
+          "p90": 480.6,
+          "p99": 2716.3,
+          "p999": 8972.492,
+          "std": 802.927778
+        },
+        "weighted_out_degree": {
+          "count": 139255,
+          "fraction_zero": 0.071121,
+          "gini": 0.669283,
+          "hill_alpha_tail10pct": 2.4876,
+          "max": 92957.0,
+          "mean": 245.259172,
+          "median": 105.0,
+          "min": 0.0,
+          "p90": 517.0,
+          "p99": 2363.0,
+          "p999": 7401.984,
+          "std": 733.214653
+        }
+      },
+      "recurrent": {
+        "density": 0.000137817213,
+        "in_degree": {
+          "count": 139255,
+          "fraction_zero": 0.135672,
+          "gini": 0.655116,
+          "hill_alpha_tail10pct": 2.5857,
+          "max": 5080.0,
+          "mean": 19.191598,
+          "median": 9.0,
+          "min": 0.0,
+          "p90": 43.0,
+          "p99": 166.0,
+          "p999": 541.746,
+          "std": 49.398512
+        },
+        "mean_degree": 41.746478,
+        "out_degree": {
+          "count": 139255,
+          "fraction_zero": 0.081333,
+          "gini": 0.585356,
+          "hill_alpha_tail10pct": 2.9193,
+          "max": 6396.0,
+          "mean": 19.191598,
+          "median": 11.0,
+          "min": 0.0,
+          "p90": 41.0,
+          "p99": 133.0,
+          "p999": 444.984,
+          "std": 45.312081
+        },
+        "total_degree": {
+          "count": 139255,
+          "fraction_zero": 0.080564,
+          "gini": 0.595951,
+          "hill_alpha_tail10pct": 2.7284,
+          "max": 11476.0,
+          "mean": 38.383196,
+          "median": 21.0,
+          "min": 0.0,
+          "p90": 81.0,
+          "p99": 290.0,
+          "p999": 872.746,
+          "std": 88.497717
+        },
+        "weighted_in_degree": {
+          "count": 139255,
+          "fraction_zero": 0.135672,
+          "gini": 0.718468,
+          "hill_alpha_tail10pct": 2.279,
+          "max": 67616.0,
+          "mean": 241.990011,
+          "median": 90.0,
+          "min": 0.0,
+          "p90": 477.0,
+          "p99": 2702.0,
+          "p999": 8972.492,
+          "std": 802.091898
+        },
+        "weighted_out_degree": {
+          "count": 139255,
+          "fraction_zero": 0.081333,
+          "gini": 0.671398,
+          "hill_alpha_tail10pct": 2.4777,
+          "max": 92587.0,
+          "mean": 241.990011,
+          "median": 104.0,
+          "min": 0.0,
+          "p90": 506.0,
+          "p99": 2343.0,
+          "p999": 7381.492,
+          "std": 729.094206
+        }
+      }
+    },
+    "leiden": {
+      "no_aut_full": {
+        "algorithm": "Leiden (modularity, resolution=1.0, seed=0)",
+        "communities_gt_100": 10,
+        "largest_community": 26944,
+        "largest_community_fraction": 0.193487,
+        "modularity": 0.69618,
+        "n_communities": 5337,
+        "scope": "all neurons",
+        "size_quantiles": {
+          "50": 1,
+          "90": 1,
+          "99": 9
+        }
+      },
+      "no_aut_giant_wcc": {
+        "algorithm": "Leiden (modularity, resolution=1.0, seed=0)",
+        "communities_gt_100": 10,
+        "largest_community": 24728,
+        "largest_community_fraction": 0.177574,
+        "modularity": 0.692944,
+        "n_communities": 20,
+        "scope": "largest weak component",
+        "size_quantiles": {
+          "50": 1510,
+          "90": 22612,
+          "99": 24375
+        }
+      }
+    },
+    "neuropil": {
+      "assignment": "dominant neuropil by synapse count (pre/post side)",
+      "n_neuropils": 79,
+      "variants": {
+        "largest_scc": {
+          "fraction_synapses_assigned": 1.0,
+          "matrix_file": "neuropil_matrix_largest_scc.npy",
+          "top_pairs": [
+            {
+              "post": "ME_R",
+              "pre": "ME_R",
+              "row_fraction": 0.89876,
+              "synapses": 4814765
+            },
+            {
+              "post": "ME_L",
+              "pre": "ME_L",
+              "row_fraction": 0.90236,
+              "synapses": 3964892
+            },
+            {
+              "post": "GNG",
+              "pre": "GNG",
+              "row_fraction": 0.82605,
+              "synapses": 1704098
+            },
+            {
+              "post": "LO_R",
+              "pre": "LO_R",
+              "row_fraction": 0.70316,
+              "synapses": 1344989
+            },
+            {
+              "post": "LO_L",
+              "pre": "LO_L",
+              "row_fraction": 0.72292,
+              "synapses": 1309495
+            },
+            {
+              "post": "AVLP_R",
+              "pre": "AVLP_R",
+              "row_fraction": 0.75249,
+              "synapses": 1279266
+            },
+            {
+              "post": "AVLP_L",
+              "pre": "AVLP_L",
+              "row_fraction": 0.71987,
+              "synapses": 932803
+            },
+            {
+              "post": "LOP_R",
+              "pre": "LOP_R",
+              "row_fraction": 0.77605,
+              "synapses": 832618
+            },
+            {
+              "post": "FB",
+              "pre": "FB",
+              "row_fraction": 0.90558,
+              "synapses": 574208
+            },
+            {
+              "post": "LOP_L",
+              "pre": "LOP_L",
+              "row_fraction": 0.7411,
+              "synapses": 443525
+            },
+            {
+              "post": "ME_R",
+              "pre": "LO_R",
+              "row_fraction": 0.21741,
+              "synapses": 415865
+            },
+            {
+              "post": "AL_L",
+              "pre": "AL_L",
+              "row_fraction": 0.81365,
+              "synapses": 388333
+            },
+            {
+              "post": "ME_L",
+              "pre": "LO_L",
+              "row_fraction": 0.20846,
+              "synapses": 377594
+            },
+            {
+              "post": "LO_R",
+              "pre": "ME_R",
+              "row_fraction": 0.06769,
+              "synapses": 362631
+            },
+            {
+              "post": "AL_R",
+              "pre": "AL_R",
+              "row_fraction": 0.7922,
+              "synapses": 352273
+            }
+          ],
+          "total_synapses_assigned": 33231067
+        },
+        "no_aut": {
+          "fraction_synapses_assigned": 1.0,
+          "matrix_file": "neuropil_matrix_no_aut.npy",
+          "top_pairs": [
+            {
+              "post": "ME_R",
+              "pre": "ME_R",
+              "row_fraction": 0.89979,
+              "synapses": 4906435
+            },
+            {
+              "post": "ME_L",
+              "pre": "ME_L",
+              "row_fraction": 0.90403,
+              "synapses": 4080554
+            },
+            {
+              "post": "GNG",
+              "pre": "GNG",
+              "row_fraction": 0.82719,
+              "synapses": 1911762
+            },
+            {
+              "post": "LO_R",
+              "pre": "LO_R",
+              "row_fraction": 0.70291,
+              "synapses": 1346794
+            },
+            {
+              "post": "LO_L",
+              "pre": "LO_L",
+              "row_fraction": 0.72267,
+              "synapses": 1317388
+            },
+            {
+              "post": "AVLP_R",
+              "pre": "AVLP_R",
+              "row_fraction": 0.75314,
+              "synapses": 1301893
+            },
+            {
+              "post": "AVLP_L",
+              "pre": "AVLP_L",
+              "row_fraction": 0.72042,
+              "synapses": 945195
+            },
+            {
+              "post": "LOP_R",
+              "pre": "LOP_R",
+              "row_fraction": 0.77595,
+              "synapses": 833053
+            },
+            {
+              "post": "FB",
+              "pre": "FB",
+              "row_fraction": 0.90562,
+              "synapses": 576257
+            },
+            {
+              "post": "LOP_L",
+              "pre": "LOP_L",
+              "row_fraction": 0.74139,
+              "synapses": 445458
+            },
+            {
+              "post": "ME_R",
+              "pre": "LO_R",
+              "row_fraction": 0.21761,
+              "synapses": 416946
+            },
+            {
+              "post": "AL_L",
+              "pre": "AL_L",
+              "row_fraction": 0.80997,
+              "synapses": 396207
+            },
+            {
+              "post": "ME_L",
+              "pre": "LO_L",
+              "row_fraction": 0.2089,
+              "synapses": 380817
+            },
+            {
+              "post": "LO_R",
+              "pre": "ME_R",
+              "row_fraction": 0.06657,
+              "synapses": 362986
+            },
+            {
+              "post": "AL_R",
+              "pre": "AL_R",
+              "row_fraction": 0.79135,
+              "synapses": 358810
+            }
+          ],
+          "total_synapses_assigned": 34153566
+        }
+      }
+    },
+    "neurotransmitter": {
+      "central": {
+        "by_connections": {
+          "ach": {
+            "count": 1566381,
+            "fraction": 0.586105
+          },
+          "da": {
+            "count": 15457,
+            "fraction": 0.005784
+          },
+          "gaba": {
+            "count": 616177,
+            "fraction": 0.23056
+          },
+          "glut": {
+            "count": 443752,
+            "fraction": 0.166042
+          },
+          "oct": {
+            "count": 9414,
+            "fraction": 0.003523
+          },
+          "ser": {
+            "count": 21345,
+            "fraction": 0.007987
+          }
+        },
+        "by_synapses": {
+          "ach": {
+            "count": 19310702,
+            "fraction": 0.573046
+          },
+          "da": {
+            "count": 188632,
+            "fraction": 0.005598
+          },
+          "gaba": {
+            "count": 8223387,
+            "fraction": 0.24403
+          },
+          "glut": {
+            "count": 5571713,
+            "fraction": 0.165341
+          },
+          "oct": {
+            "count": 88335,
+            "fraction": 0.002621
+          },
+          "ser": {
+            "count": 315550,
+            "fraction": 0.009364
+          }
+        },
+        "n_connections": 2672526,
+        "n_synapses": 33698319
+      },
+      "full": {
+        "by_connections": {
+          "ach": {
+            "count": 1582068,
+            "fraction": 0.58584
+          },
+          "da": {
+            "count": 15538,
+            "fraction": 0.005754
+          },
+          "gaba": {
+            "count": 623512,
+            "fraction": 0.230887
+          },
+          "glut": {
+            "count": 448097,
+            "fraction": 0.16593
+          },
+          "oct": {
+            "count": 9459,
+            "fraction": 0.003503
+          },
+          "ser": {
+            "count": 21839,
+            "fraction": 0.008087
+          }
+        },
+        "by_synapses": {
+          "ach": {
+            "count": 19563948,
+            "fraction": 0.572823
+          },
+          "da": {
+            "count": 189136,
+            "fraction": 0.005538
+          },
+          "gaba": {
+            "count": 8354305,
+            "fraction": 0.24461
+          },
+          "glut": {
+            "count": 5636506,
+            "fraction": 0.165034
+          },
+          "oct": {
+            "count": 88646,
+            "fraction": 0.002596
+          },
+          "ser": {
+            "count": 321025,
+            "fraction": 0.009399
+          }
+        },
+        "n_connections": 2700513,
+        "n_synapses": 34153566
+      },
+      "largest_scc": {
+        "by_connections": {
+          "ach": {
+            "count": 1542858,
+            "fraction": 0.585691
+          },
+          "da": {
+            "count": 15173,
+            "fraction": 0.00576
+          },
+          "gaba": {
+            "count": 609158,
+            "fraction": 0.231245
+          },
+          "glut": {
+            "count": 437891,
+            "fraction": 0.16623
+          },
+          "oct": {
+            "count": 9357,
+            "fraction": 0.003552
+          },
+          "ser": {
+            "count": 19815,
+            "fraction": 0.007522
+          }
+        },
+        "by_synapses": {
+          "ach": {
+            "count": 19030231,
+            "fraction": 0.572664
+          },
+          "da": {
+            "count": 186557,
+            "fraction": 0.005614
+          },
+          "gaba": {
+            "count": 8122445,
+            "fraction": 0.244423
+          },
+          "glut": {
+            "count": 5503241,
+            "fraction": 0.165605
+          },
+          "oct": {
+            "count": 87898,
+            "fraction": 0.002645
+          },
+          "ser": {
+            "count": 300695,
+            "fraction": 0.009049
+          }
+        },
+        "n_connections": 2634252,
+        "n_synapses": 33231067
+      },
+      "no_aut": {
+        "by_connections": {
+          "ach": {
+            "count": 1582068,
+            "fraction": 0.58584
+          },
+          "da": {
+            "count": 15538,
+            "fraction": 0.005754
+          },
+          "gaba": {
+            "count": 623512,
+            "fraction": 0.230887
+          },
+          "glut": {
+            "count": 448097,
+            "fraction": 0.16593
+          },
+          "oct": {
+            "count": 9459,
+            "fraction": 0.003503
+          },
+          "ser": {
+            "count": 21839,
+            "fraction": 0.008087
+          }
+        },
+        "by_synapses": {
+          "ach": {
+            "count": 19563948,
+            "fraction": 0.572823
+          },
+          "da": {
+            "count": 189136,
+            "fraction": 0.005538
+          },
+          "gaba": {
+            "count": 8354305,
+            "fraction": 0.24461
+          },
+          "glut": {
+            "count": 5636506,
+            "fraction": 0.165034
+          },
+          "oct": {
+            "count": 88646,
+            "fraction": 0.002596
+          },
+          "ser": {
+            "count": 321025,
+            "fraction": 0.009399
+          }
+        },
+        "n_connections": 2700513,
+        "n_synapses": 34153566
+      },
+      "recurrent": {
+        "by_connections": {
+          "ach": {
+            "count": 1566381,
+            "fraction": 0.586105
+          },
+          "da": {
+            "count": 15457,
+            "fraction": 0.005784
+          },
+          "gaba": {
+            "count": 616177,
+            "fraction": 0.23056
+          },
+          "glut": {
+            "count": 443752,
+            "fraction": 0.166042
+          },
+          "oct": {
+            "count": 9414,
+            "fraction": 0.003523
+          },
+          "ser": {
+            "count": 21345,
+            "fraction": 0.007987
+          }
+        },
+        "by_synapses": {
+          "ach": {
+            "count": 19310702,
+            "fraction": 0.573046
+          },
+          "da": {
+            "count": 188632,
+            "fraction": 0.005598
+          },
+          "gaba": {
+            "count": 8223387,
+            "fraction": 0.24403
+          },
+          "glut": {
+            "count": 5571713,
+            "fraction": 0.165341
+          },
+          "oct": {
+            "count": 88335,
+            "fraction": 0.002621
+          },
+          "ser": {
+            "count": 315550,
+            "fraction": 0.009364
+          }
+        },
+        "n_connections": 2672526,
+        "n_synapses": 33698319
+      }
+    },
+    "paths": {
+      "central": {
+        "directed": {
+          "distance_histogram": {
+            "0": 1000,
+            "1": 21689,
+            "10": 2596,
+            "11": 185,
+            "12": 5,
+            "2": 1612870,
+            "3": 13749177,
+            "4": 45474356,
+            "5": 42993548,
+            "6": 13616462,
+            "7": 2060944,
+            "8": 183190,
+            "9": 22191
+          },
+          "max_path_length": 12,
+          "mean_eccentricity": 9.441,
+          "mean_path_length": 4.502980163901394,
+          "mean_reachable_fraction": 0.8598485727621988,
+          "median_path_length": 4,
+          "n_reachable_pairs": 119738213,
+          "n_sources": 1000,
+          "p90_path_length": 6,
+          "p99_path_length": 7
+        },
+        "n_nodes_in_largest_wcc": 127966,
+        "undirected": {
+          "distance_histogram": {
+            "0": 1000,
+            "1": 42404,
+            "10": 329,
+            "11": 24,
+            "12": 1,
+            "2": 4038066,
+            "3": 33624553,
+            "4": 59893396,
+            "5": 26424658,
+            "6": 3721070,
+            "7": 212980,
+            "8": 6379,
+            "9": 1140
+          },
+          "max_path_length": 12,
+          "mean_eccentricity": 9.2,
+          "mean_path_length": 3.9430099166966226,
+          "mean_reachable_fraction": 0.9189328928943306,
+          "median_path_length": 4,
+          "n_reachable_pairs": 127966000,
+          "n_sources": 1000,
+          "p90_path_length": 5,
+          "p99_path_length": 6
+        }
+      },
+      "full": {
+        "directed": {
+          "distance_histogram": {
+            "0": 1000,
+            "1": 22111,
+            "10": 3084,
+            "11": 244,
+            "12": 4,
+            "2": 1534448,
+            "3": 13369137,
+            "4": 43632231,
+            "5": 43843607,
+            "6": 15211335,
+            "7": 2436216,
+            "8": 268621,
+            "9": 28867
+          },
+          "max_path_length": 12,
+          "mean_eccentricity": 9.221,
+          "mean_path_length": 4.550935798945591,
+          "mean_reachable_fraction": 0.8642483573300779,
+          "median_path_length": 5,
+          "n_reachable_pairs": 120350905,
+          "n_sources": 1000,
+          "p90_path_length": 6,
+          "p99_path_length": 7
+        },
+        "n_nodes_in_largest_wcc": 132483,
+        "undirected": {
+          "distance_histogram": {
+            "0": 1000,
+            "1": 39601,
+            "10": 7490,
+            "11": 3174,
+            "12": 1382,
+            "13": 116,
+            "2": 3831275,
+            "3": 32959650,
+            "4": 60839518,
+            "5": 29511669,
+            "6": 4806868,
+            "7": 415334,
+            "8": 46566,
+            "9": 19357
+          },
+          "max_path_length": 13,
+          "mean_eccentricity": 11.309,
+          "mean_path_length": 3.9999147890672764,
+          "mean_reachable_fraction": 0.951369789235575,
+          "median_path_length": 4,
+          "n_reachable_pairs": 132483000,
+          "n_sources": 1000,
+          "p90_path_length": 5,
+          "p99_path_length": 6
+        }
+      },
+      "largest_scc": {
+        "directed": {
+          "distance_histogram": {
+            "0": 1000,
+            "1": 22002,
+            "10": 1980,
+            "11": 97,
+            "2": 1833049,
+            "3": 14430660,
+            "4": 46576005,
+            "5": 42797680,
+            "6": 12501875,
+            "7": 1447151,
+            "8": 127134,
+            "9": 17367
+          },
+          "max_path_length": 11,
+          "mean_eccentricity": 9.388,
+          "mean_path_length": 4.455793855840208,
+          "mean_reachable_fraction": 0.8599763024666978,
+          "median_path_length": 4,
+          "n_reachable_pairs": 119756000,
+          "n_sources": 1000,
+          "p90_path_length": 6,
+          "p99_path_length": 7
+        },
+        "n_nodes_in_largest_wcc": 119756,
+        "undirected": {
+          "distance_histogram": {
+            "0": 1000,
+            "1": 40614,
+            "2": 4296706,
+            "3": 35244714,
+            "4": 58504590,
+            "5": 20409963,
+            "6": 1242095,
+            "7": 16289,
+            "8": 29
+          },
+          "max_path_length": 8,
+          "mean_eccentricity": 6.388,
+          "mean_path_length": 3.8244694879588494,
+          "mean_reachable_fraction": 0.8599763024666978,
+          "median_path_length": 4,
+          "n_reachable_pairs": 119756000,
+          "n_sources": 1000,
+          "p90_path_length": 5,
+          "p99_path_length": 6
+        }
+      },
+      "no_aut": {
+        "directed": {
+          "distance_histogram": {
+            "0": 1000,
+            "1": 19270,
+            "10": 2935,
+            "11": 215,
+            "12": 10,
+            "2": 1582141,
+            "3": 13505351,
+            "4": 44312650,
+            "5": 42940019,
+            "6": 14825257,
+            "7": 2391808,
+            "8": 246407,
+            "9": 27554
+          },
+          "max_path_length": 12,
+          "mean_eccentricity": 9.141,
+          "mean_path_length": 4.535457945687649,
+          "mean_reachable_fraction": 0.860684478115687,
+          "median_path_length": 5,
+          "n_reachable_pairs": 119854617,
+          "n_sources": 1000,
+          "p90_path_length": 6,
+          "p99_path_length": 7
+        },
+        "n_nodes_in_largest_wcc": 132483,
+        "undirected": {
+          "distance_histogram": {
+            "0": 1000,
+            "1": 35517,
+            "10": 7993,
+            "11": 3199,
+            "12": 1260,
+            "13": 159,
+            "2": 3957089,
+            "3": 33394028,
+            "4": 60404598,
+            "5": 29203040,
+            "6": 4869759,
+            "7": 448623,
+            "8": 110615,
+            "9": 46120
+          },
+          "max_path_length": 13,
+          "mean_eccentricity": 11.275,
+          "mean_path_length": 3.997166368515206,
+          "mean_reachable_fraction": 0.951369789235575,
+          "median_path_length": 4,
+          "n_reachable_pairs": 132483000,
+          "n_sources": 1000,
+          "p90_path_length": 5,
+          "p99_path_length": 6
+        }
+      },
+      "recurrent": {
+        "directed": {
+          "distance_histogram": {
+            "0": 1000,
+            "1": 23164,
+            "10": 2658,
+            "11": 206,
+            "12": 8,
+            "2": 1682427,
+            "3": 14173000,
+            "4": 45635940,
+            "5": 42257273,
+            "6": 13796935,
+            "7": 2042432,
+            "8": 219116,
+            "9": 23914
+          },
+          "max_path_length": 12,
+          "mean_eccentricity": 9.446,
+          "mean_path_length": 4.495424125498831,
+          "mean_reachable_fraction": 0.8607092958960181,
+          "median_path_length": 4,
+          "n_reachable_pairs": 119858073,
+          "n_sources": 1000,
+          "p90_path_length": 6,
+          "p99_path_length": 7
+        },
+        "n_nodes_in_largest_wcc": 127966,
+        "undirected": {
+          "distance_histogram": {
+            "0": 1000,
+            "1": 42344,
+            "10": 294,
+            "11": 25,
+            "2": 4120864,
+            "3": 34115968,
+            "4": 60174291,
+            "5": 25864148,
+            "6": 3420203,
+            "7": 220160,
+            "8": 5558,
+            "9": 1145
+          },
+          "max_path_length": 11,
+          "mean_eccentricity": 9.167,
+          "mean_path_length": 3.9289358267039685,
+          "mean_reachable_fraction": 0.9189328928943306,
+          "median_path_length": 4,
+          "n_reachable_pairs": 127966000,
+          "n_sources": 1000,
+          "p90_path_length": 5,
+          "p99_path_length": 6
+        }
+      }
+    },
+    "rich_club": {
+      "no_aut": {
+        "degree_threshold_for_rich_club": 2,
+        "k_grid": [
+          2,
+          4,
+          7,
+          13,
+          25,
+          48,
+          91,
+          172,
+          324,
+          612,
+          1157,
+          2185,
+          4127,
+          7795
+        ],
+        "max_phi_norm": 1.02542,
+        "max_phi_norm_k": 48,
+        "n_nodes_in_rich_club_at_best": 26496,
+        "null_model": "degree-preserving rewiring (3 reps, 10*E swaps, simple mode)",
+        "phi_k": {
+          "2": 0.000311,
+          "4": 0.000345,
+          "7": 0.000394,
+          "13": 0.000554,
+          "25": 0.00105,
+          "48": 0.002659,
+          "91": 0.007086,
+          "172": 0.016205,
+          "324": 0.034223,
+          "612": 0.052802,
+          "1157": 0.084898,
+          "2185": 0.10989,
+          "4127": 0.0,
+          "7795": null
+        },
+        "phi_norm_k": {
+          "2": 1.00004,
+          "4": 1.00025,
+          "7": 1.00169,
+          "13": 1.00481,
+          "25": 1.01219,
+          "48": 1.02542,
+          "91": 1.00141,
+          "172": 0.81437,
+          "324": 0.51157,
+          "612": 0.26025,
+          "1157": 0.20376,
+          "2185": 0.15385,
+          "4127": 0.0,
+          "7795": null
+        }
+      }
+    },
+    "spectral": {
+      "largest_scc": {
+        "adjacency_spectral_radius": 157.626284,
+        "laplacian_lambda_max": 1.778989,
+        "laplacian_top50": [
+          1.778989,
+          1.742105,
+          1.734705,
+          1.700674,
+          1.673858,
+          1.667825,
+          1.657344,
+          1.653934,
+          1.648093,
+          1.644943,
+          1.638919,
+          1.634635,
+          1.627545,
+          1.62575,
+          1.624935,
+          1.622222,
+          1.618864,
+          1.61739,
+          1.611636,
+          1.611469,
+          1.608524,
+          1.607141,
+          1.59897,
+          1.590052,
+          1.587681,
+          1.586105,
+          1.582657,
+          1.580863,
+          1.579549,
+          1.575913,
+          1.574454,
+          1.573906,
+          1.573898,
+          1.571707,
+          1.57048,
+          1.569714,
+          1.568925,
+          1.568816,
+          1.567167,
+          1.563141,
+          1.562385,
+          1.560968,
+          1.55856,
+          1.558271,
+          1.558107,
+          1.558033,
+          1.557766,
+          1.555753,
+          1.5543,
+          1.55359
+        ],
+        "n_isolated_nodes": 19499
+      },
+      "no_aut": {
+        "adjacency_spectral_radius": 157.819938,
+        "laplacian_lambda_max": 2.0,
+        "laplacian_top50": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          1.98861,
+          1.983994,
+          1.979797,
+          1.976962,
+          1.968238,
+          1.966099,
+          1.964596,
+          1.961935,
+          1.945541,
+          1.945051,
+          1.941755,
+          1.934627,
+          1.922359,
+          1.919112,
+          1.918145,
+          1.915965,
+          1.915627,
+          1.9131,
+          1.9095,
+          1.892523,
+          1.88902,
+          1.885539,
+          1.881941,
+          1.88065,
+          1.879153,
+          1.878456,
+          1.870679,
+          1.857207,
+          1.857143,
+          1.857143,
+          1.856568,
+          1.856033,
+          1.853014,
+          1.850838,
+          1.847916,
+          1.839591,
+          1.830638,
+          1.827694,
+          1.823841
+        ],
+        "n_isolated_nodes": 5074
+      }
+    },
+    "threshold_robustness": {
+      "1": {
+        "mean_synapses_per_connection": 3.6107,
+        "mean_total_degree": 216.753,
+        "n_connections": 15091983,
+        "n_neurons_total_degree_gt_37": 121352,
+        "n_synapses_in_connections": 54492922,
+        "reciprocity": 0.266
+      },
+      "10": {
+        "mean_synapses_per_connection": 22.1826,
+        "mean_total_degree": 15.322,
+        "n_connections": 1066822,
+        "n_neurons_total_degree_gt_37": 12428,
+        "n_synapses_in_connections": 23664861,
+        "reciprocity": 0.11531
+      },
+      "2": {
+        "mean_synapses_per_connection": 6.1871,
+        "mean_total_degree": 109.094,
+        "n_connections": 7595967,
+        "n_neurons_total_degree_gt_37": 104134,
+        "n_synapses_in_connections": 46996906,
+        "reciprocity": 0.19214
+      },
+      "3": {
+        "mean_synapses_per_connection": 8.4694,
+        "mean_total_degree": 70.608,
+        "n_connections": 4916231,
+        "n_neurons_total_degree_gt_37": 77761,
+        "n_synapses_in_connections": 41637434,
+        "reciprocity": 0.1645
+      },
+      "4": {
+        "mean_synapses_per_connection": 10.6016,
+        "mean_total_degree": 50.802,
+        "n_connections": 3537227,
+        "n_neurons_total_degree_gt_37": 56587,
+        "n_synapses_in_connections": 37500422,
+        "reciprocity": 0.14936
+      },
+      "5": {
+        "mean_synapses_per_connection": 12.6471,
+        "mean_total_degree": 38.785,
+        "n_connections": 2700513,
+        "n_neurons_total_degree_gt_37": 40412,
+        "n_synapses_in_connections": 34153566,
+        "reciprocity": 0.13977
+      }
+    },
+    "triads": {
+      "no_aut": {
+        "n_triads": 450061420236635,
+        "n_triads_connected": 349304205444,
+        "seconds": 404.4,
+        "triad_census": {
+          "003": 449712116031191,
+          "012": 322702215130,
+          "021C": 134787052,
+          "021D": 88864477,
+          "021U": 121117155,
+          "030C": 289036,
+          "030T": 4048329,
+          "102": 26139160368,
+          "111D": 38487364,
+          "111U": 45889268,
+          "120C": 568315,
+          "120D": 706365,
+          "120U": 750733,
+          "201": 26566403,
+          "210": 578394,
+          "300": 177055
+        }
+      }
+    }
+  },
+  "canonical_counts": {
+    "n_annotated_neurons": 139241,
+    "n_autapse_pairs": 0,
+    "n_edges_in_reciprocal_pairs": 4014518,
+    "n_edges_rows": 16847997,
+    "n_neurons": 139255,
+    "n_neuropils": 79,
+    "n_pairs": 15091983,
+    "n_raw_rows_streamed": 16847997,
+    "n_raw_rows_with_unmatched_root_id": 0,
+    "n_reciprocal_pairs": 2007259,
+    "n_synapses_autapse": 0,
+    "n_synapses_pairs": 54492922,
+    "reciprocity": 0.26600334760514904
+  },
+  "canonical_dir": "~/Projects/VybFly/data/processed/canonical_v783",
+  "canonical_version": "flywire-v783-canon-1",
+  "seed": 0,
+  "synapse_threshold": 5,
+  "threshold_note": "connections are included when they carry >= synapse_threshold synapses; this matches Lin et al. 2024 / Dorkenwald et al. 2024 (five synapses)",
+  "timings": {
+    "celltype": 6.5,
+    "clustering": 108.5,
+    "components": 0.1,
+    "counts": 0.8,
+    "degrees": 0.3,
+    "leiden": 5.7,
+    "neuropil": 2.5,
+    "neurotransmitter": 0.2,
+    "paths": 649.4,
+    "rich_club": 65.6,
+    "spectral": 52.0,
+    "threshold_robustness": 27.3,
+    "triads": 405.2,
+    "variants": 0.1
+  },
+  "variants": {
+    "central": 2672526,
+    "full": 2700513,
+    "largest_scc": 2634252,
+    "no_aut": 2700513,
+    "recurrent": 2672526
+  }
+}

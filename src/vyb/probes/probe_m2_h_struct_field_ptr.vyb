@@ -1,0 +1,16 @@
+// probe_m2_h_struct_field_ptr - is `ptr` usable as a struct field name?
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_h_struct_field_ptr.vyb
+
+struct B {
+    ptr<Vec<Int>>,
+    finalized<Int>
+}
+
+main()<Int> -> {
+    b<B> = B { ptr = Vec(), finalized = 0 }
+    b.ptr.push(3)
+    println("B ok len=" + b.ptr.len().to_string() + " finalized=" + b.finalized.to_string())
+    return 0
+}

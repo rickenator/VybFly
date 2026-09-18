@@ -1,0 +1,33 @@
+// probe_m2_b1_nested_vec_writeback - Vec<Vec<Int>>: push an inner Vec, then grow it with
+// the get -> push -> set write-back dance (the shape test 217 documents).
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_b1_nested_vec_writeback.vyb
+
+main()<Int> -> {
+    buckets<Vec<Vec<Int>>> = Vec()
+    i<Int> = 0
+    while (i < 4) {
+        inner<Vec<Int>> = Vec()
+        buckets.push(inner)
+        i = i + 1
+    }
+    println("outer_len=" + buckets.len().to_string())
+
+    b1<Vec<Int>> = buckets.get(1)
+    b1.push(11)
+    b1.push(12)
+    buckets.set(1, b1)
+    println("inner1_len=" + buckets.get(1).len().to_string())
+    println("inner1_0=" + buckets.get(1).get(0).to_string())
+
+    tot<Int> = 0
+    k<Int> = 0
+    while (k < buckets.len()) {
+        tot = tot + buckets.get(k).len()
+        k = k + 1
+    }
+    println("total=" + tot.to_string())
+    println("probe-b1-done")
+    return 0
+}

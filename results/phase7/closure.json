@@ -1,0 +1,620 @@
+{
+  "criterion": "R(G_s) approaches G1: coarse-graining a generated scale must recover the biological source graph",
+  "geometry": {
+    "R": 3.543302001278045,
+    "T": 0.9689573690237164,
+    "dim": 2,
+    "fit": {
+      "R": 3.543302001278045,
+      "T": 0.9689573690237164,
+      "auc": 0.8877867467,
+      "auc_definition": "P(distance(connected pair) < distance(random pair))",
+      "distance_median_negative": 5.243462350230988,
+      "distance_median_positive": 2.136744454576953,
+      "kind": "hyperbolic",
+      "log_likelihood": -333967.64267708565,
+      "n_negative": 400000,
+      "n_positive": 400000
+    },
+    "kind": "hyperbolic",
+    "source": "phase4:hyperbolic_2d_coords.npy+law_fit"
+  },
+  "phase": "7 + M9 (renormalization closure test)",
+  "prior_scales_carried_over": [
+    "10.0",
+    "5.0"
+  ],
+  "reference": {
+    "density": 0.00013926045,
+    "mean_out_degree": 19.3926,
+    "mean_synapses_per_connection": 12.6471,
+    "n_connections": 2700513,
+    "n_neurons": 139255,
+    "n_synapses": 34153566
+  },
+  "scales": {
+    "10.0": {
+      "closure": {
+        "community_ari": 1.0,
+        "community_nmi": 1.0,
+        "composite": 0.000978306,
+        "connectivity_matrix_divergence": NaN,
+        "correspondence_coverage": 1.0,
+        "degree_wasserstein": 0.0,
+        "degree_wasserstein_normalised": 0.0,
+        "latent_distance_wasserstein": null,
+        "motif_divergence_L1": 0.0,
+        "n_reference": 139255,
+        "n_replica": 139255,
+        "reference": {
+          "density": 0.00013926045,
+          "mean_out_degree": 19.3926,
+          "mean_synapses_per_connection": 12.6471,
+          "n_connections": 2700513,
+          "n_neurons": 139255,
+          "n_synapses": 34153566
+        },
+        "replica": {
+          "density": 0.00013926045,
+          "mean_out_degree": 19.3926,
+          "mean_synapses_per_connection": 126.4707,
+          "n_connections": 2700513,
+          "n_neurons": 139255,
+          "n_synapses": 341535660
+        },
+        "rich_club": {
+          "reference": {
+            "10": 0.000461943,
+            "100": 0.008089838,
+            "2": 0.000311177,
+            "200": 0.02011122,
+            "25": 0.00104972,
+            "5": 0.000359915,
+            "50": 0.002832949
+          },
+          "replica": {
+            "10": 0.000461943,
+            "100": 0.008089838,
+            "2": 0.000311177,
+            "200": 0.02011122,
+            "25": 0.00104972,
+            "5": 0.000359915,
+            "50": 0.002832949
+          }
+        },
+        "rich_club_distance": 0.0,
+        "rich_club_jaccard_matched_quantile": 1.0,
+        "rich_club_jaccard_note": "top 29% by total degree in each graph (the published rich-club fraction), compared node-for-node through the correspondence",
+        "scale_edges": 1.0,
+        "scale_n": 1.0,
+        "scale_synapses": 10.0,
+        "spectral_distance": 0.005543733,
+        "spectral_reference_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "spectral_replica_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "triad_census_available": true,
+        "two_node": {
+          "reciprocity_delta": 0.0,
+          "reference": {
+            "connections": 2700513,
+            "reciprocal_pairs": 188724,
+            "reciprocity": 0.139769,
+            "unidirectional_pairs": 2323065
+          },
+          "replica": {
+            "connections": 2700513,
+            "reciprocal_pairs": 188724,
+            "reciprocity": 0.139769,
+            "unidirectional_pairs": 2323065
+          }
+        },
+        "weighted_degree_wasserstein": 2207.332548
+      },
+      "dynamics": {
+        "cascade": {
+          "absolute_threshold": 12.460788700508317,
+          "active_curve": [
+            1331,
+            8934,
+            264558,
+            726640,
+            1009803,
+            1091975,
+            1105852,
+            1107677,
+            1108142,
+            1108309,
+            1108374,
+            1108395,
+            1108407
+          ],
+          "active_fraction_curve": [
+            0.0009558,
+            0.00641557,
+            0.18998097,
+            0.52180532,
+            0.72514667,
+            0.78415497,
+            0.79412014,
+            0.79543068,
+            0.7957646,
+            0.79588453,
+            0.79593121,
+            0.79594629,
+            0.7959549
+          ],
+          "active_mask_hash": 1108407,
+          "active_set_fraction": 0.7959549,
+          "final_active": 1108407,
+          "final_active_fraction": 0.7959549,
+          "latency_steps_to_half": 3,
+          "n_neurons": 1392550,
+          "n_seeds": 1331,
+          "newly_active": [
+            1331,
+            7603,
+            255624,
+            462082,
+            283163,
+            82172,
+            13877,
+            1825,
+            465,
+            167,
+            65,
+            21,
+            12
+          ],
+          "peak_newly_active": 462082,
+          "relative_threshold": 1.0,
+          "seed_fraction": 0.0009558,
+          "steps": 12
+        },
+        "comparison_vs_reference": {
+          "active_set_jaccard": 0.010854,
+          "active_set_precision": 0.010872,
+          "active_set_recall": 0.86536,
+          "curve_L1": 0.43398585,
+          "curve_max_abs_delta": 0.15685613,
+          "final_fraction_ratio": 0.96307,
+          "latency_delta_steps": -1,
+          "mapped_nodes": 1392550,
+          "peak_delta": 414102,
+          "reference_final_fraction": 0.82647661,
+          "replica_final_fraction": 0.7959549
+        }
+      },
+      "renormalised": {
+        "edges": 2700513,
+        "n": 139255,
+        "provenance": {
+          "intra_group_synapses": 5398890,
+          "kind": "lineage_coarse_grain",
+          "n_groups": 139255,
+          "source_kind": "upscale",
+          "source_n": 1392550
+        },
+        "synapses": 341535660
+      },
+      "seconds_rebuild": 8.1,
+      "seconds_renormalise": 3.7,
+      "source_graph": {
+        "edges": 27842102,
+        "n": 1392550,
+        "origin": "loaded:~/Projects/VybFly/results/phase6/replicas/g10.0",
+        "synapses": 346934550
+      }
+    },
+    "2.0": {
+      "closure": {
+        "community_ari": 0.911867,
+        "community_nmi": 0.9396,
+        "composite": 0.018407118,
+        "connectivity_matrix_divergence": NaN,
+        "correspondence_coverage": 1.0,
+        "degree_wasserstein": 0.14393,
+        "degree_wasserstein_normalised": 0.007422,
+        "latent_distance_wasserstein": null,
+        "motif_divergence_L1": 1.0638e-05,
+        "n_reference": 139255,
+        "n_replica": 139255,
+        "reference": {
+          "density": 0.00013926045,
+          "mean_out_degree": 19.3926,
+          "mean_synapses_per_connection": 12.6471,
+          "n_connections": 2700513,
+          "n_neurons": 139255,
+          "n_synapses": 34153566
+        },
+        "replica": {
+          "density": 0.00013822687,
+          "mean_out_degree": 19.2486,
+          "mean_synapses_per_connection": 25.4833,
+          "n_connections": 2680470,
+          "n_neurons": 139255,
+          "n_synapses": 68307132
+        },
+        "rich_club": {
+          "reference": {
+            "2": 0.000311177,
+            "5": 0.000359915,
+            "10": 0.000461943,
+            "25": 0.00104972,
+            "50": 0.002832949,
+            "100": 0.008089838,
+            "200": 0.02011122
+          },
+          "replica": {
+            "2": 0.000309292,
+            "5": 0.000358004,
+            "10": 0.000460553,
+            "25": 0.001050548,
+            "50": 0.002845888,
+            "100": 0.008105777,
+            "200": 0.020217332
+          }
+        },
+        "rich_club_distance": 0.00384656,
+        "rich_club_jaccard_matched_quantile": 0.975135,
+        "rich_club_jaccard_note": "top 29% by total degree in each graph (the published rich-club fraction), compared node-for-node through the correspondence",
+        "scale_edges": 0.992578,
+        "scale_n": 1.0,
+        "scale_synapses": 2.0,
+        "spectral_distance": 0.00241726,
+        "spectral_reference_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "spectral_replica_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "triad_census_available": true,
+        "two_node": {
+          "reciprocity_delta": -0.001052,
+          "reference": {
+            "connections": 2700513,
+            "reciprocal_pairs": 188724,
+            "reciprocity": 0.139769,
+            "unidirectional_pairs": 2323065
+          },
+          "replica": {
+            "connections": 2680470,
+            "reciprocal_pairs": 185914,
+            "reciprocity": 0.138717,
+            "unidirectional_pairs": 2308642
+          }
+        },
+        "weighted_degree_wasserstein": 245.259172
+      },
+      "dynamics": {
+        "cascade": {
+          "absolute_threshold": 13.194699601332427,
+          "active_curve": [
+            1383,
+            8074,
+            102370,
+            189029,
+            215881,
+            220009,
+            220562,
+            220688,
+            220719,
+            220732,
+            220734,
+            220734
+          ],
+          "active_fraction_curve": [
+            0.00496571,
+            0.02898998,
+            0.3675631,
+            0.67871531,
+            0.77512836,
+            0.78995009,
+            0.79193566,
+            0.79238807,
+            0.79249937,
+            0.79254605,
+            0.79255323,
+            0.79255323
+          ],
+          "active_mask_hash": 220734,
+          "active_set_fraction": 0.79255323,
+          "final_active": 220734,
+          "final_active_fraction": 0.79255323,
+          "latency_steps_to_half": 3,
+          "n_neurons": 278510,
+          "n_seeds": 1383,
+          "newly_active": [
+            1383,
+            6691,
+            94296,
+            86659,
+            26852,
+            4128,
+            553,
+            126,
+            31,
+            13,
+            2,
+            0
+          ],
+          "peak_newly_active": 94296,
+          "relative_threshold": 1.0,
+          "seed_fraction": 0.00496571,
+          "steps": 11
+        },
+        "comparison_vs_reference": {
+          "active_set_jaccard": 0.23065,
+          "active_set_precision": 0.244738,
+          "active_set_recall": 0.800279,
+          "curve_L1": 0.81859538,
+          "curve_max_abs_delta": 0.31376612,
+          "final_fraction_ratio": 0.958954,
+          "latency_delta_steps": -1,
+          "mapped_nodes": 278510,
+          "peak_delta": 46316,
+          "reference_final_fraction": 0.82647661,
+          "replica_final_fraction": 0.79255323
+        }
+      },
+      "renormalised": {
+        "edges": 2680470,
+        "n": 139255,
+        "provenance": {
+          "intra_group_synapses": 120910,
+          "kind": "lineage_coarse_grain",
+          "n_groups": 139255,
+          "source_kind": "upscale",
+          "source_n": 278510
+        },
+        "synapses": 68307132
+      },
+      "seconds_rebuild": 1.4,
+      "seconds_renormalise": 1.2,
+      "source_graph": {
+        "edges": 5186025,
+        "n": 278510,
+        "origin": "loaded:~/Projects/VybFly/results/phase6/replicas/g2.0",
+        "synapses": 68428042
+      }
+    },
+    "5.0": {
+      "closure": {
+        "community_ari": 0.991497,
+        "community_nmi": 0.988582,
+        "composite": 0.00150404,
+        "connectivity_matrix_divergence": NaN,
+        "correspondence_coverage": 1.0,
+        "degree_wasserstein": 0.000108,
+        "degree_wasserstein_normalised": 6e-06,
+        "latent_distance_wasserstein": null,
+        "motif_divergence_L1": 7e-09,
+        "n_reference": 139255,
+        "n_replica": 139255,
+        "reference": {
+          "density": 0.00013926045,
+          "mean_out_degree": 19.3926,
+          "mean_synapses_per_connection": 12.6471,
+          "n_connections": 2700513,
+          "n_neurons": 139255,
+          "n_synapses": 34153566
+        },
+        "replica": {
+          "density": 0.000139259677,
+          "mean_out_degree": 19.3925,
+          "mean_synapses_per_connection": 63.2357,
+          "n_connections": 2700498,
+          "n_neurons": 139255,
+          "n_synapses": 170767830
+        },
+        "rich_club": {
+          "reference": {
+            "10": 0.000461943,
+            "100": 0.008089838,
+            "2": 0.000311177,
+            "200": 0.02011122,
+            "25": 0.00104972,
+            "5": 0.000359915,
+            "50": 0.002832949
+          },
+          "replica": {
+            "10": 0.000461948,
+            "100": 0.008089764,
+            "2": 0.000311176,
+            "200": 0.020110581,
+            "25": 0.001049739,
+            "5": 0.000359913,
+            "50": 0.002832936
+          }
+        },
+        "rich_club_distance": 1.1886e-05,
+        "rich_club_jaccard_matched_quantile": 1.0,
+        "rich_club_jaccard_note": "top 29% by total degree in each graph (the published rich-club fraction), compared node-for-node through the correspondence",
+        "scale_edges": 0.999994,
+        "scale_n": 1.0,
+        "scale_synapses": 5.0,
+        "spectral_distance": 0.0,
+        "spectral_reference_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "spectral_replica_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "triad_census_available": true,
+        "two_node": {
+          "reciprocity_delta": -1e-06,
+          "reference": {
+            "connections": 2700513,
+            "reciprocal_pairs": 188724,
+            "reciprocity": 0.139769,
+            "unidirectional_pairs": 2323065
+          },
+          "replica": {
+            "connections": 2700498,
+            "reciprocal_pairs": 188721,
+            "reciprocity": 0.139768,
+            "unidirectional_pairs": 2323056
+          }
+        },
+        "weighted_degree_wasserstein": 981.036688
+      },
+      "dynamics": {
+        "cascade": {
+          "absolute_threshold": 12.737750400364304,
+          "active_curve": [
+            1363,
+            7996,
+            182574,
+            429896,
+            531969,
+            550539,
+            552992,
+            553497,
+            553604,
+            553639,
+            553655,
+            553662,
+            553666
+          ],
+          "active_fraction_curve": [
+            0.00195756,
+            0.01148397,
+            0.26221536,
+            0.61742271,
+            0.7640214,
+            0.7906919,
+            0.79421493,
+            0.79494022,
+            0.79509389,
+            0.79514416,
+            0.79516714,
+            0.79517719,
+            0.79518294
+          ],
+          "active_mask_hash": 553666,
+          "active_set_fraction": 0.79518294,
+          "final_active": 553666,
+          "final_active_fraction": 0.79518294,
+          "latency_steps_to_half": 3,
+          "n_neurons": 696275,
+          "n_seeds": 1363,
+          "newly_active": [
+            1363,
+            6633,
+            174578,
+            247322,
+            102073,
+            18570,
+            2453,
+            505,
+            107,
+            35,
+            16,
+            7,
+            4
+          ],
+          "peak_newly_active": 247322,
+          "relative_threshold": 1.0,
+          "seed_fraction": 0.00195756,
+          "steps": 12
+        },
+        "comparison_vs_reference": {
+          "active_set_jaccard": 0.039918,
+          "active_set_precision": 0.040317,
+          "active_set_recall": 0.801623,
+          "curve_L1": 0.63067609,
+          "curve_max_abs_delta": 0.25247352,
+          "final_fraction_ratio": 0.962136,
+          "latency_delta_steps": -1,
+          "mapped_nodes": 696275,
+          "peak_delta": 199342,
+          "reference_final_fraction": 0.82647661,
+          "replica_final_fraction": 0.79518294
+        }
+      },
+      "renormalised": {
+        "edges": 2700498,
+        "n": 139255,
+        "provenance": {
+          "intra_group_synapses": 1202360,
+          "kind": "lineage_coarse_grain",
+          "n_groups": 139255,
+          "source_kind": "upscale",
+          "source_n": 696275
+        },
+        "synapses": 170767830
+      },
+      "seconds_rebuild": 3.7,
+      "seconds_renormalise": 2.1,
+      "source_graph": {
+        "edges": 13500829,
+        "n": 696275,
+        "origin": "loaded:~/Projects/VybFly/results/phase6/replicas/g5.0",
+        "synapses": 171970190
+      }
+    }
+  },
+  "seed": 0,
+  "timings": {
+    "scale_10.0": 473.1,
+    "scale_2.0": 432.8,
+    "scale_5.0": 442.9
+  },
+  "total_seconds": 442.8
+}

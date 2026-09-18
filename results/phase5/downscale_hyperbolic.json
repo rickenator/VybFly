@@ -1,0 +1,791 @@
+{
+  "factors": {
+    "0.1": {
+      "closure": {
+        "community_ari": 0.239706,
+        "community_nmi": 0.413355,
+        "composite": 0.320210899,
+        "connectivity_matrix_divergence": 0.086471487,
+        "degree_wasserstein": 4.68804,
+        "degree_wasserstein_normalised": 0.241744,
+        "latent_distance_wasserstein": null,
+        "motif_divergence_L1": 0.014703674,
+        "n_reference": 139255,
+        "n_replica": 15617,
+        "partition_coverage": 1.0,
+        "partition_group_size_mean": 8.9169,
+        "reference": {
+          "density": 0.00013926045,
+          "mean_out_degree": 19.3926,
+          "mean_synapses_per_connection": 12.6471,
+          "n_connections": 2700513,
+          "n_neurons": 139255,
+          "n_synapses": 34153566
+        },
+        "replica": {
+          "density": 0.001507698171,
+          "mean_out_degree": 23.5442,
+          "mean_synapses_per_connection": 44.6965,
+          "n_connections": 367690,
+          "n_neurons": 15617,
+          "n_synapses": 16434461
+        },
+        "rich_club": {
+          "reference": {
+            "2": 0.000311177,
+            "5": 0.000359915,
+            "10": 0.000461943,
+            "25": 0.00104972,
+            "50": 0.002832949,
+            "100": 0.008089838,
+            "200": 0.02011122
+          },
+          "replica": {
+            "2": 0.003477327,
+            "5": 0.004140602,
+            "10": 0.005309639,
+            "25": 0.012273147,
+            "50": 0.02809514,
+            "100": 0.071581165,
+            "200": 0.180150215
+          }
+        },
+        "rich_club_distance": 0.90365319,
+        "rich_club_jaccard_matched_quantile": 0.701007,
+        "rich_club_jaccard_note": "top 29% by total degree; the reference side is the per-group mean degree, so a coarse node inherits the richness of the neurons it aggregates",
+        "scale_edges": 0.136156,
+        "scale_n": 0.112147,
+        "scale_synapses": 0.481193,
+        "spectral_distance": 0.042390416,
+        "spectral_reference_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "spectral_replica_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "triad_census_available": true,
+        "two_node": {
+          "reciprocity_delta": 0.037293,
+          "reference": {
+            "connections": 2700513,
+            "reciprocal_pairs": 188724,
+            "reciprocity": 0.139769,
+            "unidirectional_pairs": 2323065
+          },
+          "replica": {
+            "connections": 367690,
+            "reciprocal_pairs": 32552,
+            "reciprocity": 0.177062,
+            "unidirectional_pairs": 302586
+          }
+        },
+        "weighted_degree_wasserstein": 807.210187
+      },
+      "replica": {
+        "density": 0.001507698171,
+        "mean_out_degree": 23.5442,
+        "mean_synapses_per_connection": 44.6965,
+        "n_connections": 367690,
+        "n_neurons": 15617,
+        "n_synapses": 16434461
+      },
+      "replica_provenance": {
+        "edge_threshold": 21,
+        "factor": 0.1,
+        "geometry": {
+          "R": 3.543302001278045,
+          "T": 0.9689573690237164,
+          "dim": 2,
+          "kind": "hyperbolic",
+          "n": 139255,
+          "source": "phase4:hyperbolic_2d_coords.npy+law_fit"
+        },
+        "group_size": 10,
+        "group_size_histogram": {
+          "1": 551,
+          "2": 381,
+          "3": 367,
+          "4": 327,
+          "5": 298,
+          "6": 286,
+          "7": 297,
+          "8": 293,
+          "9": 266,
+          "10": 12551
+        },
+        "intra_group_synapses": 60809,
+        "kind": "coarse_grain",
+        "n_groups": 15617,
+        "seed": 0,
+        "source_edges": 2700513,
+        "source_mean_out_degree": 19.3926,
+        "source_n": 139255,
+        "threshold_calibration": {
+          "calibrated": true,
+          "candidates": [
+            {
+              "mean_out_degree": 153.188,
+              "threshold": 1
+            },
+            {
+              "mean_out_degree": 153.188,
+              "threshold": 5
+            },
+            {
+              "mean_out_degree": 57.92495,
+              "threshold": 11
+            },
+            {
+              "mean_out_degree": 23.54421,
+              "threshold": 21
+            },
+            {
+              "mean_out_degree": 11.95703,
+              "threshold": 32
+            },
+            {
+              "mean_out_degree": 7.51361,
+              "threshold": 42
+            },
+            {
+              "mean_out_degree": 5.15105,
+              "threshold": 52
+            },
+            {
+              "mean_out_degree": 3.63252,
+              "threshold": 63
+            },
+            {
+              "mean_out_degree": 2.74515,
+              "threshold": 73
+            },
+            {
+              "mean_out_degree": 2.13101,
+              "threshold": 83
+            },
+            {
+              "mean_out_degree": 1.65422,
+              "threshold": 94
+            },
+            {
+              "mean_out_degree": 1.32708,
+              "threshold": 104
+            },
+            {
+              "mean_out_degree": 1.08343,
+              "threshold": 114
+            },
+            {
+              "mean_out_degree": 0.87578,
+              "threshold": 125
+            },
+            {
+              "mean_out_degree": 0.72415,
+              "threshold": 135
+            },
+            {
+              "mean_out_degree": 0.60402,
+              "threshold": 145
+            },
+            {
+              "mean_out_degree": 0.49888,
+              "threshold": 156
+            },
+            {
+              "mean_out_degree": 0.4262,
+              "threshold": 166
+            },
+            {
+              "mean_out_degree": 0.36544,
+              "threshold": 176
+            },
+            {
+              "mean_out_degree": 0.31408,
+              "threshold": 187
+            },
+            {
+              "mean_out_degree": 0.27573,
+              "threshold": 197
+            },
+            {
+              "mean_out_degree": 0.24332,
+              "threshold": 207
+            },
+            {
+              "mean_out_degree": 0.21278,
+              "threshold": 218
+            },
+            {
+              "mean_out_degree": 0.1889,
+              "threshold": 228
+            },
+            {
+              "mean_out_degree": 0.17078,
+              "threshold": 238
+            },
+            {
+              "mean_out_degree": 0.15112,
+              "threshold": 249
+            }
+          ],
+          "chosen": 21,
+          "chosen_error": 4.15164,
+          "min_achievable_mean_degree": 153.188,
+          "target_mean_degree": 19.39257477289864,
+          "target_reachable": true
+        }
+      },
+      "seconds_coarse_grain": 2.7
+    },
+    "0.25": {
+      "closure": {
+        "community_ari": 0.198329,
+        "community_nmi": 0.411924,
+        "composite": 0.311294624,
+        "connectivity_matrix_divergence": 0.055488997,
+        "degree_wasserstein": 5.877332,
+        "degree_wasserstein_normalised": 0.303071,
+        "latent_distance_wasserstein": null,
+        "motif_divergence_L1": 0.002657588,
+        "n_reference": 139255,
+        "n_replica": 36048,
+        "partition_coverage": 1.0,
+        "partition_group_size_mean": 3.863,
+        "reference": {
+          "density": 0.00013926045,
+          "mean_out_degree": 19.3926,
+          "mean_synapses_per_connection": 12.6471,
+          "n_connections": 2700513,
+          "n_neurons": 139255,
+          "n_synapses": 34153566
+        },
+        "replica": {
+          "density": 0.000375998639,
+          "mean_out_degree": 13.5536,
+          "mean_synapses_per_connection": 35.2139,
+          "n_connections": 488581,
+          "n_neurons": 36048,
+          "n_synapses": 17204865
+        },
+        "rich_club": {
+          "reference": {
+            "2": 0.000311177,
+            "5": 0.000359915,
+            "10": 0.000461943,
+            "25": 0.00104972,
+            "50": 0.002832949,
+            "100": 0.008089838,
+            "200": 0.02011122
+          },
+          "replica": {
+            "2": 0.000960351,
+            "5": 0.001276807,
+            "10": 0.002185845,
+            "25": 0.006452315,
+            "50": 0.015199827,
+            "100": 0.037768845,
+            "200": 0.078580828
+          }
+        },
+        "rich_club_distance": 0.766223163,
+        "rich_club_jaccard_matched_quantile": 0.708801,
+        "rich_club_jaccard_note": "top 29% by total degree; the reference side is the per-group mean degree, so a coarse node inherits the richness of the neurons it aggregates",
+        "scale_edges": 0.180922,
+        "scale_n": 0.258863,
+        "scale_synapses": 0.50375,
+        "spectral_distance": 0.044276218,
+        "spectral_reference_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "spectral_replica_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          1.991082,
+          1.986084,
+          1.984259
+        ],
+        "triad_census_available": true,
+        "two_node": {
+          "reciprocity_delta": -0.013939,
+          "reference": {
+            "connections": 2700513,
+            "reciprocal_pairs": 188724,
+            "reciprocity": 0.139769,
+            "unidirectional_pairs": 2323065
+          },
+          "replica": {
+            "connections": 488581,
+            "reciprocal_pairs": 30739,
+            "reciprocity": 0.12583,
+            "unidirectional_pairs": 427103
+          }
+        },
+        "weighted_degree_wasserstein": 233.086382
+      },
+      "replica": {
+        "density": 0.000375998639,
+        "mean_out_degree": 13.5536,
+        "mean_synapses_per_connection": 35.2139,
+        "n_connections": 488581,
+        "n_neurons": 36048,
+        "n_synapses": 17204865
+      },
+      "replica_provenance": {
+        "edge_threshold": 17,
+        "factor": 0.25,
+        "geometry": {
+          "R": 3.543302001278045,
+          "T": 0.9689573690237164,
+          "dim": 2,
+          "kind": "hyperbolic",
+          "n": 139255,
+          "source": "phase4:hyperbolic_2d_coords.npy+law_fit"
+        },
+        "group_size": 4,
+        "group_size_histogram": {
+          "1": 907,
+          "2": 766,
+          "3": 684,
+          "4": 33691
+        },
+        "intra_group_synapses": 24590,
+        "kind": "coarse_grain",
+        "n_groups": 36048,
+        "seed": 0,
+        "source_edges": 2700513,
+        "source_mean_out_degree": 19.3926,
+        "source_n": 139255,
+        "threshold_calibration": {
+          "calibrated": true,
+          "candidates": [
+            {
+              "mean_out_degree": 72.29591,
+              "threshold": 1
+            },
+            {
+              "mean_out_degree": 72.29591,
+              "threshold": 5
+            },
+            {
+              "mean_out_degree": 33.70137,
+              "threshold": 9
+            },
+            {
+              "mean_out_degree": 13.55362,
+              "threshold": 17
+            },
+            {
+              "mean_out_degree": 6.7113,
+              "threshold": 26
+            },
+            {
+              "mean_out_degree": 4.13748,
+              "threshold": 34
+            },
+            {
+              "mean_out_degree": 2.67568,
+              "threshold": 43
+            },
+            {
+              "mean_out_degree": 1.93847,
+              "threshold": 51
+            },
+            {
+              "mean_out_degree": 1.46679,
+              "threshold": 59
+            },
+            {
+              "mean_out_degree": 1.11035,
+              "threshold": 68
+            },
+            {
+              "mean_out_degree": 0.88615,
+              "threshold": 76
+            },
+            {
+              "mean_out_degree": 0.7019,
+              "threshold": 85
+            },
+            {
+              "mean_out_degree": 0.57754,
+              "threshold": 93
+            },
+            {
+              "mean_out_degree": 0.46607,
+              "threshold": 102
+            },
+            {
+              "mean_out_degree": 0.38679,
+              "threshold": 110
+            },
+            {
+              "mean_out_degree": 0.32659,
+              "threshold": 118
+            },
+            {
+              "mean_out_degree": 0.26925,
+              "threshold": 127
+            },
+            {
+              "mean_out_degree": 0.22736,
+              "threshold": 135
+            },
+            {
+              "mean_out_degree": 0.19113,
+              "threshold": 144
+            },
+            {
+              "mean_out_degree": 0.16403,
+              "threshold": 152
+            },
+            {
+              "mean_out_degree": 0.14115,
+              "threshold": 160
+            },
+            {
+              "mean_out_degree": 0.11962,
+              "threshold": 169
+            },
+            {
+              "mean_out_degree": 0.10486,
+              "threshold": 177
+            },
+            {
+              "mean_out_degree": 0.09071,
+              "threshold": 186
+            },
+            {
+              "mean_out_degree": 0.07998,
+              "threshold": 194
+            },
+            {
+              "mean_out_degree": 0.07054,
+              "threshold": 203
+            }
+          ],
+          "chosen": 17,
+          "chosen_error": 5.838952,
+          "min_achievable_mean_degree": 72.29591,
+          "target_mean_degree": 19.39257477289864,
+          "target_reachable": true
+        }
+      },
+      "seconds_coarse_grain": 4.8
+    },
+    "0.5": {
+      "closure": {
+        "community_ari": 0.331175,
+        "community_nmi": 0.512167,
+        "composite": 0.21379935,
+        "connectivity_matrix_divergence": 0.048853909,
+        "degree_wasserstein": 2.022886,
+        "degree_wasserstein_normalised": 0.104312,
+        "latent_distance_wasserstein": null,
+        "motif_divergence_L1": 0.001237203,
+        "n_reference": 139255,
+        "n_replica": 70369,
+        "partition_coverage": 1.0,
+        "partition_group_size_mean": 1.9789,
+        "reference": {
+          "density": 0.00013926045,
+          "mean_out_degree": 19.3926,
+          "mean_synapses_per_connection": 12.6471,
+          "n_connections": 2700513,
+          "n_neurons": 139255,
+          "n_synapses": 34153566
+        },
+        "replica": {
+          "density": 0.00024847741,
+          "mean_out_degree": 17.4849,
+          "mean_synapses_per_connection": 20.6032,
+          "n_connections": 1230392,
+          "n_neurons": 70369,
+          "n_synapses": 25349962
+        },
+        "rich_club": {
+          "reference": {
+            "2": 0.000311177,
+            "5": 0.000359915,
+            "10": 0.000461943,
+            "25": 0.00104972,
+            "50": 0.002832949,
+            "100": 0.008089838,
+            "200": 0.02011122
+          },
+          "replica": {
+            "2": 0.000575666,
+            "5": 0.000679531,
+            "10": 0.000926658,
+            "25": 0.002438712,
+            "50": 0.006185425,
+            "100": 0.015739991,
+            "200": 0.037992772
+          }
+        },
+        "rich_club_distance": 0.499933946,
+        "rich_club_jaccard_matched_quantile": 0.805185,
+        "rich_club_jaccard_note": "top 29% by total degree; the reference side is the per-group mean degree, so a coarse node inherits the richness of the neurons it aggregates",
+        "scale_edges": 0.455614,
+        "scale_n": 0.505325,
+        "scale_synapses": 0.742235,
+        "spectral_distance": 0.066983876,
+        "spectral_reference_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "spectral_replica_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "triad_census_available": true,
+        "two_node": {
+          "reciprocity_delta": -0.015662,
+          "reference": {
+            "connections": 2700513,
+            "reciprocal_pairs": 188724,
+            "reciprocity": 0.139769,
+            "unidirectional_pairs": 2323065
+          },
+          "replica": {
+            "connections": 1230392,
+            "reciprocal_pairs": 76350,
+            "reciprocity": 0.124107,
+            "unidirectional_pairs": 1077692
+          }
+        },
+        "weighted_degree_wasserstein": 115.077843
+      },
+      "replica": {
+        "density": 0.00024847741,
+        "mean_out_degree": 17.4849,
+        "mean_synapses_per_connection": 20.6032,
+        "n_connections": 1230392,
+        "n_neurons": 70369,
+        "n_synapses": 25349962
+      },
+      "replica_provenance": {
+        "edge_threshold": 9,
+        "factor": 0.5,
+        "geometry": {
+          "R": 3.543302001278045,
+          "T": 0.9689573690237164,
+          "dim": 2,
+          "kind": "hyperbolic",
+          "n": 139255,
+          "source": "phase4:hyperbolic_2d_coords.npy+law_fit"
+        },
+        "group_size": 2,
+        "group_size_histogram": {
+          "1": 1483,
+          "2": 68886
+        },
+        "intra_group_synapses": 9198,
+        "kind": "coarse_grain",
+        "n_groups": 70369,
+        "seed": 0,
+        "source_edges": 2700513,
+        "source_mean_out_degree": 19.3926,
+        "source_n": 139255,
+        "threshold_calibration": {
+          "calibrated": true,
+          "candidates": [
+            {
+              "mean_out_degree": 37.92221,
+              "threshold": 1
+            },
+            {
+              "mean_out_degree": 37.92221,
+              "threshold": 5
+            },
+            {
+              "mean_out_degree": 17.48486,
+              "threshold": 9
+            },
+            {
+              "mean_out_degree": 6.86564,
+              "threshold": 17
+            },
+            {
+              "mean_out_degree": 3.56968,
+              "threshold": 25
+            },
+            {
+              "mean_out_degree": 2.13927,
+              "threshold": 33
+            },
+            {
+              "mean_out_degree": 1.41739,
+              "threshold": 41
+            },
+            {
+              "mean_out_degree": 1.011,
+              "threshold": 49
+            },
+            {
+              "mean_out_degree": 0.75509,
+              "threshold": 57
+            },
+            {
+              "mean_out_degree": 0.58334,
+              "threshold": 65
+            },
+            {
+              "mean_out_degree": 0.46067,
+              "threshold": 73
+            },
+            {
+              "mean_out_degree": 0.37153,
+              "threshold": 81
+            },
+            {
+              "mean_out_degree": 0.30307,
+              "threshold": 89
+            },
+            {
+              "mean_out_degree": 0.24968,
+              "threshold": 97
+            },
+            {
+              "mean_out_degree": 0.20677,
+              "threshold": 105
+            },
+            {
+              "mean_out_degree": 0.17194,
+              "threshold": 113
+            },
+            {
+              "mean_out_degree": 0.14469,
+              "threshold": 121
+            },
+            {
+              "mean_out_degree": 0.12143,
+              "threshold": 129
+            },
+            {
+              "mean_out_degree": 0.10287,
+              "threshold": 137
+            },
+            {
+              "mean_out_degree": 0.08764,
+              "threshold": 145
+            },
+            {
+              "mean_out_degree": 0.07508,
+              "threshold": 153
+            },
+            {
+              "mean_out_degree": 0.06439,
+              "threshold": 161
+            },
+            {
+              "mean_out_degree": 0.05531,
+              "threshold": 169
+            },
+            {
+              "mean_out_degree": 0.0483,
+              "threshold": 177
+            },
+            {
+              "mean_out_degree": 0.0425,
+              "threshold": 185
+            },
+            {
+              "mean_out_degree": 0.03722,
+              "threshold": 193
+            }
+          ],
+          "chosen": 9,
+          "chosen_error": 1.907716,
+          "min_achievable_mean_degree": 37.92221,
+          "target_mean_degree": 19.39257477289864,
+          "target_reachable": true
+        }
+      },
+      "seconds_coarse_grain": 16.7
+    }
+  },
+  "geometry": {
+    "R": 3.543302001278045,
+    "T": 0.9689573690237164,
+    "dim": 2,
+    "fit": {
+      "R": 3.543302001278045,
+      "T": 0.9689573690237164,
+      "auc": 0.8877867467,
+      "auc_definition": "P(distance(connected pair) < distance(random pair))",
+      "distance_median_negative": 5.243462350230988,
+      "distance_median_positive": 2.136744454576953,
+      "kind": "hyperbolic",
+      "log_likelihood": -333967.64267708565,
+      "n_negative": 400000,
+      "n_positive": 400000
+    },
+    "kind": "hyperbolic",
+    "source": "phase4:hyperbolic_2d_coords.npy+law_fit"
+  },
+  "phase": "5 + M6/M7 (downscaling and dynamic validation)",
+  "reference": {
+    "density": 0.00013926045,
+    "mean_out_degree": 19.3926,
+    "mean_synapses_per_connection": 12.6471,
+    "n_connections": 2700513,
+    "n_neurons": 139255,
+    "n_synapses": 34153566
+  },
+  "seed": 0,
+  "threshold": 5,
+  "timings": {
+    "coarse_0.1": 42.4,
+    "coarse_0.25": 46.5,
+    "coarse_0.5": 332.7
+  },
+  "total_seconds": 446.6
+}

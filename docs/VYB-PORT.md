@@ -1,0 +1,165 @@
+# Vyb-native implementation plan (FlyScale)
+
+Director's steer: this project should end up in Vyb, not Python. PROJECT-VYBFLY.md §22 allows
+a Python/C++ reference implementation for validation and requires production execution to be
+Vyb + CUDA/NVPTX with no Python in the loop. This document is the bridge, and it now carries
+verified findings from the first working Vyb loader.
+
+## Division of labour
+
+| Layer | Reference (Python) | Production (Vyb) |
+|---|---|---|
+| Source ingest (feather/tsv parsing) | yes, `scripts/fetch_data.py` + `flyscale.io` | no - ingest emits a flat binary that Vyb reads directly |
+| Canonical graph representation | yes, `flyscale.connectome` | `src/vyb/flyload.vyb` (loader over the same flat binary) |
+| Graph metrics (degrees, components, paths, motifs) | yes, `flyscale.metrics` (the oracle) | `metrics.vyb` - must match the oracle numerically |
+| Neural dynamics (LIF) | Phase 1 reference | Phase 1/2 Vyb |
+| Discrete-event runtime | no | Vyb DES (the real target) |
+| GPU event execution | no | Vyb CUDA/NVPTX |
+
+The Python layer keeps its value as a *golden reference*: every Vyb metric is checked against
+the oracle's numbers on the same canonical dataset.
+
+## Canonical binary format (the interface)
+
+Header-less little-endian arrays, so Vyb needs nothing from Python at runtime:
+
+```
+data/processed/canonical_v783/bin/
+  meta.json                  counts, element types, thresholds, provenance
+  neurons.root_id.i64        N           neuron root ids, index order
+  neurons.<attr>.txt         N lines     super_class, cell_class, cell_type, supertype, top_nt, side
+  neurons.coords.f32         6N floats   annotation/soma coordinates (geometry phase)
+  pairs.pre.i32              M           connection source neuron index
+  pairs.post.i32             M           connection target neuron index
+  pairs.syn.i32              M           synapse count of the connection
+  pairs.nt.i8                M           dominant transmitter code (0..5, NT_TYPES order)
+  csr.out.indptr.i64         N+1
+  csr.out.indices.i32        M
+  csr.out.syn.i32            M
+  csr.in.indptr.i64          N+1
+  csr.in.indices.i32         M
+  csr.in.syn.i32             M
+  neuropils.txt              K lines     neuropil label per code
+```
+
+Total 449.6 MB for v783 (M = 15,091,983 pairs at threshold 1). The threshold-5 view used for
+all published comparisons is a filter on `pairs.syn.i32` - no extra files.
+
+## Verified Vyb constraints (2026-09-17, build `vyb 0.7.5`, probes in `src/vyb/probes/`)
+
+These cost real debugging time and must be respected by any Vyb code that reads the dataset:
+
+1. **A raw io byte buffer cannot cross a module boundary.** `io.read_bytes_at` returns a
+   `Vec<UInt8>` that is correct when used in the same function, but a module function that
+   *returns* it hands the caller a buffer of the right length with **garbage contents**
+   (probe: inline read gave `0, 62`; the same 16 bytes returned through a module function gave
+   `101106528132824, 0`). Passing a `File` into a helper fails the same way. Decode inside the
+   function that reads, and return `Vec<Int>` built with `push`.
+2. **A function returning `Vec<UInt8>?` cannot `return` a `Vec<UInt8>`.** The compiler emits
+   `Unsupported or invalid cast from type { ptr, i64, i64 } to { { ptr, i64, i64 }, i1 }`.
+   An optional Vec only comes straight out of an io intrinsic; signal failure with a short
+   buffer instead (`probe_b`).
+3. **A `Vec` parameter is not mutated for the caller** ("Vec assignment deep-copies on
+   borrow"), so out-parameters do not work: `load_i64(out<Vec<Int>>)` returned an empty Vec
+   (`probe_d`). Return results by value.
+4. **Byte-at-a-time decoding is ~29 us per element** (~34k elements/s): `summarise_i32` over
+   1M elements took 30.7 s, over 5M took 148.1 s, i.e. ~29 us/element, roughly three orders
+   of magnitude off a native loop (`probe_e`). A full pass over the 15.1M-pair arrays costs
+   ~7 minutes. Consequence for the port: **the dataset should be read with a bulk path** (a
+   runtime/binding helper that maps file bytes to an integer view, or a `.vyb` array-typed
+   bulk read) rather than element-wise `Vec.get` in Vyb code. Until that exists, V1 validation
+   runs single-pass reductions and accepts the runtime; production (DES/CUDA) must not depend
+   on element-wise decoding.
+
+### Verified Vyb constraints found while building the M2 DES (2026-09-17, same build)
+
+Probes: `src/vyb/probes/probe_m2_*.vyb`, indexed with outcomes in `src/vyb/probes/README.md`.
+
+5. **`Vec<Vec<T>>` is unusable.** get -> push -> set write-back dies two ways (LLVM
+   `ICmpInst::AssertOK` core dump; `free(): double free detected in tcache 2` at exit for the
+   minimal slice), `Vec<Vec<String>>` segfaults, `outer.get(i).get(0)` returns **garbage** (a silent
+   wrong answer), `outer.get(i).push(x)` silently writes into a temporary, and `outer[i].push(x)` is
+   a semantic error. Every bucketed structure must therefore be a structure-of-arrays: per-bucket
+   chain heads (`Vec<Int>`) over one flat event arena. This is what `des.vyb`'s calendar queue does,
+   and it is also the layout the CUDA backend needs, so the constraint cost us nothing in the end.
+6. **Caller state is only mutable through a `their<T>` borrow** (confirmed: `Vec` push/set and
+   struct scalar fields all reach the caller, including across a module boundary for a module-defined
+   `share(all)` struct). A bare `Vec` parameter is a copy; passing an owned value to a `their<T>`
+   parameter requires `borrow(...)` at the owning call site.
+7. **Re-borrowing an existing `their<T>` segfaults**: `f(borrow(v), x)` where `v<their<T>>` is
+   already a borrow (probe_m2_i, rc=139); passing `v` straight through works (probe_m2_k). Rule:
+   borrow once at the owner, propagate afterwards.
+8. **`ptr` is reserved and is rejected as a struct field name** ("Expected field name in struct ..."),
+   with no mention of the offending token (probe_m2_h). Struct fields must also be
+   **comma-separated** (probe_m2_g).
+9. **`String.to_int` / `to_float` do not exist on this build** despite `docs/refman/language.md`
+   (probe_m2_c); `split`, `trim`, `starts_with`, `contains` do work. Applications ship their own
+   integer parser.
+10. A `while (a && b)` condition with an early-exit body (the `lif_leak` shape) compiles and runs
+    correctly (probe_m2_j), and `time::time_mono_millis` + `io::open_write/write_str/read_all` are a
+    complete timing/result-emission surface (probe_m2_d).
+
+## Milestones and state
+
+* **V0** - `scripts/export_bin.py` emits the flat binary. **DONE** (449.6 MB, 18 arrays).
+* **V1** - Vyb loads the dataset and reproduces the loader-level invariants
+  (`src/vyb/phase0_counts.vyb`), checked against the Python reference by
+  `scripts/vyb_v1_check.py`. **DONE**: 26/26 invariants match exactly (neuron and pair
+  counts, synapse total, the threshold-5 counts, CSR row pointers and degree statistics, and
+  whole-array sums for the pre/post/root-id arrays - the root-id sum matches even though it
+  overflows int64, so both sides wrap identically). Result: `results/phase0/vyb_v1_check.json`.
+  Runtime ~28 min for the full scan, dominated by the decode throughput in constraint 4.
+* **V2** - Vyb computes components (SCC/WCC), reciprocity, clustering, sampled BFS path
+  statistics. Gate: match the oracle within stated tolerances.
+* **V3** - Vyb DES engine (§8): Entity/State/Event/Scheduler, LIF neuron state in
+  structure-of-arrays, validated against the Phase 1 Python LIF reference. **DONE** (M2):
+  `src/vyb/des.vyb` (bucketed calendar-queue runtime) + `src/vyb/phase2_des.vyb` (LIF application),
+  gate `scripts/vyb_des_check.py` against the fixture from `scripts/make_tiny_net.py`.
+  Result: `results/phase2/des_summary.json` and `results/phase2/vyb_des_check.json` - 4/4
+  replications match spike-for-spike (771,379 spikes over 22,766,285 events in the primary
+  replication, 0 mismatched entities, identical FNV hashes), 6.6-7.0M events/s measured.
+* **V4** - bucketed CUDA/NVPTX event scheduling (§9, §23), validated against V3.
+
+Phase 1 (LIF baseline) and Phase 2 (Vyb DES) can run in parallel with V1/V2: they consume the
+same canonical dataset.
+
+## Reproducing the Vyb side
+
+```
+cd ~/Projects/VybFly
+VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb \
+    src/vyb/phase0_counts.vyb --module-path src/vyb > results/phase0/vyb_counts.txt
+python scripts/vyb_v1_check.py
+```
+
+M2 (DES) gate - fixture, runtime, application, independent oracle:
+
+```
+cd ~/Projects/VybFly
+python3 scripts/make_tiny_net.py                     # data/processed/tiny_net/*.csv + meta.json
+VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb \
+    src/vyb/probes/probe_m2_f_des_smoke.vyb --module-path src/vyb     # 42 unit checks
+VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb \
+    src/vyb/phase2_des.vyb --module-path src/vyb > results/phase2/vyb_des_stdout.txt
+python3 scripts/vyb_des_check.py                     # -> results/phase2/vyb_des_check.json
+```
+
+`scripts/vyb_des_check.py --reference-only` runs the oracle alone (fast, useful when tuning the
+fixture with `scripts/make_tiny_net.py --neurons/--ticks/--e-weight/...`).
+
+
+Probes (each is a standalone program; `probe_c` needs `--module-path src/vyb/probes`):
+
+```
+VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb src/vyb/probes/probe_a_inline_read.vyb
+VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb src/vyb/probes/probe_c_module_buffer_boundary.vyb --module-path src/vyb/probes
+```
+
+## Open items to raise upstream (Vyb repo)
+
+* element-wise byte decode throughput (constraint 4) - needs a bulk byte->int view for
+  GPU/array workloads, which the CUDA path will otherwise be built on top of;
+* the module-boundary `Vec<UInt8>` corruption (constraint 1) - silent data corruption is the
+  worst failure mode for a compiler that advertises a binary io surface (#213);
+* optional-return limitation (constraint 2) and non-mutating `Vec` parameters (constraint 3)
+  are narrower but each one is a trap for a first-time data-loading consumer.

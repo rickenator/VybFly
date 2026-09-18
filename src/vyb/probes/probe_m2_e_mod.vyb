@@ -1,0 +1,40 @@
+// probe_m2_e_mod - main-less share(all) module: does a their<Sched> borrow parameter
+// mutate the CALLER's struct (with Vec fields) across a module boundary?
+//
+// Run from the program probe_m2_e_module_borrow.vyb with --module-path src/vyb/probes
+
+share(all)
+struct Pair {
+    t<Int>,
+    v<Int>
+}
+
+share(all)
+struct Sched {
+    arena<Vec<Int>>,
+    heads<Vec<Int>>,
+    n<Int>
+}
+
+share(all)
+mk(nb<Int>)<Sched> -> {
+    s<Sched> = Sched { arena = Vec(), heads = Vec(), n = 0 }
+    i<Int> = 0
+    while (i < nb) {
+        s.heads.push(-1)
+        i = i + 1
+    }
+    return s
+}
+
+share(all)
+push_ev(s<their<Sched>>, t<Int>, v<Int>) -> {
+    s.arena.push(v)
+    s.heads.set(0, s.arena.len() - 1)
+    s.n = s.n + 1
+}
+
+share(all)
+mk_pair(t<Int>, v<Int>)<Pair> -> {
+    return Pair { t = t, v = v }
+}

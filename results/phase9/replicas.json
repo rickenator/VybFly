@@ -1,0 +1,189 @@
+{
+  "errors": {},
+  "reference_threshold": 5,
+  "scales": {
+    "1": {
+      "graph": {
+        "density": 0.00013926045,
+        "mean_out_degree": 19.3926,
+        "mean_synapses_per_connection": 12.6471,
+        "n_connections": 2700513,
+        "n_neurons": 139255,
+        "n_synapses": 34153566
+      },
+      "path": "results/phase9/replicas/g1",
+      "seconds_load": 1.31,
+      "source": "cached"
+    },
+    "10": {
+      "graph": {
+        "density": 1.4382965e-05,
+        "mean_out_degree": 20.029,
+        "mean_synapses_per_connection": 12.4477,
+        "n_connections": 27891361,
+        "n_neurons": 1392550,
+        "n_synapses": 347182855
+      },
+      "parameters": {
+        "factor": 10.0,
+        "geometry": {
+          "R": 1.7481218938992897,
+          "T": 0.7556933600339182,
+          "dim": 3,
+          "kind": "euclidean",
+          "n": 139255,
+          "source": "annotation_xyz+law_fit"
+        },
+        "geometry_R": 1.7481218938992897,
+        "geometry_T": 0.7556933600339182,
+        "operation": "renorm.upscale",
+        "rewire_fraction": 0.1,
+        "sibling_edges": true,
+        "sibling_prob_scale": 0.1
+      },
+      "path": "results/phase9/replicas/g10",
+      "provenance": {
+        "children_histogram": {
+          "10": 139255
+        },
+        "factor": 10.0,
+        "geometry": {
+          "R": 1.7481218938992897,
+          "T": 0.7556933600339182,
+          "dim": 3,
+          "kind": "euclidean",
+          "n": 139255,
+          "source": "annotation_xyz+law_fit"
+        },
+        "kind": "upscale",
+        "mean_children": 10.0,
+        "n_sibling_edges_pre_merge": 1129439,
+        "perturbation": 0.05794209858664885,
+        "rewire_fraction": 0.1,
+        "seed": 0,
+        "sibling_edges": true,
+        "sibling_prob_scale": 0.1,
+        "sibling_threshold": 5,
+        "source_edges": 2700513,
+        "source_n": 139255
+      },
+      "seconds_build": 95.7,
+      "seconds_total": 114.4,
+      "source": "built"
+    },
+    "2": {
+      "graph": {
+        "density": 6.6879018e-05,
+        "mean_out_degree": 18.6264,
+        "mean_synapses_per_connection": 13.1917,
+        "n_connections": 5187641,
+        "n_neurons": 278510,
+        "n_synapses": 68433997
+      },
+      "parameters": {
+        "factor": 2.0,
+        "geometry": {
+          "R": 1.7481218938992897,
+          "T": 0.7556933600339182,
+          "dim": 3,
+          "kind": "euclidean",
+          "n": 139255,
+          "source": "annotation_xyz+law_fit"
+        },
+        "geometry_R": 1.7481218938992897,
+        "geometry_T": 0.7556933600339182,
+        "operation": "renorm.upscale",
+        "rewire_fraction": 0.1,
+        "sibling_edges": true,
+        "sibling_prob_scale": 0.1
+      },
+      "path": "results/phase9/replicas/g2",
+      "provenance": {
+        "children_histogram": {
+          "2": 139255
+        },
+        "factor": 2.0,
+        "geometry": {
+          "R": 1.7481218938992897,
+          "T": 0.7556933600339182,
+          "dim": 3,
+          "kind": "euclidean",
+          "n": 139255,
+          "source": "annotation_xyz+law_fit"
+        },
+        "kind": "upscale",
+        "mean_children": 2.0,
+        "n_sibling_edges_pre_merge": 25373,
+        "perturbation": 0.05794209858664885,
+        "rewire_fraction": 0.1,
+        "seed": 0,
+        "sibling_edges": true,
+        "sibling_prob_scale": 0.1,
+        "sibling_threshold": 5,
+        "source_edges": 2700513,
+        "source_n": 139255
+      },
+      "seconds_build": 13.6,
+      "seconds_total": 37.2,
+      "source": "built"
+    },
+    "5": {
+      "graph": {
+        "density": 2.7870497e-05,
+        "mean_out_degree": 19.4055,
+        "mean_synapses_per_connection": 12.7314,
+        "n_connections": 13511566,
+        "n_neurons": 696275,
+        "n_synapses": 172021005
+      },
+      "parameters": {
+        "factor": 5.0,
+        "geometry": {
+          "R": 1.7481218938992897,
+          "T": 0.7556933600339182,
+          "dim": 3,
+          "kind": "euclidean",
+          "n": 139255,
+          "source": "annotation_xyz+law_fit"
+        },
+        "geometry_R": 1.7481218938992897,
+        "geometry_T": 0.7556933600339182,
+        "operation": "renorm.upscale",
+        "rewire_fraction": 0.1,
+        "sibling_edges": true,
+        "sibling_prob_scale": 0.1
+      },
+      "path": "results/phase9/replicas/g5",
+      "provenance": {
+        "children_histogram": {
+          "5": 139255
+        },
+        "factor": 5.0,
+        "geometry": {
+          "R": 1.7481218938992897,
+          "T": 0.7556933600339182,
+          "dim": 3,
+          "kind": "euclidean",
+          "n": 139255,
+          "source": "annotation_xyz+law_fit"
+        },
+        "kind": "upscale",
+        "mean_children": 5.0,
+        "n_sibling_edges_pre_merge": 250635,
+        "perturbation": 0.05794209858664885,
+        "rewire_fraction": 0.1,
+        "seed": 0,
+        "sibling_edges": true,
+        "sibling_prob_scale": 0.1,
+        "sibling_threshold": 5,
+        "source_edges": 2700513,
+        "source_n": 139255
+      },
+      "seconds_build": 29.1,
+      "seconds_total": 37.5,
+      "source": "built"
+    }
+  },
+  "seconds_total": 190.7,
+  "seed": 0
+}

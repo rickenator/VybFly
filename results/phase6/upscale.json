@@ -1,0 +1,481 @@
+{
+  "geometry": {
+    "R": 0.0003964305558085959,
+    "T": 0.00021149649631410462,
+    "dim": 16,
+    "fit": {
+      "R": 0.0003964305558085959,
+      "T": 0.00021149649631410462,
+      "auc": 0.89453012745,
+      "auc_definition": "P(distance(connected pair) < distance(random pair))",
+      "distance_median_negative": 0.0009899825466918783,
+      "distance_median_positive": 7.267552575554296e-05,
+      "kind": "euclidean",
+      "log_likelihood": -299931.86274812307,
+      "n_negative": 400000,
+      "n_positive": 400000
+    },
+    "kind": "euclidean",
+    "source": "phase4:spectral_16_coords.npy+law_fit"
+  },
+  "node_subdivision": {
+    "policy": "each neuron becomes `factor` children placed near the parent in the latent geometry; a child inherits the parent's partner set with the parent's synapse weights and the concrete target child is drawn by the geometric connection law; sibling edges added by the law at a damped rate",
+    "rewire_fraction": 0.1,
+    "sibling_edge_prob_scale": 0.1,
+    "sibling_edges": true
+  },
+  "phase": "6 + M8/M10 (inverse renormalization / upscaling)",
+  "reference": {
+    "density": 0.00013926045,
+    "mean_out_degree": 19.3926,
+    "mean_synapses_per_connection": 12.6471,
+    "n_connections": 2700513,
+    "n_neurons": 139255,
+    "n_synapses": 34153566
+  },
+  "scales": {
+    "10.0": {
+      "closure": {
+        "community_ari": 0.56344,
+        "community_nmi": 0.791833,
+        "composite": 0.275251441,
+        "connectivity_matrix_divergence": 0.014483548,
+        "correspondence_coverage": 1.0,
+        "degree_wasserstein": 0.642381,
+        "degree_wasserstein_normalised": 0.033125,
+        "latent_distance_wasserstein": null,
+        "motif_divergence_L1": null,
+        "n_reference": 139255,
+        "n_replica": 1392550,
+        "reference": {
+          "density": 0.00013926045,
+          "mean_out_degree": 19.3926,
+          "mean_synapses_per_connection": 12.6471,
+          "n_connections": 2700513,
+          "n_neurons": 139255,
+          "n_synapses": 34153566
+        },
+        "replica": {
+          "density": 1.4357563e-05,
+          "mean_out_degree": 19.9936,
+          "mean_synapses_per_connection": 12.4608,
+          "n_connections": 27842102,
+          "n_neurons": 1392550,
+          "n_synapses": 346934550
+        },
+        "rich_club": {
+          "reference": {
+            "2": 0.000311177,
+            "5": 0.000359915,
+            "10": 0.000461943,
+            "25": 0.00104972,
+            "50": 0.002832949,
+            "100": 0.008089838,
+            "200": 0.02011122
+          },
+          "replica": {
+            "2": 3.1558e-05,
+            "5": 3.6952e-05,
+            "10": 4.6049e-05,
+            "25": 0.000101379,
+            "50": 0.000272871,
+            "100": 0.000825729,
+            "200": 0.002144343
+          }
+        },
+        "rich_club_distance": 0.899234161,
+        "rich_club_jaccard_matched_quantile": 0.898942,
+        "rich_club_jaccard_note": "top 29% by total degree in each graph (the published rich-club fraction), compared node-for-node through the correspondence",
+        "scale_edges": 10.309931,
+        "scale_n": 10.0,
+        "scale_synapses": 10.158077,
+        "spectral_distance": 0.07356331,
+        "spectral_reference_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "spectral_replica_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "triad_census_available": false,
+        "two_node": {
+          "reciprocity_delta": -0.123129,
+          "reference": {
+            "connections": 2700513,
+            "reciprocal_pairs": 188724,
+            "reciprocity": 0.139769,
+            "unidirectional_pairs": 2323065
+          },
+          "replica": {
+            "connections": 27842102,
+            "reciprocal_pairs": 231649,
+            "reciprocity": 0.01664,
+            "unidirectional_pairs": 27378804
+          }
+        },
+        "weighted_degree_wasserstein": 3.876981
+      },
+      "connection_ratio": 10.309931,
+      "mean_degree_reference": 19.392575,
+      "mean_degree_replica": 19.99361,
+      "mean_strength_reference": 12.647066,
+      "mean_strength_replica": 12.460789,
+      "n_ratio": 10.0,
+      "replica": {
+        "density": 1.4357563e-05,
+        "mean_out_degree": 19.9936,
+        "mean_synapses_per_connection": 12.4608,
+        "n_connections": 27842102,
+        "n_neurons": 1392550,
+        "n_synapses": 346934550
+      },
+      "replica_provenance": {
+        "children_histogram": {
+          "10": 139255
+        },
+        "factor": 10.0,
+        "geometry": {
+          "R": 0.0003964305558085959,
+          "T": 0.00021149649631410462,
+          "dim": 16,
+          "kind": "euclidean",
+          "n": 139255,
+          "source": "phase4:spectral_16_coords.npy+law_fit"
+        },
+        "kind": "upscale",
+        "mean_children": 10.0,
+        "n_sibling_edges_pre_merge": 1079778,
+        "perturbation": 5.109811223422871e-06,
+        "rewire_fraction": 0.1,
+        "seed": 0,
+        "sibling_edges": true,
+        "sibling_prob_scale": 0.1,
+        "sibling_threshold": 5,
+        "source_edges": 2700513,
+        "source_n": 139255
+      },
+      "seconds_upscale": 73.8,
+      "synapse_ratio": 10.158077
+    },
+    "2.0": {
+      "closure": {
+        "community_ari": 0.579185,
+        "community_nmi": 0.797909,
+        "composite": 0.194123045,
+        "connectivity_matrix_divergence": 0.002646948,
+        "correspondence_coverage": 1.0,
+        "degree_wasserstein": 0.78753,
+        "degree_wasserstein_normalised": 0.04061,
+        "latent_distance_wasserstein": null,
+        "motif_divergence_L1": null,
+        "n_reference": 139255,
+        "n_replica": 278510,
+        "reference": {
+          "density": 0.00013926045,
+          "mean_out_degree": 19.3926,
+          "mean_synapses_per_connection": 12.6471,
+          "n_connections": 2700513,
+          "n_neurons": 139255,
+          "n_synapses": 34153566
+        },
+        "replica": {
+          "density": 6.6858184e-05,
+          "mean_out_degree": 18.6206,
+          "mean_synapses_per_connection": 13.1947,
+          "n_connections": 5186025,
+          "n_neurons": 278510,
+          "n_synapses": 68428042
+        },
+        "rich_club": {
+          "reference": {
+            "2": 0.000311177,
+            "5": 0.000359915,
+            "10": 0.000461943,
+            "25": 0.00104972,
+            "50": 0.002832949,
+            "100": 0.008089838,
+            "200": 0.02011122
+          },
+          "replica": {
+            "2": 0.000154867,
+            "5": 0.000180145,
+            "10": 0.000231028,
+            "25": 0.000528076,
+            "50": 0.00143858,
+            "100": 0.00413598,
+            "200": 0.010553199
+          }
+        },
+        "rich_club_distance": 0.493544371,
+        "rich_club_jaccard_matched_quantile": 0.917927,
+        "rich_club_jaccard_note": "top 29% by total degree in each graph (the published rich-club fraction), compared node-for-node through the correspondence",
+        "scale_edges": 1.920385,
+        "scale_n": 2.0,
+        "scale_synapses": 2.00354,
+        "spectral_distance": 0.064169922,
+        "spectral_reference_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "spectral_replica_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          1.984258,
+          1.979778
+        ],
+        "triad_census_available": false,
+        "two_node": {
+          "reciprocity_delta": -0.072941,
+          "reference": {
+            "connections": 2700513,
+            "reciprocal_pairs": 188724,
+            "reciprocity": 0.139769,
+            "unidirectional_pairs": 2323065
+          },
+          "replica": {
+            "connections": 5186025,
+            "reciprocal_pairs": 173285,
+            "reciprocity": 0.066828,
+            "unidirectional_pairs": 4839455
+          }
+        },
+        "weighted_degree_wasserstein": 0.434132
+      },
+      "connection_ratio": 1.920385,
+      "mean_degree_reference": 19.392575,
+      "mean_degree_replica": 18.620606,
+      "mean_strength_reference": 12.647066,
+      "mean_strength_replica": 13.1947,
+      "n_ratio": 2.0,
+      "replica": {
+        "density": 6.6858184e-05,
+        "mean_out_degree": 18.6206,
+        "mean_synapses_per_connection": 13.1947,
+        "n_connections": 5186025,
+        "n_neurons": 278510,
+        "n_synapses": 68428042
+      },
+      "replica_provenance": {
+        "children_histogram": {
+          "2": 139255
+        },
+        "factor": 2.0,
+        "geometry": {
+          "R": 0.0003964305558085959,
+          "T": 0.00021149649631410462,
+          "dim": 16,
+          "kind": "euclidean",
+          "n": 139255,
+          "source": "phase4:spectral_16_coords.npy+law_fit"
+        },
+        "kind": "upscale",
+        "mean_children": 2.0,
+        "n_sibling_edges_pre_merge": 24182,
+        "perturbation": 5.109811223422871e-06,
+        "rewire_fraction": 0.1,
+        "seed": 0,
+        "sibling_edges": true,
+        "sibling_prob_scale": 0.1,
+        "sibling_threshold": 5,
+        "source_edges": 2700513,
+        "source_n": 139255
+      },
+      "seconds_upscale": 10.9,
+      "synapse_ratio": 2.00354
+    },
+    "5.0": {
+      "closure": {
+        "community_ari": 0.635999,
+        "community_nmi": 0.814731,
+        "composite": 0.235530859,
+        "connectivity_matrix_divergence": 0.008001907,
+        "correspondence_coverage": 1.0,
+        "degree_wasserstein": 0.296107,
+        "degree_wasserstein_normalised": 0.015269,
+        "latent_distance_wasserstein": null,
+        "motif_divergence_L1": null,
+        "n_reference": 139255,
+        "n_replica": 696275,
+        "reference": {
+          "density": 0.00013926045,
+          "mean_out_degree": 19.3926,
+          "mean_synapses_per_connection": 12.6471,
+          "n_connections": 2700513,
+          "n_neurons": 139255,
+          "n_synapses": 34153566
+        },
+        "replica": {
+          "density": 2.7848349e-05,
+          "mean_out_degree": 19.3901,
+          "mean_synapses_per_connection": 12.7378,
+          "n_connections": 13500829,
+          "n_neurons": 696275,
+          "n_synapses": 171970190
+        },
+        "rich_club": {
+          "reference": {
+            "2": 0.000311177,
+            "5": 0.000359915,
+            "10": 0.000461943,
+            "25": 0.00104972,
+            "50": 0.002832949,
+            "100": 0.008089838,
+            "200": 0.02011122
+          },
+          "replica": {
+            "2": 6.3735e-05,
+            "5": 7.4377e-05,
+            "10": 9.3367e-05,
+            "25": 0.000208281,
+            "50": 0.000558062,
+            "100": 0.001660886,
+            "200": 0.00425618
+          }
+        },
+        "rich_club_distance": 0.796295487,
+        "rich_club_jaccard_matched_quantile": 0.905509,
+        "rich_club_jaccard_note": "top 29% by total degree in each graph (the published rich-club fraction), compared node-for-node through the correspondence",
+        "scale_edges": 4.999357,
+        "scale_n": 5.0,
+        "scale_synapses": 5.035205,
+        "spectral_distance": 0.067507519,
+        "spectral_reference_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ],
+        "spectral_replica_head": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          1.995765
+        ],
+        "triad_census_available": false,
+        "two_node": {
+          "reciprocity_delta": -0.111314,
+          "reference": {
+            "connections": 2700513,
+            "reciprocal_pairs": 188724,
+            "reciprocity": 0.139769,
+            "unidirectional_pairs": 2323065
+          },
+          "replica": {
+            "connections": 13500829,
+            "reciprocal_pairs": 192080,
+            "reciprocity": 0.028455,
+            "unidirectional_pairs": 13116669
+          }
+        },
+        "weighted_degree_wasserstein": 1.726846
+      },
+      "connection_ratio": 4.999357,
+      "mean_degree_reference": 19.392575,
+      "mean_degree_replica": 19.390082,
+      "mean_strength_reference": 12.647066,
+      "mean_strength_replica": 12.73775,
+      "n_ratio": 5.0,
+      "replica": {
+        "density": 2.7848349e-05,
+        "mean_out_degree": 19.3901,
+        "mean_synapses_per_connection": 12.7378,
+        "n_connections": 13500829,
+        "n_neurons": 696275,
+        "n_synapses": 171970190
+      },
+      "replica_provenance": {
+        "children_histogram": {
+          "5": 139255
+        },
+        "factor": 5.0,
+        "geometry": {
+          "R": 0.0003964305558085959,
+          "T": 0.00021149649631410462,
+          "dim": 16,
+          "kind": "euclidean",
+          "n": 139255,
+          "source": "phase4:spectral_16_coords.npy+law_fit"
+        },
+        "kind": "upscale",
+        "mean_children": 5.0,
+        "n_sibling_edges_pre_merge": 240472,
+        "perturbation": 5.109811223422871e-06,
+        "rewire_fraction": 0.1,
+        "seed": 0,
+        "sibling_edges": true,
+        "sibling_prob_scale": 0.1,
+        "sibling_threshold": 5,
+        "source_edges": 2700513,
+        "source_n": 139255
+      },
+      "seconds_upscale": 25.6,
+      "synapse_ratio": 5.035205
+    }
+  },
+  "scaling_exponents": {
+    "connections_vs_neurons": {
+      "alpha": 1.017485,
+      "intercept": 2.73511,
+      "n_points": 4,
+      "r2": 0.999492
+    },
+    "note": "alpha ~ 1 means sparsity is preserved (E proportional to N); alpha ~ 2 would mean the enlargement drifted into a dense all-to-all regime",
+    "synapses_vs_neurons": {
+      "alpha": 1.006663,
+      "intercept": 5.421841,
+      "n_points": 4,
+      "r2": 0.999996
+    }
+  },
+  "seed": 0,
+  "threshold": 5,
+  "timings": {
+    "upscale_10.0": 73.8,
+    "upscale_2.0": 10.9,
+    "upscale_5.0": 25.6
+  },
+  "total_seconds": 3174.7
+}

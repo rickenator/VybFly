@@ -1,0 +1,18 @@
+// probe_m2_g_struct_field_names - which struct field names parse?  (`ptr` was suspected of being a
+// type keyword after "Expected field name in struct 'Recorder'".)
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_g_struct_field_names.vyb --module-path src/vyb/probes
+
+struct A {
+    ticks<Vec<Int>>,
+    count<Vec<Int>>,
+    total<Int>
+}
+
+main()<Int> -> {
+    a<A> = A { ticks = Vec(), count = Vec(), total = 7 }
+    a.ticks.push(1)
+    println("A ok total=" + a.total.to_string() + " len=" + a.ticks.len().to_string())
+    return 0
+}

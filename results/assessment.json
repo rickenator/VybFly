@@ -1,0 +1,156 @@
+{
+  "missing_artifacts": [],
+  "phase_inventory": {
+    "M0 baseline dataset + published gate": {
+      "artifact": "results/phase0/gate_result.json",
+      "headline": "11/11 required checks vs published FlyWire values; passed=True",
+      "present": true
+    },
+    "M1 LIF whole-connectome baseline": {
+      "artifact": "results/phase1/lif_baseline.json",
+      "headline": "keys=['agreement_tolerances', 'arguments', 'artifacts', 'canonical_dataset', 'command', 'driven_vs_silent_sensory_note', 'engine_agreement_gate', 'environment']",
+      "present": true
+    },
+    "M11 plasticity / associative learning": {
+      "artifact": "results/phase8/learning.json",
+      "headline": "keys=['aggregate', 'annotations', 'attribution', 'capacity_budget_check', 'condition_notes', 'criterion', 'dataset', 'eta_sweep']",
+      "present": true
+    },
+    "M12-M14 capability and energy scaling": {
+      "artifact": "results/phase9/capability.json",
+      "headline": "keys=['calibration', 'capability_module_sha256_16', 'capability_per_watt', 'cost', 'dataset_hash', 'deliverable', 'environment', 'fits']",
+      "present": true
+    },
+    "M2 Vyb DES engine + reference equivalence": {
+      "artifact": "results/phase2/vyb_des_check.json",
+      "headline": "verdict=PASS",
+      "present": true
+    },
+    "M3 event-driven GPU backend": {
+      "artifact": "results/phase3/",
+      "headline": "spike_bucket.ptx with 2 .entry kernels; CPU~GPU equivalence PASSED; SUMMARY.txt present",
+      "present": true
+    },
+    "M4 energy instrumentation": {
+      "artifact": "results/energy/hardware_energy.json",
+      "headline": "keys=['baseline_stability', 'baseline_stability_note', 'cross_track_comparison', 'device_availability', 'devices', 'instrumentation_verification', 'measurement', 'notes']",
+      "present": true
+    },
+    "M5 latent geometry": {
+      "artifact": "results/phase4/geometry.json",
+      "headline": "keys=['canonical', 'comparison_table', 'config', 'degree_only_baseline', 'environment', 'errors', 'geometries', 'geometry_attributes']",
+      "present": true
+    },
+    "M6/M7 downscaling + dynamic validation": {
+      "artifact": "results/phase5/{downscale,dynamics}.json",
+      "headline": "0.1x: N=15997 composite=0.275767492; 0.25x: N=36197 composite=0.26652541; 0.5x: N=70437 composite=0.178548318; dyn 0.1x: jaccard=0.853034 final_ratio=1.006947; dyn 0.25x: jaccard=0.949853 final_ratio=1.091892; dyn 0.5x: jaccard=0.908583 final_ratio=0.993412",
+      "present": true
+    },
+    "M8/M10 inverse scaling (2x..10x)": {
+      "artifact": "results/phase6/upscale.json",
+      "headline": "10.0x: N=1392550 E=27842102 mean_deg=19.99361 comp=0.275251441; 2.0x: N=278510 E=5186025 mean_deg=18.620606 comp=0.194123045; 5.0x: N=696275 E=13500829 mean_deg=19.390082 comp=0.235530859; E~N^1.017485 (R2=0.999492)",
+      "present": true
+    },
+    "M9 renormalization closure": {
+      "artifact": "results/phase7/closure.json",
+      "headline": "10.0x: R(N)=139255 composite=0.000978306 deg_wass_n=0.0 ARI=1.0; 2.0x: R(N)=139255 composite=0.018407118 deg_wass_n=0.007422 ARI=0.911867; 5.0x: R(N)=139255 composite=0.00150404 deg_wass_n=6e-06 ARI=0.991497",
+      "present": true
+    }
+  },
+  "power_scaling_table": [
+    {
+      "E": 5186025,
+      "N": 278510,
+      "dynamics_curve_L1": 0.81859538,
+      "final_active_fraction": 0.79255323,
+      "latency_steps_to_half": 3,
+      "scale": 2.0,
+      "synapses": 68428042
+    },
+    {
+      "E": 13500829,
+      "N": 696275,
+      "dynamics_curve_L1": 0.63067609,
+      "final_active_fraction": 0.79518294,
+      "latency_steps_to_half": 3,
+      "scale": 5.0,
+      "synapses": 171970190
+    },
+    {
+      "E": 27842102,
+      "N": 1392550,
+      "dynamics_curve_L1": 0.43398585,
+      "final_active_fraction": 0.7959549,
+      "latency_steps_to_half": 3,
+      "scale": 10.0,
+      "synapses": 346934550
+    }
+  ],
+  "success_criteria": [
+    {
+      "artifacts": "results/phase7/closure.json (2.0), results/phase5/dynamics.json, results/phase1/lif_baseline.json",
+      "checks": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "criterion": "Minimum success - 2x synthetic connectome preserving statistics, renormalising back toward the real graph, executing stably, retaining baseline circuit behaviour",
+      "evidence": [
+        "2x closure composite=0.018407118 degree_wasserstein_normalised=0.007422",
+        "downscaled dynamics jaccard>0.5: True",
+        "LIF baseline artifact present (executes stably under its own gate)"
+      ],
+      "verdict": "SUPPORTED"
+    },
+    {
+      "artifacts": "results/phase6/upscale.json, results/phase7/closure.json (10.0), results/phase9/capability.json, results/phase8/learning.json, results/energy/curves.json",
+      "checks": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "criterion": "Strong success - 10x connectome retaining invariants, learning the same tasks, beating baseline capacity on at least one benchmark, ~proportional biological energy",
+      "evidence": [
+        "connections ~ N^1.0442 (sparsity preserved requires alpha ~ 1)",
+        "10x closure composite=0.000978306",
+        "grew: discrimination_accuracy_at_finest_delta [0.5, 0.75, 0.75, 0.8125]",
+        "grew: discrimination_bits_at_finest_delta [0.0, 0.25, 0.18872187554086717, 0.4300365325772657]",
+        "grew: discrimination_bits_at_overlap_0.6 [0.7743974703476992, 0.7743974703476992, 1.0, 1.0]",
+        "grew: discrimination_bits_at_overlap_0.9 [0.0, 0.15563906222956642, 0.5243974703476992, 0.7743974703476992]",
+        "grew: discrimination_bits_at_overlap_0.95 [0.0, 0.25, 0.18872187554086717, 0.4300365325772657]",
+        "grew: generalization_gap [-0.125, 0.0, 0.0, 0.0]",
+        "grew: generalization_matched_accuracy [0.875, 1.0, 1.0, 1.0]",
+        "grew: memory_capacity [8.0, 96.0, 96.0, 96.0]",
+        "grew: memory_capacity_accuracy_at_grid_max [0.8541666666666666, 0.9791666666666666, 1.0, 1.0]",
+        "grew: memory_capacity_at_0.95 [8.0, 96.0, 96.0, 96.0]",
+        "grew: memory_capacity_at_0.99 [8.0, 80.0, 96.0, 96.0]",
+        "grew: min_separable_delta_at_grid_minimum [0.0, 1.0, 1.0, 1.0]",
+        "grew: participation_ratio [182.59642477652721, 268.5835620022859, 339.23639886359825, 388.540714761344]",
+        "grew: robustness_accuracy_at_max_synapses_lesion [0.7, 0.7, 1.0, 1.0]",
+        "grew: robustness_baseline_accuracy [0.9, 1.0, 1.0, 1.0]",
+        "grew: robustness_max_tolerated_rate_synapses [0.699999988079071, 0.699999988079071, 0.8999999761581421, 0.8999999761581421]",
+        "grew: robustness_mi_at_largest_rate_synapses [0.23645279766002797, 0.23645279766002797, 1.0, 1.0]",
+        "grew: robustness_mi_retention_at_largest_rate_synapses [0.3876360861049757, 0.23645279766002797, 1.0, 1.0]",
+        "grew: stimulus_response_mi_at_ceiling [0.0, 0.0, 1.0, 1.0]",
+        "associative learning: plastic AUC 1.0 vs frozen AUC 0.3142857142857142 (and see results/phase8/SUMMARY.txt for the shuffled-connectivity control, which matters for any architecture claim)",
+        "biological track is linear in N by construction (P_bio(N) = P0*N/N0), so this clause is a model identity rather than a measurement; what was measured is the hardware side: joules_per_spike by scale: 1x=8.89e-06, 2x=5.2e-06, 5x=3.92e-06, 10x=4.19e-06"
+      ],
+      "verdict": "SUPPORTED"
+    },
+    {
+      "artifacts": "results/phase9/capability.json + results/energy/curves.json",
+      "checks": [
+        false
+      ],
+      "criterion": "Exceptional result - C(N) grows faster than P(N) across multiple scales",
+      "evidence": [
+        "best-growing capability metric: memory_capacity_at_0.99 ~ N^0.959 (values [8.0, 80.0, 96.0, 96.0]); P_bio is linear in N by construction, so only an exponent clearly above 1 would make capability grow faster than power",
+        "CAVEAT: the capacity series is censored at the 96-class grid at 3 scale(s), so this exponent is a lower bound - extending the grid is the prerequisite for a definitive verdict on the exceptional criterion"
+      ],
+      "verdict": "NOT SUPPORTED"
+    }
+  ]
+}

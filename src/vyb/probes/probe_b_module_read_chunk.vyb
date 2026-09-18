@@ -1,0 +1,37 @@
+import io::{open_read, close, read_bytes_at}
+import flyload::{i64_le, u32_le, read_chunk, chunk_elems_i32}
+
+main()<Int> -> {
+    println("start")
+    dir<String> = "data/processed/canonical_v783/bin/"
+
+    // 1. inline read + module decoder
+    match (open_read(dir + "csr.out.indptr.i64")) {
+        f -> {
+            match (read_bytes_at(f, 0, 16)) {
+                b -> {
+                    println("inline len=" + b.len().to_string())
+                    println("inline i64[0]=" + i64_le(b, 0).to_string())
+                    println("inline i64[8]=" + i64_le(b, 8).to_string())
+                }
+                ? -> { println("read failed") }
+            }
+            close(f)
+        }
+        ? -> { println("open failed") }
+    }
+
+    // 2. module read_chunk (opens its own fd)
+    buf<Vec<UInt8>> = read_chunk(dir + "csr.out.indptr.i64", 0, 16)
+    println("chunk len=" + buf.len().to_string())
+    if (buf.len() >= 16) {
+        println("chunk i64[0]=" + i64_le(buf, 0).to_string())
+        println("chunk u32_le[0]=" + u32_le(buf, 0).to_string())
+    }
+
+    // 3. empty / missing path
+    miss<Vec<UInt8>> = read_chunk(dir + "does_not_exist.bin", 0, 16)
+    println("missing len=" + miss.len().to_string())
+    println("done")
+    return 0
+}

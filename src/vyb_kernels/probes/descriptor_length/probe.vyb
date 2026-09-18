@@ -1,0 +1,174 @@
+// Host runner for the descriptor-length probe. Loads both kernels, runs each with a
+// distinguishable descriptor, and prints what each lane read back.
+//
+// Build kernels first:
+//   VYB_STDLIB=~/Projects/Vyb/stdlib build/vyb --kernel kern6.vyb  --ptx kern6.ptx
+//   VYB_STDLIB=~/Projects/Vyb/stdlib build/vyb --kernel kern13.vyb --ptx kern13.ptx
+// Run:
+//   VYB_STDLIB=~/Projects/Vyb/stdlib build/vyb probe.vyb \
+//       --module-path ~/Projects/Vyb/bindings \
+//       --module-path ~/Projects/Vyb/bindings/cuda
+import cuda::{cuda_init, cuda_device_count, cuda_device, cuda_ctx_retain, cuda_module_load,
+              cuda_module_func, cuda_mem_alloc, cuda_mem_free, cuda_write_i32, cuda_read_i32,
+              cuda_launch, cuda_sync}
+import io::{open_read, read_all}
+
+desc_word(dst<Int>, off<Int>, value<Int>)<Int> -> {
+    low<Int> = value % 4294967296
+    high<Int> = value / 4294967296
+    cuda_write_i32(dst + off, low as CInt)
+    cuda_write_i32(dst + off + 4, high as CInt)
+    return 0
+}
+
+load_ptx(path<String>)<Int> -> {
+    hmod<Int> = 0
+    match (open_read(path)) {
+        f -> {
+            match (read_all(f)) {
+                s -> { hmod = cuda_module_load(s) }
+                ? -> { return 0 }
+            }
+        }
+        ? -> { return 0 }
+    }
+    return hmod
+}
+
+read_lane(d<Int>, i<Int>)<Int> -> {
+    v<Int> = cuda_read_i32(d + i * 4) as Int
+    return v
+}
+
+main()<Int> -> {
+    n<Int> = 8
+    cuda_init()
+    if (cuda_device_count() < 1) { println("ERROR no device"); return 8 }
+    dev<Int> = cuda_device(0) as Int
+    cuda_ctx_retain(dev)
+
+    // ---- 6-word descriptor -------------------------------------------------------------
+    h6<Int> = load_ptx("kern6.ptx")
+    if (h6 == 0) { println("ERROR load kern6"); return 2 }
+    f6<Int> = cuda_module_func(h6, "probe6")
+    d_dsc<Int> = cuda_mem_alloc(64)
+    d_a<Int> = cuda_mem_alloc(n * 4)
+    d_b<Int> = cuda_mem_alloc(n * 4)
+    d_l<Int> = cuda_mem_alloc(n * 4)
+    desc_word(d_dsc, 0, d_a)
+    desc_word(d_dsc, 8, d_b)
+    desc_word(d_dsc, 16, d_l)
+    desc_word(d_dsc, 24, n)
+    desc_word(d_dsc, 32, 111)
+    desc_word(d_dsc, 40, 222)
+    r<CInt> = cuda_launch(f6, 1, 1, 1, 64 as CInt, 1, 1, d_dsc)
+    ri<Int> = r as Int
+    if (cuda_sync() != 0) { println("ERROR sync kern6"); return 4 }
+    a<String> = ""
+    b<String> = ""
+    l<String> = ""
+    i<Int> = 0
+    while (i < n) {
+        a = a + read_lane(d_a, i).to_string() + " "
+        b = b + read_lane(d_b, i).to_string() + " "
+        l = l + read_lane(d_l, i).to_string() + " "
+        i = i + 1
+    }
+    println("kern6  rc=" + ri.to_string())
+    println("kern6  word4(expect 111 x8) = " + a)
+    println("kern6  word5(expect 222 x8) = " + b)
+    println("kern6  lane ids(expect 0..7) = " + l)
+
+    // ---- 6-word descriptor, derived value ------------------------------------------------
+    h6b<Int> = load_ptx("kern6b.ptx")
+    if (h6b == 0) { println("ERROR load kern6b"); return 2 }
+    f6b<Int> = cuda_module_func(h6b, "probe6b")
+    d_dscb<Int> = cuda_mem_alloc(64)
+    d_ab<Int> = cuda_mem_alloc(n * 4)
+    d_bb<Int> = cuda_mem_alloc(n * 4)
+    d_lb<Int> = cuda_mem_alloc(n * 4)
+    desc_word(d_dscb, 0, d_ab)
+    desc_word(d_dscb, 8, d_bb)
+    desc_word(d_dscb, 16, d_lb)
+    desc_word(d_dscb, 24, n)
+    desc_word(d_dscb, 32, 111)
+    desc_word(d_dscb, 40, 222)
+    rb<CInt> = cuda_launch(f6b, 1, 1, 1, 64 as CInt, 1, 1, d_dscb)
+    rbi<Int> = rb as Int
+    if (cuda_sync() != 0) { println("ERROR sync kern6b"); return 4 }
+    ab<String> = ""
+    lb<String> = ""
+    i = 0
+    while (i < n) {
+        ab = ab + read_lane(d_ab, i).to_string() + " "
+        lb = lb + read_lane(d_lb, i).to_string() + " "
+        i = i + 1
+    }
+    println("kern6b rc=" + rbi.to_string())
+    println("kern6b derived(expect 222 x8) = " + ab)
+    println("kern6b lane ids(expect 0..7)  = " + lb)
+
+    // ---- plain i32 store, lane-dependent value -------------------------------------------
+    hs<Int> = load_ptx("kern_store.ptx")
+    if (hs == 0) { println("ERROR load kern_store"); return 2 }
+    fs<Int> = cuda_module_func(hs, "probe_store")
+    d_out<Int> = cuda_mem_alloc(64 * 4)
+    dscs<Int> = cuda_mem_alloc(32)
+    desc_word(dscs, 0, d_out)
+    desc_word(dscs, 8, 64)
+    rs<CInt> = cuda_launch(fs, 1, 1, 1, 64 as CInt, 1, 1, dscs)
+    rsi<Int> = rs as Int
+    if (cuda_sync() != 0) { println("ERROR sync kern_store"); return 4 }
+    s1<String> = ""
+    s2<String> = ""
+    i = 0
+    while (i < 12) {
+        s1 = s1 + read_lane(d_out, i).to_string() + " "
+        s2 = s2 + read_lane(d_out, i + 32).to_string() + " "
+        i = i + 1
+    }
+    println("kern_store rc=" + rsi.to_string())
+    println("kern_store slots 0-11 (expect 1000..1011) = " + s1)
+    println("kern_store slots 32-43 (expect 2000..2022) = " + s2)
+
+    // ---- 13-word descriptor ------------------------------------------------------------
+    h13<Int> = load_ptx("kern13.ptx")
+    if (h13 == 0) { println("ERROR load kern13"); return 2 }
+    f13<Int> = cuda_module_func(h13, "probe13")
+    d_dsc2<Int> = cuda_mem_alloc(128)
+    d_a2<Int> = cuda_mem_alloc(n * 4)
+    d_b2<Int> = cuda_mem_alloc(n * 4)
+    d_l2<Int> = cuda_mem_alloc(n * 4)
+    desc_word(d_dsc2, 0, d_a2)
+    desc_word(d_dsc2, 8, d_b2)
+    desc_word(d_dsc2, 16, d_l2)
+    desc_word(d_dsc2, 24, n)
+    desc_word(d_dsc2, 32, 111)
+    desc_word(d_dsc2, 40, 222)
+    desc_word(d_dsc2, 48, 606)
+    desc_word(d_dsc2, 56, 707)
+    desc_word(d_dsc2, 64, 808)
+    desc_word(d_dsc2, 72, 909)
+    desc_word(d_dsc2, 80, 1010)
+    desc_word(d_dsc2, 88, 1111)
+    desc_word(d_dsc2, 96, 1212)
+    r2<CInt> = cuda_launch(f13, 1, 1, 1, 64 as CInt, 1, 1, d_dsc2)
+    r2i<Int> = r2 as Int
+    if (cuda_sync() != 0) { println("ERROR sync kern13"); return 4 }
+    a2<String> = ""
+    b2<String> = ""
+    l2<String> = ""
+    i = 0
+    while (i < n) {
+        a2 = a2 + read_lane(d_a2, i).to_string() + " "
+        b2 = b2 + read_lane(d_b2, i).to_string() + " "
+        l2 = l2 + read_lane(d_l2, i).to_string() + " "
+        i = i + 1
+    }
+    println("kern13 rc=" + r2i.to_string())
+    println("kern13 word4(expect 111 x8)  = " + a2)
+    println("kern13 word6(expect 606 x8)  = " + b2)
+    println("kern13 word12(expect 1212 x8)= " + l2)
+    println("probe-done")
+    return 0
+}

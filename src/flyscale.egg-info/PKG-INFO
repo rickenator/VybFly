@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: flyscale
+Version: 0.0.1
+Summary: FlyScale: geometric upscaling of the Drosophila connectome (PROJECT-VYBFLY.md)
+Requires-Python: >=3.11
+Requires-Dist: numpy>=1.26
+Requires-Dist: scipy>=1.11
+Requires-Dist: pandas>=2.2
+Requires-Dist: pyarrow>=16
+Requires-Dist: networkx>=3.2
+Requires-Dist: igraph>=0.11
+Requires-Dist: leidenalg>=0.10
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
+Provides-Extra: vision
+Requires-Dist: torch>=2.3; extra == "vision"
+Requires-Dist: torchvision>=0.18; extra == "vision"
+Requires-Dist: matplotlib>=3.8; extra == "vision"
+Requires-Dist: scikit-learn>=1.4; extra == "vision"

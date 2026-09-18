@@ -1,0 +1,57 @@
+{
+  "config": {
+    "batch": 65536,
+    "dim": 2,
+    "epochs": 150,
+    "init": "degree",
+    "lr": 0.05,
+    "seed": 0
+  },
+  "interpretation": "two runs of the same hyperbolic configuration reach held-out AUC 0.8646 and 0.9012 on identical held-out pairs (spread 0.0366), which is larger than both the hyperbolic-vs-anatomical margin (+0.0132 for the delivered run) and the hyperbolic-vs-degree-only margin (-0.0093). Both runs beat the 3-D anatomical coordinates (0.8514), but the comparison against the degree-only baseline (0.8739) is not resolved by this protocol: it flips between runs.",
+  "runs": {
+    "run1_delivered": {
+      "artifact": "results/phase4/artifacts/hyperbolic_2d_coords.npy",
+      "connection_law": {
+        "R": 3.451147899174943,
+        "T": 0.977911015614465,
+        "nll_mean": 0.4324340698890691
+      },
+      "heldout": {
+        "auc": 0.8645541290635546,
+        "average_precision": 0.8375227970384397,
+        "distance_separation": {
+          "median_neg": 5.064946685448884,
+          "median_pos": 2.200768693883524
+        },
+        "log_likelihood_mean": -0.45973845382299383,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.45973845382299383
+      },
+      "note": "this repository's script run (post-patch protocol: 132,181 analysis nodes)"
+    },
+    "run2_same_config": {
+      "artifact": "results/phase4/artifacts/hyperbolic_2d_run2_coords.npy",
+      "connection_law": {
+        "R": 3.144863070470183,
+        "T": 0.7885790819503088,
+        "nll_mean": 0.36295865197703797
+      },
+      "heldout": {
+        "auc": 0.9011944795999045,
+        "average_precision": 0.8711310254697896,
+        "distance_separation": {
+          "median_neg": 5.0223586259042845,
+          "median_pos": 1.8247581434407731
+        },
+        "log_likelihood_mean": -0.3915770108946154,
+        "n_neg": 269478,
+        "n_pos": 269478,
+        "nll_mean": 0.3915770108946154
+      },
+      "note": "separate run of the same configuration on the pre-patch protocol (132,191 nodes)"
+    }
+  },
+  "spread_auc": 0.03664035053634995,
+  "why": "the two hyperbolic fits use the same configuration; the only difference is the protocol variant (14 neurons without an annotation row removed from the analysis graph after the first fit), which changes the sampled non-edges and hence the SGD trajectory. Both are scored on the identical held-out pairs of the delivered protocol, so the spread below is a measured run-to-run sensitivity."
+}

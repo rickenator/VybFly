@@ -1,0 +1,24 @@
+// probe_m2_i_nested_borrow - re-borrowing an existing their<T> at a call site: f(x) where x is
+// itself a their<Vec<Int>> parameter.  Suspected segfault (the smoke test died right after a helper
+// that pushes into a borrowed Vec it received as a borrow).
+//
+// Run: VYB_STDLIB=$HOME/Projects/Vyb/stdlib $HOME/Projects/Vyb/build/vyb \
+//        src/vyb/probes/probe_m2_i_nested_borrow.vyb
+
+push_two(v<their<Vec<Int>>>, x<Int>) -> {
+    v.push(x)
+}
+
+outer(v<their<Vec<Int>>>) -> {
+    push_two(borrow(v), 7)
+    println("outer_after_push=" + v.len().to_string())
+}
+
+main()<Int> -> {
+    v<Vec<Int>> = Vec()
+    v.push(1)
+    outer(borrow(v))
+    println("final_len=" + v.len().to_string())
+    println("probe-i-done")
+    return 0
+}

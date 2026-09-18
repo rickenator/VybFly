@@ -1,0 +1,23 @@
+import io::{open_read, close, read_bytes_at}
+
+main()<Int> -> {
+    println("start")
+    match (open_read("data/processed/canonical_v783/bin/csr.out.indptr.i64")) {
+        f -> {
+            println("opened")
+            match (read_bytes_at(f, 0, 16)) {
+                b -> {
+                    println("len=" + b.len().to_string())
+                    b0<Int> = b.get(0) as Int
+                    b1<Int> = b.get(1) as Int
+                    println("b0=" + b0.to_string() + " b1=" + b1.to_string())
+                }
+                ? -> { println("read failed") }
+            }
+            close(f)
+        }
+        ? -> { println("open failed") }
+    }
+    println("done")
+    return 0
+}

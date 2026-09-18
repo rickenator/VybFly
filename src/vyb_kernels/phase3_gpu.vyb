@@ -1,0 +1,357 @@
+// Phase 3 GPU↔CPU equivalence runner (PROJECT-VYBFLY.md §9 / milestone M3).
+//
+// Runs the Vyb-authored event-bucket pipeline (src/vyb_kernels/spike_bucket.vyb) on the GPU
+// against a small deterministic network that scripts/phase3_gpu_check.py reproduces in numpy
+// with the same semantics. The gate is the doc's: CPU DES ~ GPU DES.
+//
+// Build + run (JIT, io-importing runner; the signed cuda binding is adopted, not hand-rolled):
+//   VYB_STDLIB=~/Projects/Vyb/stdlib build/vyb --kernel src/vyb_kernels/spike_bucket.vyb \
+//       --ptx results/phase3/spike_bucket.ptx
+//   VYB_STDLIB=~/Projects/Vyb/stdlib build/vyb src/vyb_kernels/phase3_gpu.vyb \
+//       --module-path <Vyb>/bindings --module-path <Vyb>/bindings/cuda
+//
+// Network (regenerated identically by the Python checker):
+//   n = 512 ring neurons, each projecting to (i+1), (i+3), (i+7) mod n
+//   synapse count = (3 + offset), negative when i % 5 == 0 (inhibitory, by construction)
+//   LIF: v_rest=0, v_reset=0, v_thresh=1.0, leak=0.9, refractory 2 ticks, g=0.02
+//   stimulus: neurons 0..9 fire at t=0; 30 steps
+
+import io::{open_read, read_all}
+import cuda::{cuda_init, cuda_device_count, cuda_device, cuda_ctx_retain, cuda_module_load,
+              cuda_module_func, cuda_mem_alloc, cuda_mem_free, cuda_write_i32, cuda_read_i32,
+              cuda_write_f64, cuda_read_f64, cuda_launch, cuda_sync}
+
+// Write an i64 descriptor word as two little-endian i32 halves (the device side reads it back
+// with ld_i64, so the byte order must match the host's little-endian layout).
+desc_word(dst<Int>, off<Int>, value<Int>)<Int> -> {
+    low<Int> = value % 4294967296
+    high<Int> = value / 4294967296
+    cuda_write_i32(dst + off, low as CInt)
+    cuda_write_i32(dst + off + 4, high as CInt)
+    return 0
+}
+
+main()<Int> -> {
+    n<Int> = 512
+    ticks<Int> = 30
+    n_seed<Int> = 10
+    g_micro<Int> = 20000                                  // 0.02
+    v_thresh_micro<Int> = 300000                          // 0.3
+    leak_micro<Int> = 900000                              // 0.9
+    refractory<Int> = 2
+
+    // ---- host-side network (CSR) ----
+    indptr<Vec<Int>> = Vec()
+    indices<Vec<Int>> = Vec()
+    syn<Vec<Int>> = Vec()
+    offs<Vec<Int>> = Vec()
+    offs.push(1)
+    offs.push(3)
+    offs.push(7)
+    i<Int> = 0
+    while (i < n) {
+        indptr.push(indices.len())
+        k<Int> = 0
+        while (k < 3) {
+            d<Int> = offs.get(k)
+            tgt<Int> = (i + d) % n
+            w<Int> = 3 + d
+            if (i % 5 == 0) { w = 0 - w }
+            indices.push(tgt)
+            syn.push(w)
+            k = k + 1
+        }
+        i = i + 1
+    }
+    indptr.push(indices.len())
+    m<Int> = indices.len()
+
+    // ---- device resources via the signed binding ----
+    if (cuda_init() != 0) { println("ERROR cuda_init"); return 7 }
+    if (cuda_device_count() < 1) { println("ERROR no device"); return 8 }
+    dev<CInt> = cuda_device(0)
+    if (dev < 0) { println("ERROR bad device"); return 14 }
+    if (cuda_ctx_retain(dev) != 0) { println("ERROR ctx"); return 14 }
+
+    ptx<String> = ""
+    match (open_read("results/phase3/spike_bucket.ptx")) {
+        f -> {
+            match (read_all(f)) {
+                s -> { ptx = s }
+                ? -> { println("ERROR read ptx"); return 13 }
+            }
+        }
+        ? -> { println("ERROR open ptx"); return 13 }
+    }
+    hmod<Int> = cuda_module_load(ptx)
+    if (hmod == 0) { println("ERROR module load"); return 9 }
+    hf_acc<Int> = cuda_module_func(hmod, "accumulate_bucket")
+    hf_upd<Int> = cuda_module_func(hmod, "update_and_fire")
+    if (hf_acc == 0 || hf_upd == 0) { println("ERROR module func"); return 10 }
+
+    d_indptr<Int> = cuda_mem_alloc((n + 1) * 4)
+    d_indices<Int> = cuda_mem_alloc(m * 4)
+    d_syn<Int> = cuda_mem_alloc(m * 4)
+    d_v<Int> = cuda_mem_alloc(n * 8)
+    d_refr<Int> = cuda_mem_alloc(n * 4)
+    d_fired<Int> = cuda_mem_alloc(n * 4)
+    d_accum<Int> = cuda_mem_alloc(n * 8)
+    d_src<Int> = cuda_mem_alloc(n * 4)
+    d_next_ids<Int> = cuda_mem_alloc(n * 4)
+    d_next_count<Int> = cuda_mem_alloc(4)
+    d_dsc_acc<Int> = cuda_mem_alloc(64)
+    d_dsc_upd<Int> = cuda_mem_alloc(128)
+    if (d_indptr == 0 || d_indices == 0 || d_syn == 0 || d_v == 0 || d_refr == 0) {
+        println("ERROR alloc"); return 11
+    }
+
+    // ---- upload ----
+    i = 0
+    while (i <= n) {
+        cuda_write_i32(d_indptr + i * 4, indptr.get(i) as CInt)
+        i = i + 1
+    }
+    i = 0
+    while (i < m) {
+        cuda_write_i32(d_indices + i * 4, indices.get(i) as CInt)
+        cuda_write_i32(d_syn + i * 4, syn.get(i) as CInt)
+        i = i + 1
+    }
+    i = 0
+    while (i < n) {
+        cuda_write_i32(d_refr + i * 4, 0)
+        cuda_write_i32(d_fired + i * 4, 0)
+        cuda_write_i32(d_next_ids + i * 4, 0)
+        i = i + 1
+    }
+    // membrane potentials and synaptic accumulation must start at zero: cuda_mem_alloc returns
+    // UNINITIALISED device memory, and garbage here makes the first update fire everything,
+    // which then blows up the next bucket's grid size (that failure mode is what the launch
+    // diagnostics in this runner caught)
+    i = 0
+    while (i < n) {
+        cuda_write_f64(d_v + i * 8, 0.0)
+        cuda_write_f64(d_accum + i * 8, 0.0)
+        i = i + 1
+    }
+    // membrane potential starts at rest (0.0)
+    spike_counts<Vec<Int>> = Vec()
+    i = 0
+    while (i < n) {
+        spike_counts.push(0)
+        i = i + 1
+    }
+    // stimulus: first n_seed neurons in the bucket
+    count<Int> = n_seed
+    i = 0
+    while (i < n_seed) {
+        cuda_write_i32(d_src + i * 4, i as CInt)
+        i = i + 1
+    }
+
+    // ---- descriptors ----
+    desc_word(d_dsc_acc, 0, d_accum)
+    desc_word(d_dsc_acc, 8, d_src)
+    desc_word(d_dsc_acc, 16, d_indptr)
+    desc_word(d_dsc_acc, 24, d_indices)
+    desc_word(d_dsc_acc, 32, d_syn)
+    desc_word(d_dsc_acc, 40, n)
+    desc_word(d_dsc_acc, 48, g_micro)
+    desc_word(d_dsc_upd, 0, d_accum)
+    desc_word(d_dsc_upd, 8, d_v)
+    desc_word(d_dsc_upd, 16, d_refr)
+    desc_word(d_dsc_upd, 24, d_fired)
+    desc_word(d_dsc_upd, 32, d_next_ids)
+    desc_word(d_dsc_upd, 40, d_next_count)
+    desc_word(d_dsc_upd, 48, 0)
+    desc_word(d_dsc_upd, 56, 0)
+    desc_word(d_dsc_upd, 64, v_thresh_micro)
+    desc_word(d_dsc_upd, 72, leak_micro)
+    desc_word(d_dsc_upd, 80, refractory)
+    desc_word(d_dsc_upd, 88, n)
+
+    blk<Int> = 64
+    upd_grid<Int> = (n + blk - 1) / blk
+    // descriptor readback: prove the i64 words landed on the device as expected before any
+    // launch depends on them
+    dw<String> = ""
+    wi<Int> = 0
+    while (wi < 7) {
+        lo<Int> = cuda_read_i32(d_dsc_acc + wi * 8) as Int
+        hi<Int> = cuda_read_i32(d_dsc_acc + wi * 8 + 4) as Int
+        dw = dw + lo.to_string() + ":" + hi.to_string()
+        if (wi < 6) { dw = dw + " " }
+        wi = wi + 1
+    }
+    println("diag_dsc_acc_words=" + dw)
+    println("diag_expect_accum=" + d_accum.to_string() + " src=" + d_src.to_string()
+            + " indptr=" + d_indptr.to_string() + " g_micro=" + g_micro.to_string())
+    // dump the uploaded CSR head: indptr[0..3], indices[0..5], syn[0..5]
+    ip<String> = ""
+    i = 0
+    while (i < 4) {
+        v<Int> = cuda_read_i32(d_indptr + i * 4) as Int
+        ip = ip + v.to_string() + " "
+        i = i + 1
+    }
+    println("diag_indptr_head=" + ip)
+    ix<String> = ""
+    sy<String> = ""
+    i = 0
+    while (i < 6) {
+        a<Int> = cuda_read_i32(d_indices + i * 4) as Int
+        b<Int> = cuda_read_i32(d_syn + i * 4) as Int
+        ix = ix + a.to_string() + " "
+        sy = sy + b.to_string() + " "
+        i = i + 1
+    }
+    println("diag_indices_head=" + ix)
+    println("diag_syn_head=" + sy)
+    dw2<String> = ""
+    wi = 0
+    while (wi < 13) {
+        lo2<Int> = cuda_read_i32(d_dsc_upd + wi * 8) as Int
+        hi2<Int> = cuda_read_i32(d_dsc_upd + wi * 8 + 4) as Int
+        dw2 = dw2 + lo2.to_string() + ":" + hi2.to_string()
+        if (wi < 12) { dw2 = dw2 + " " }
+        wi = wi + 1
+    }
+    println("diag_dsc_upd_words=" + dw2)
+    per_step<Vec<Int>> = Vec()
+    t<Int> = 0
+    launch_err<Int> = 0
+    // prove the zero fill landed and that the first accumulate produces finite values
+    pv0<Float> = cuda_read_f64(d_v + 8)
+    println("diag_v_after_init_neuron1=" + pv0.to_string())
+    pa0<Float> = cuda_read_f64(d_accum + 8)
+    println("diag_accum_after_init_neuron1=" + pa0.to_string())
+    while (t < ticks) {
+        cuda_write_i32(d_next_count, 0)
+        desc_word(d_dsc_upd, 96, t)
+        r1<CInt> = 0
+        skip_acc<Int> = 0
+        if (count == 0) {
+            // an empty bucket means nothing to propagate this tick; cuLaunchKernel rejects a
+            // zero grid dimension, and the kernel itself has no work to do anyway
+            skip_acc = 1
+        }
+        if (skip_acc == 0) {
+            r1 = cuda_launch(hf_acc, count as CInt, 1, 1, blk as CInt, 1, 1, d_dsc_acc)
+        }
+        if (t == 0) {
+            // What the UPDATE kernel actually receives: read the accumulator between the two
+            // launches, before the update clears it. The probe says it should hold 0.4 at 9/10,
+            // 0.32 at 11, -0.08 at 12.
+            if (cuda_sync() != 0) { println("ERROR sync acc"); return 12 }
+            a9<Float> = cuda_read_f64(d_accum + 9 * 8)
+            a10<Float> = cuda_read_f64(d_accum + 10 * 8)
+            a11<Float> = cuda_read_f64(d_accum + 11 * 8)
+            a12<Float> = cuda_read_f64(d_accum + 12 * 8)
+            a4<Float> = cuda_read_f64(d_accum + 4 * 8)
+            v1p<Float> = cuda_read_f64(d_v + 8)
+            println("diag_accum_pre_update 4=" + a4.to_string() + " 9=" + a9.to_string()
+                    + " 10=" + a10.to_string() + " 11=" + a11.to_string()
+                    + " 12=" + a12.to_string() + " v1=" + v1p.to_string())
+        }
+        r2<CInt> = cuda_launch(hf_upd, upd_grid as CInt, 1, 1, blk as CInt, 1, 1, d_dsc_upd)
+        if (r1 != 0 || r2 != 0) { launch_err = launch_err + 1 }
+        if (cuda_sync() != 0) { println("ERROR sync at t=" + t.to_string()); return 12 }
+        if (t == 0) {
+            pa1<Float> = cuda_read_f64(d_accum + 8)
+            println("diag_accum_after_first_step_neuron1=" + pa1.to_string())
+            pv1<Float> = cuda_read_f64(d_v + 8)
+            println("diag_v_after_first_step_neuron1=" + pv1.to_string())
+            pc1<Int> = cuda_read_i32(d_next_count) as Int
+            println("diag_next_count_after_first_step=" + pc1.to_string())
+        }
+        fired_now<Int> = 0
+        i = 0
+        while (i < n) {
+            fv<Int> = cuda_read_i32(d_fired + i * 4) as Int
+            if (fv == 1) {
+                cur<Int> = spike_counts.get(i)
+                spike_counts.set(i, cur + 1)
+                fired_now = fired_now + 1
+            }
+            i = i + 1
+        }
+        new_count<Int> = cuda_read_i32(d_next_count) as Int
+        if (t < 4) {
+            r1i2<Int> = r1 as Int
+            r2i2<Int> = r2 as Int
+            fid<Int> = cuda_read_i32(d_next_ids) as Int
+            println("diag_tick=" + t.to_string() + " bucket=" + count.to_string()
+                    + " r1=" + r1i2.to_string() + " r2=" + r2i2.to_string()
+                    + " fired_now=" + fired_now.to_string()
+                    + " next_count=" + new_count.to_string()
+                    + " first_id=" + fid.to_string())
+        }
+        per_step.push(fired_now)
+        // next bucket becomes the current one
+        i = 0
+        while (i < new_count) {
+            nid<Int> = cuda_read_i32(d_next_ids + i * 4) as Int
+            cuda_write_i32(d_src + i * 4, nid as CInt)
+            i = i + 1
+        }
+        count = new_count
+        t = t + 1
+    }
+
+    // ---- report ----
+    total<Int> = 0
+    counts_csv<String> = ""
+    i = 0
+    while (i < n) {
+        c<Int> = spike_counts.get(i)
+        total = total + c
+        counts_csv = counts_csv + c.to_string()
+        if (i < n - 1) { counts_csv = counts_csv + "," }
+        i = i + 1
+    }
+    v_milli<Int> = 0
+    i = 0
+    while (i < n) {
+        vv<Float> = cuda_read_f64(d_v + i * 8)
+        vi<Int> = (vv * 1000.0) as Int
+        v_milli = v_milli + vi
+        i = i + 1
+    }
+    steps_csv<String> = ""
+    i = 0
+    while (i < per_step.len()) {
+        steps_csv = steps_csv + per_step.get(i).to_string()
+        if (i < per_step.len() - 1) { steps_csv = steps_csv + "," }
+        i = i + 1
+    }
+    println("gpu_n=" + n.to_string())
+    println("gpu_edges=" + m.to_string())
+    println("gpu_steps=" + ticks.to_string())
+    println("gpu_launch_errors=" + launch_err.to_string())
+    probe<String> = ""
+    i = 0
+    while (i < 8) {
+        pv<Float> = cuda_read_f64(d_v + i * 8)
+        // round to nearest milli-unit, matching the checker's round(); a plain `as Int` cast
+        // truncates toward zero, so -0.0035 printed as -3 while the reference expected -4 and
+        // the informational probe line looked like a failure when the values actually agreed.
+        sc<Float> = pv * 1000.0
+        pi<Int> = 0
+        if (sc >= 0.0) {
+            pi = (sc + 0.5) as Int
+        } else {
+            negv<Int> = ((0.0 - sc) + 0.5) as Int
+            pi = 0 - negv
+        }
+        probe = probe + pi.to_string()
+        if (i < 7) { probe = probe + "," }
+        i = i + 1
+    }
+    println("gpu_v_probe_milli_first8=" + probe)
+    println("gpu_spikes_total=" + total.to_string())
+    println("gpu_spikes_per_step=" + steps_csv)
+    println("gpu_v_checksum_milli=" + v_milli.to_string())
+    println("gpu_spike_counts=" + counts_csv)
+    println("phase3-gpu-ok")
+    return 0
+}

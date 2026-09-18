@@ -1,0 +1,875 @@
+// des.vyb - the FlyScale discrete-event simulation runtime (PROJECT-VYBFLY.md §8, milestone M2).
+//
+// A general, model-agnostic DES core for sparse biological networks: bucketed scheduling with no
+// single global heap, structure-of-arrays entity state, and the EventSource / EventSink /
+// Recorder / Replication / Experiment abstractions the scope doc asks for.
+//
+// ---------------------------------------------------------------------------------------------
+// ABSTRACTIONS
+// ---------------------------------------------------------------------------------------------
+//   Timestamp   `Int` ticks. 1 tick = 0.1 ms simulated (TIMESTAMP_TICKS_PER_MS = 10). Integer
+//               time is deliberate: it makes both this runtime and any independent reference
+//               bit-exact, with no floating point and no tolerance anywhere in the gate.
+//   EventType   `Int` codeword (STIMULUS / SYNAPTIC / PROBE); `event_type_name` gives the name.
+//               (A module-level `enum` cannot be used as a struct-field type on this compiler
+//               build, so the type tag is a plain codeword plus a name table.)
+//   Entity      `Int` entity id: an index into the entity state arrays. A neuron is not an
+//               allocated object; it is a column in the structure-of-arrays EntityState.
+//   Event       a logical record: (time, entity/target, EventType, value). Events live in the
+//               scheduler's flat SoA arena, not as individually allocated objects.
+//   State       `EntityState`: Vm, last_update, refractory_until, tau_ticks, decay_k, threshold,
+//               vrest, vreset, type, spike_count + the per-tick accumulation scratch
+//               (acc / mark / touched) and the fired list. SoA, so it maps 1:1 onto GPU storage.
+//   Scheduler   `Sched`: a bucketed calendar queue (a ring of per-bucket event chains over a flat
+//               event arena). No global heap, no global ordering data structure: push is O(1),
+//               "next tick" advances the ring cursor one turn at a time, and the ring grows
+//               (doubling, O(buckets) relabel) if a horizon falls outside the window.
+//   EventSource `EventSource`: an external schedule (e.g. a stimulus file) that pumps events into
+//               a scheduler. Prime it up front, or pump it incrementally during a run.
+//   EventSink   `Delivery`: the batch a scheduler hands to a consumer for one tick. `drain_tick`
+//               is the adapter from the pull interface to the sink buffer.
+//   Recorder    `Recorder`: append-only spike log (tick + entity), per-entity counts, and a
+//               canonical entity-major view (`rec_finalize`) so the record is order-independent.
+//   Replication one run of a model: name, stimulus stream, horizon, result counters, wall time.
+//   Experiment  a configuration (bucket count, replications) plus the set of Replication
+//               results and their aggregate report (`experiment_*`).
+//
+// ---------------------------------------------------------------------------------------------
+// SEMANTICS OF THE LIF KERNEL STAGE (contract shared with scripts/vyb_des_check.py)
+// ---------------------------------------------------------------------------------------------
+//   1. An entity is integrated LAZILY: only when an event arrives for it.
+//   2. Within one tick, every arrival for one entity is summed before that single integration
+//      ("group by destination, then update") - the §9 pipeline, and what makes the result
+//      independent of arrival order.
+//   3. Leak is iterated one tick at a time, truncating toward zero each step:
+//          vm <- vrest + trunc((vm - vrest) * decay_k / 1000)
+//      (decay_k is precomputed in the fixture so no libm call exists on either side.)
+//   4. If t < refractory_until the arrival is DROPPED (absolute refractory clamp) but
+//      last_update still advances to t.
+//   5. Otherwise vm is integrated and the entity fires iff vm >= threshold; firing sets
+//      vm <- vreset, refractory_until <- t + refr_ticks and records a spike.
+//   6. A fired entity's out-edges are scheduled by the application at t + delay, delay >= 1, so
+//      no within-tick causal chain can exist. Ordering therefore cannot change the dynamics, and
+//      the gate compares canonical (entity-major / tick-ascending) records plus the sorted
+//      (tick, entity) multiset. See results/phase2/vyb_des_check.json for the recorded rules.
+//
+// ---------------------------------------------------------------------------------------------
+// VERIFIED VYB CONSTRAINTS THAT SHAPED THIS MODULE (this compiler build, 2026-09-17)
+// ---------------------------------------------------------------------------------------------
+//   * Caller state can only be mutated through a `their<T>` borrow (a plain Vec parameter is a
+//     copy). Every mutating entry point here therefore takes `s<their<Sched>>` and friends - that
+//     is the whole reason the API is shaped this way. (probe_m2_a_borrow_mut.vyb,
+//     probe_m2_e_module_borrow.vyb)
+//   * `Vec<Vec<T>>` is unusable on this build: get -> push -> set write-back aborts with
+//     "free(): double free detected in tcache 2", a chained `outer.get(i).get(0)` returns garbage,
+//     and the Vec<Vec<String>> variant segfaults (probe_m2_b1_nested_vec_writeback.vyb,
+//     probe_m2_b4_nested_get_push_set_len.vyb, probe_m2_b6_nested_chained_get.vyb,
+//     probe_m2_b7_nested_vec_of_string.vyb). The scheduler therefore stores buckets as per-bucket
+//     chain heads (`bucket_head`) over ONE flat event arena - the same bucketed calendar-queue
+//     semantics in a structure-of-arrays layout, which is also what the CUDA backend needs.
+//   * `String.to_int` / `to_float` do not exist on this build (probe_m2_c_struct_vec_parse.vyb);
+//     the application supplies its own integer parser.
+//
+// Run the gate:
+//   VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb \
+//     src/vyb/phase2_des.vyb --module-path src/vyb
+//   python3 scripts/vyb_des_check.py
+
+// ---------------------------------------------------------------------------------------------
+// Timestamp / EventType
+// ---------------------------------------------------------------------------------------------
+
+share(all)
+timestamp_ticks_per_ms()<Int> -> { return 10 }
+
+share(all)
+timestamp_ms_to_ticks(ms<Int>)<Int> -> { return ms * timestamp_ticks_per_ms() }
+
+share(all)
+timestamp_ticks_to_micros(t<Int>)<Int> -> { return t * 100 }
+
+share(all)
+event_type_stimulus()<Int> -> { return 1 }
+
+share(all)
+event_type_synaptic()<Int> -> { return 2 }
+
+share(all)
+event_type_probe()<Int> -> { return 3 }
+
+share(all)
+event_type_slots()<Int> -> { return 8 }
+
+share(all)
+event_type_name(kind<Int>)<String> -> {
+    if (kind == 1) { return "STIMULUS" }
+    if (kind == 2) { return "SYNAPTIC" }
+    if (kind == 3) { return "PROBE" }
+    return "UNKNOWN"
+}
+
+// Truncate toward zero (Python's `//` floors; C and this helper do not).
+share(all)
+trunc_div(a<Int>, b<Int>)<Int> -> {
+    if (b == 0) { return 0 }
+    if (a >= 0) { return a / b }
+    return -((-a) / b)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Event (logical record) and the bucketed Scheduler
+// ---------------------------------------------------------------------------------------------
+
+// The logical event record. Events are stored packed in the Scheduler's arena (SoA); this struct
+// exists as the documented shape of one record and for tests that need to materialise one.
+share(all)
+struct Event {
+    time<Int>,
+    target<Int>,
+    kind<Int>,
+    value<Int>,
+    seq<Int>
+}
+
+// Bucketed calendar queue. Bucket `b` holds a chain of arena slots; a bucket's chain is stamped
+// with the turn (absolute tick / width) it belongs to, so a stale bucket is simply overwritten.
+// `bucket_head[b] == -1` means empty.
+share(all)
+struct Sched {
+    width<Int>,          // ticks per turn (bucket); 1 keeps a bucket == one tick
+    n_buckets<Int>,      // ring size in buckets
+    bucket_head<Vec<Int>>,   // -1 = empty, else arena slot of the newest event in the bucket
+    bucket_turn<Vec<Int>>,   // the turn whose events this bucket currently holds (-1 = never used)
+    bucket_len<Vec<Int>>,    // number of events currently chained in the bucket
+    cur_slot<Int>,           // ring cursor: bucket index of cur_turn
+    cur_turn<Int>,           // turn the ring cursor is on (absolute, monotonically increasing)
+    started<Int>,
+    pending<Int>,            // events currently scheduled
+    ev_time<Vec<Int>>,       // ---- flat event arena (structure of arrays) ----
+    ev_target<Vec<Int>>,
+    ev_kind<Vec<Int>>,
+    ev_value<Vec<Int>>,
+    ev_next<Vec<Int>>,       // next arena slot in the same bucket chain (-1 = end)
+    free<Vec<Int>>,          // recycled arena slots (bounded memory: no heap growth per event)
+    by_kind<Vec<Int>>,       // events pushed per EventType
+    total_pushed<Int>,
+    total_popped<Int>,
+    late_events<Int>,        // pushes aimed before the cursor (clamped): must be 0
+    far_events<Int>,         // pushes outside the ring window after growth: must be 0
+    grows<Int>,              // ring doublings
+    recycles<Int>,           // arena slots reused
+    ticks_advanced<Int>,     // bucket cursor advances (evidence of bucketed scheduling)
+    max_bucket_len<Int>,     // deepest single bucket (burstiness)
+    arena_high<Int>          // arena slots ever allocated
+}
+
+share(all)
+sched_new(n_buckets<Int>, width<Int>)<Sched> -> {
+    s<Sched> = Sched {
+        width = width,
+        n_buckets = n_buckets,
+        bucket_head = Vec(), bucket_turn = Vec(), bucket_len = Vec(),
+        cur_slot = 0, cur_turn = 0, started = 0, pending = 0,
+        ev_time = Vec(), ev_target = Vec(), ev_kind = Vec(), ev_value = Vec(), ev_next = Vec(),
+        free = Vec(), by_kind = Vec(),
+        total_pushed = 0, total_popped = 0, late_events = 0, far_events = 0, grows = 0,
+        recycles = 0, ticks_advanced = 0, max_bucket_len = 0, arena_high = 0
+    }
+    i<Int> = 0
+    while (i < n_buckets) {
+        s.bucket_head.push(-1)
+        s.bucket_turn.push(-1)
+        s.bucket_len.push(0)
+        i = i + 1
+    }
+    k<Int> = 0
+    while (k < event_type_slots()) {
+        s.by_kind.push(0)
+        k = k + 1
+    }
+    return s
+}
+
+// Size the ring so a whole run of `ticks` fits, with `slack` ticks of headroom (delay horizon).
+share(all)
+sched_new_for_horizon(ticks<Int>, slack<Int>)<Sched> -> {
+    n<Int> = ticks + slack + 1
+    if (n < 16) { n = 16 }
+    return sched_new(n, 1)
+}
+
+// Ring growth: double the bucket count and RELABEL each live bucket (no per-event work).
+//
+// Correctness argument: a bucket holds events of exactly one turn T (all events in a bucket share
+// the turn used to place them), and two live buckets never hold the same turn. Slot mapping is
+// slot = T mod n, so after doubling the map T -> T mod 2n is injective on the live set (two live
+// turns differ by less than the old window n). Hence each live chain moves to a distinct
+// destination bucket and no chain is lost or merged.
+share(all)
+sched_grow(s<their<Sched>>) -> {
+    old_n<Int> = s.n_buckets
+    new_n<Int> = old_n * 2
+    j<Int> = old_n
+    while (j < new_n) {
+        s.bucket_head.push(-1)
+        s.bucket_turn.push(-1)
+        s.bucket_len.push(0)
+        j = j + 1
+    }
+    s.n_buckets = new_n
+    o<Int> = 0
+    while (o < old_n) {
+        t_o<Int> = s.bucket_turn.get(o)
+        if (t_o >= s.cur_turn && s.bucket_head.get(o) != -1) {
+            ns<Int> = t_o % new_n
+            if (ns != o) {
+                s.bucket_head.set(ns, s.bucket_head.get(o))
+                s.bucket_len.set(ns, s.bucket_len.get(o))
+                s.bucket_turn.set(ns, t_o)
+                s.bucket_head.set(o, -1)
+                s.bucket_len.set(o, 0)
+            }
+        }
+        o = o + 1
+    }
+    s.cur_slot = s.cur_turn % new_n
+    s.grows = s.grows + 1
+}
+
+// Schedule one event. Returns the arena slot used, or -1 if it had to be clamped/dropped.
+share(all)
+sched_push(s<their<Sched>>, time<Int>, target<Int>, kind<Int>, value<Int>)<Int> -> {
+    t<Int> = time
+    if (t < 0) { t = 0 }
+    turn<Int> = t / s.width
+    if (s.started == 0) {
+        s.started = 1
+        s.cur_turn = turn
+        s.cur_slot = turn % s.n_buckets
+    }
+    clamped<Int> = 0
+    if (turn < s.cur_turn) {
+        s.late_events = s.late_events + 1
+        turn = s.cur_turn
+        clamped = 1
+    }
+    guard<Int> = 0
+    while (turn >= s.cur_turn + s.n_buckets && guard < 64) {
+        sched_grow(s)          # borrow propagated, never re-borrowed (probe_m2_i)
+        guard = guard + 1
+    }
+    if (turn >= s.cur_turn + s.n_buckets) {
+        // cannot happen with a sane ring sizing; counted rather than aliased silently
+        s.far_events = s.far_events + 1
+        turn = s.cur_turn + s.n_buckets - 1
+        clamped = 1
+    }
+    slot<Int> = turn % s.n_buckets
+    if (clamped == 1) { t = turn * s.width }
+    if (s.bucket_turn.get(slot) != turn) {
+        s.bucket_head.set(slot, -1)
+        s.bucket_len.set(slot, 0)
+        s.bucket_turn.set(slot, turn)
+    }
+    idx<Int> = -1
+    if (s.free.len() > 0) {
+        idx = s.free.get(s.free.len() - 1)
+        s.free.pop()
+        s.recycles = s.recycles + 1
+    } else {
+        s.ev_time.push(0)
+        s.ev_target.push(0)
+        s.ev_kind.push(0)
+        s.ev_value.push(0)
+        s.ev_next.push(-1)
+        idx = s.ev_time.len() - 1
+        s.arena_high = s.arena_high + 1
+    }
+    s.ev_time.set(idx, t)
+    s.ev_target.set(idx, target)
+    s.ev_kind.set(idx, kind)
+    s.ev_value.set(idx, value)
+    s.ev_next.set(idx, s.bucket_head.get(slot))
+    s.bucket_head.set(slot, idx)
+    bl<Int> = s.bucket_len.get(slot) + 1
+    s.bucket_len.set(slot, bl)
+    if (bl > s.max_bucket_len) { s.max_bucket_len = bl }
+    s.pending = s.pending + 1
+    s.total_pushed = s.total_pushed + 1
+    if (kind >= 0 && kind < s.by_kind.len()) {
+        s.by_kind.set(kind, s.by_kind.get(kind) + 1)
+    }
+    if (clamped == 1) { return -1 }
+    return idx
+}
+
+// Advance the ring cursor to the next non-empty bucket and return the tick of its earliest event,
+// or -1 when the scheduler is empty. This is the whole "time advance" of the engine: no heap, no
+// global ordering structure, just a stamped ring.
+share(all)
+sched_next_tick(s<their<Sched>>)<Int> -> {
+    guard<Int> = 0
+    limit<Int> = s.n_buckets + 1
+    while (s.pending > 0 && guard < limit) {
+        slot<Int> = s.cur_slot
+        if (s.bucket_head.get(slot) != -1 && s.bucket_turn.get(slot) == s.cur_turn) {
+            h<Int> = s.bucket_head.get(slot)
+            mn<Int> = s.ev_time.get(h)
+            p<Int> = s.ev_next.get(h)
+            while (p != -1) {
+                v<Int> = s.ev_time.get(p)
+                if (v < mn) { mn = v }
+                p = s.ev_next.get(p)
+            }
+            return mn
+        }
+        s.cur_turn = s.cur_turn + 1
+        s.cur_slot = s.cur_slot + 1
+        if (s.cur_slot >= s.n_buckets) { s.cur_slot = 0 }
+        s.ticks_advanced = s.ticks_advanced + 1
+        guard = guard + 1
+    }
+    return -1
+}
+
+share(all)
+sched_pending(s<their<Sched>>)<Int> -> { return s.pending }
+
+// ---------------------------------------------------------------------------------------------
+// EventSink: the per-tick batch handed from a scheduler to a consumer
+// ---------------------------------------------------------------------------------------------
+
+share(all)
+struct Delivery {
+    tick<Int>,
+    n<Int>,
+    targets<Vec<Int>>,
+    kinds<Vec<Int>>,
+    values<Vec<Int>>
+}
+
+share(all)
+delivery_new()<Delivery> -> {
+    d<Delivery> = Delivery { tick = -1, n = 0, targets = Vec(), kinds = Vec(), values = Vec() }
+    return d
+}
+
+share(all)
+delivery_clear(d<their<Delivery>>) -> {
+    d.tick = -1
+    d.n = 0
+    d.targets.clear()
+    d.kinds.clear()
+    d.values.clear()
+}
+
+// Drain every event of the earliest pending tick out of the scheduler into the sink buffer.
+// Returns the tick, or -1 when the scheduler is empty. Only events of that ONE tick are moved, so
+// a bucket wider than one tick still yields a tick-exact batch.
+share(all)
+drain_tick(s<their<Sched>>, d<their<Delivery>>)<Int> -> {
+    t<Int> = sched_next_tick(s)
+    if (t < 0) {
+        delivery_clear(d)
+        return -1
+    }
+    delivery_clear(d)
+    slot<Int> = s.cur_slot
+    # partition the bucket chain into "this tick" (delivered) and "later ticks" (kept)
+    keep<Int> = -1
+    kept<Int> = 0
+    h<Int> = s.bucket_head.get(slot)
+    while (h != -1) {
+        nxt<Int> = s.ev_next.get(h)
+        if (s.ev_time.get(h) == t) {
+            d.targets.push(s.ev_target.get(h))
+            d.kinds.push(s.ev_kind.get(h))
+            d.values.push(s.ev_value.get(h))
+            s.free.push(h)
+        } else {
+            s.ev_next.set(h, keep)
+            keep = h
+            kept = kept + 1
+        }
+        h = nxt
+    }
+    s.bucket_head.set(slot, keep)
+    s.bucket_len.set(slot, kept)
+    d.n = d.targets.len()
+    d.tick = t
+    s.pending = s.pending - d.n
+    s.total_popped = s.total_popped + d.n
+    return t
+}
+
+// ---------------------------------------------------------------------------------------------
+// Entity state (structure of arrays) and the LIF kernel stage
+// ---------------------------------------------------------------------------------------------
+
+share(all)
+struct EntityState {
+    n<Int>,
+    vm<Vec<Int>>,
+    last_update<Vec<Int>>,
+    refractory_until<Vec<Int>>,
+    tau_ticks<Vec<Int>>,
+    decay_k<Vec<Int>>,
+    threshold<Vec<Int>>,
+    vrest<Vec<Int>>,
+    vreset<Vec<Int>>,
+    refr_ticks<Vec<Int>>,
+    etype<Vec<Int>>,          // 0 = excitatory, 1 = inhibitory
+    spike_count<Vec<Int>>,
+    acc<Vec<Int>>,            // per-tick accumulated weight (scratch)
+    mark<Vec<Int>>,           // 1 while the entity is in `touched` (scratch)
+    touched<Vec<Int>>,        // entities with >= 1 arrival in the current tick
+    fired<Vec<Int>>           // entities that fired in the current tick
+}
+
+share(all)
+ent_new(n<Int>)<EntityState> -> {
+    st<EntityState> = EntityState {
+        n = n,
+        vm = Vec(), last_update = Vec(), refractory_until = Vec(), tau_ticks = Vec(),
+        decay_k = Vec(), threshold = Vec(), vrest = Vec(), vreset = Vec(), refr_ticks = Vec(),
+        etype = Vec(), spike_count = Vec(), acc = Vec(), mark = Vec(), touched = Vec(), fired = Vec()
+    }
+    i<Int> = 0
+    while (i < n) {
+        st.vm.push(0)
+        st.last_update.push(0)
+        st.refractory_until.push(0)
+        st.tau_ticks.push(0)
+        st.decay_k.push(0)
+        st.threshold.push(0)
+        st.vrest.push(0)
+        st.vreset.push(0)
+        st.refr_ticks.push(0)
+        st.etype.push(0)
+        st.spike_count.push(0)
+        st.acc.push(0)
+        st.mark.push(0)
+        i = i + 1
+    }
+    return st
+}
+
+// Initialise one entity (its record in the State table). vm starts at rest, last_update at tick 0,
+// refractory_until at tick 0 (so an arrival at tick 0 can fire).
+share(all)
+ent_init(st<their<EntityState>>, i<Int>, etype<Int>, tau_ticks<Int>, decay_k<Int>, refr_ticks<Int>,
+         threshold<Int>, vrest<Int>, vreset<Int>) -> {
+    if (i < 0 || i >= st.n) { return }
+    st.etype.set(i, etype)
+    st.tau_ticks.set(i, tau_ticks)
+    st.decay_k.set(i, decay_k)
+    st.refr_ticks.set(i, refr_ticks)
+    st.threshold.set(i, threshold)
+    st.vrest.set(i, vrest)
+    st.vreset.set(i, vreset)
+    st.vm.set(i, vrest)
+    st.last_update.set(i, 0)
+    st.refractory_until.set(i, 0)
+    st.spike_count.set(i, 0)
+    st.acc.set(i, 0)
+    st.mark.set(i, 0)
+}
+
+share(all)
+ent_n(st<their<EntityState>>)<Int> -> { return st.n }
+
+share(all)
+ent_vm(st<their<EntityState>>, i<Int>)<Int> -> { return st.vm.get(i) }
+
+share(all)
+ent_spike_count(st<their<EntityState>>, i<Int>)<Int> -> { return st.spike_count.get(i) }
+
+share(all)
+ent_fired_count(st<their<EntityState>>)<Int> -> { return st.fired.len() }
+
+share(all)
+ent_fired_at(st<their<EntityState>>, k<Int>)<Int> -> { return st.fired.get(k) }
+
+share(all)
+ent_touched_count(st<their<EntityState>>)<Int> -> { return st.touched.len() }
+
+// One step of the integer leak, truncating toward zero.
+share(all)
+lif_leak(vm<Int>, vrest<Int>, decay_k<Int>, ticks<Int>)<Int> -> {
+    d<Int> = vm - vrest
+    j<Int> = 0
+    while (j < ticks && d != 0) {
+        d = trunc_div(d * decay_k, 1000)
+        j = j + 1
+    }
+    return vrest + d
+}
+
+// Accumulate one arrival into an entity's per-tick scratch. O(1); the entity is pushed onto
+// `touched` exactly once per tick (the "group by destination" step of the §9 pipeline).
+share(all)
+ent_receive(st<their<EntityState>>, i<Int>, weight<Int>) -> {
+    if (i < 0 || i >= st.n) { return }
+    if (st.mark.get(i) == 0) {
+        st.mark.set(i, 1)
+        st.acc.set(i, weight)
+        st.touched.push(i)
+    } else {
+        st.acc.set(i, st.acc.get(i) + weight)
+    }
+}
+
+// Take a whole sink batch in: accumulate by destination, then integrate every affected entity
+// exactly once, detect threshold crossings, record spikes and collect the fired entities.
+// Returns the number of entities that fired during this tick.
+share(all)
+kernel_tick(st<their<EntityState>>, rec<their<Recorder>>, d<their<Delivery>>, t<Int>)<Int> -> {
+    j<Int> = 0
+    while (j < d.targets.len()) {
+        tg<Int> = d.targets.get(j)
+        w<Int> = d.values.get(j)
+        if (tg >= 0 && tg < st.n) {
+            if (st.mark.get(tg) == 0) {
+                st.mark.set(tg, 1)
+                st.acc.set(tg, w)
+                st.touched.push(tg)
+            } else {
+                st.acc.set(tg, st.acc.get(tg) + w)
+            }
+        }
+        j = j + 1
+    }
+    st.fired.clear()
+    k<Int> = 0
+    while (k < st.touched.len()) {
+        i<Int> = st.touched.get(k)
+        w<Int> = st.acc.get(i)
+        st.acc.set(i, 0)
+        st.mark.set(i, 0)
+        if (t >= st.refractory_until.get(i)) {
+            v<Int> = lif_leak(st.vm.get(i), st.vrest.get(i), st.decay_k.get(i),
+                              t - st.last_update.get(i))
+            v = v + w
+            st.vm.set(i, v)
+            st.last_update.set(i, t)
+            if (v >= st.threshold.get(i)) {
+                st.vm.set(i, st.vreset.get(i))
+                st.refractory_until.set(i, t + st.refr_ticks.get(i))
+                st.spike_count.set(i, st.spike_count.get(i) + 1)
+                st.fired.push(i)
+                rec_spike(rec, t, i)
+            }
+        } else {
+            // absolute refractory: the arrival is dropped, the clock still advances
+            st.last_update.set(i, t)
+        }
+        k = k + 1
+    }
+    st.touched.clear()
+    return st.fired.len()
+}
+
+// ---------------------------------------------------------------------------------------------
+// Recorder: the entity-major spike log
+// ---------------------------------------------------------------------------------------------
+
+share(all)
+struct Recorder {
+    ticks<Vec<Int>>,        // production order (non-decreasing tick)
+    entities<Vec<Int>>,
+    count<Vec<Int>>,        // per entity
+    total<Int>,
+    row_ptr<Vec<Int>>,      // CSR row pointers over the canonical view (filled by rec_finalize)
+    by_entity<Vec<Int>>,    // entity-major, tick-ascending spike ticks
+    cursor<Vec<Int>>,       // scratch for the CSR fill
+    finalized<Int>
+}
+
+share(all)
+rec_new(n<Int>)<Recorder> -> {
+    r<Recorder> = Recorder {
+        ticks = Vec(), entities = Vec(), count = Vec(), total = 0,
+        row_ptr = Vec(), by_entity = Vec(), cursor = Vec(), finalized = 0
+    }
+    i<Int> = 0
+    while (i < n) {
+        r.count.push(0)
+        i = i + 1
+    }
+    return r
+}
+
+share(all)
+rec_spike(r<their<Recorder>>, t<Int>, entity<Int>) -> {
+    r.ticks.push(t)
+    r.entities.push(entity)
+    r.total = r.total + 1
+    if (entity >= 0 && entity < r.count.len()) {
+        r.count.set(entity, r.count.get(entity) + 1)
+    }
+}
+
+share(all)
+rec_reset(r<their<Recorder>>) -> {
+    r.ticks.clear()
+    r.entities.clear()
+    r.total = 0
+    i<Int> = 0
+    while (i < r.count.len()) {
+        r.count.set(i, 0)
+        i = i + 1
+    }
+    r.row_ptr.clear()
+    r.by_entity.clear()
+    r.cursor.clear()
+    r.finalized = 0
+}
+
+// Build the canonical entity-major view. Because the engine processes ticks in ascending order,
+// each entity's placed ticks come out non-decreasing, so this view is independent of the order in
+// which entities were updated inside a tick (the only ordering freedom the engine has).
+share(all)
+rec_finalize(r<their<Recorder>>) -> {
+    n<Int> = r.count.len()
+    r.row_ptr.clear()
+    i<Int> = 0
+    while (i <= n) {
+        r.row_ptr.push(0)
+        i = i + 1
+    }
+    i = 0
+    while (i < n) {
+        r.row_ptr.set(i + 1, r.count.get(i))
+        i = i + 1
+    }
+    i = 0
+    while (i < n) {
+        r.row_ptr.set(i + 1, r.row_ptr.get(i) + r.row_ptr.get(i + 1))
+        i = i + 1
+    }
+    r.by_entity.clear()
+    k<Int> = 0
+    while (k < r.total) {
+        r.by_entity.push(0)
+        k = k + 1
+    }
+    r.cursor.clear()
+    i = 0
+    while (i < n) {
+        r.cursor.push(r.row_ptr.get(i))
+        i = i + 1
+    }
+    k = 0
+    while (k < r.total) {
+        e<Int> = r.entities.get(k)
+        if (e >= 0 && e < n) {
+            pos<Int> = r.cursor.get(e)
+            if (pos >= 0 && pos < r.by_entity.len()) {
+                r.by_entity.set(pos, r.ticks.get(k))
+                r.cursor.set(e, pos + 1)
+            }
+        }
+        k = k + 1
+    }
+    r.finalized = 1
+}
+
+share(all)
+rec_total(r<their<Recorder>>)<Int> -> { return r.total }
+
+share(all)
+rec_count(r<their<Recorder>>, i<Int>)<Int> -> { return r.count.get(i) }
+
+share(all)
+rec_ptr(r<their<Recorder>>, i<Int>)<Int> -> { return r.row_ptr.get(i) }
+
+share(all)
+rec_tick_at(r<their<Recorder>>, j<Int>)<Int> -> { return r.by_entity.get(j) }
+
+// FNV-1a 64 over the canonical view, entity-major, mixing the entity id then each of its ticks.
+// Wraps like a 64-bit unsigned multiply (both this runtime and the reference mask to 64 bits).
+share(all)
+rec_hash_canonical(r<their<Recorder>>, n<Int>)<Int> -> {
+    h<Int> = 0x00000100000001B3
+    i<Int> = 0
+    while (i < n) {
+        if (i < r.row_ptr.len() - 1) {
+            lo<Int> = r.row_ptr.get(i)
+            hi<Int> = r.row_ptr.get(i + 1)
+            if (hi > lo) {
+                h = (h ^ i) * 0x100000001B3
+                k<Int> = lo
+                while (k < hi) {
+                    h = (h ^ r.by_entity.get(k)) * 0x100000001B3
+                    k = k + 1
+                }
+            }
+        }
+        i = i + 1
+    }
+    return h
+}
+
+// ---------------------------------------------------------------------------------------------
+// EventSource: an external schedule that pumps events into a scheduler
+// ---------------------------------------------------------------------------------------------
+
+share(all)
+struct EventSource {
+    kind<Int>,
+    tick<Vec<Int>>,
+    target<Vec<Int>>,
+    value<Vec<Int>>,
+    cursor<Int>,
+    emitted<Int>
+}
+
+share(all)
+src_new(kind<Int>)<EventSource> -> {
+    e<EventSource> = EventSource { kind = kind, tick = Vec(), target = Vec(), value = Vec(),
+                                   cursor = 0, emitted = 0 }
+    return e
+}
+
+// Build a source from three parallel vectors (already in any order; the scheduler does not care).
+share(all)
+src_from(kind<Int>, tick<Vec<Int>>, target<Vec<Int>>, value<Vec<Int>>)<EventSource> -> {
+    e<EventSource> = EventSource { kind = kind, tick = tick, target = target, value = value,
+                                   cursor = 0, emitted = 0 }
+    return e
+}
+
+share(all)
+src_len(s<their<EventSource>>)<Int> -> { return s.tick.len() }
+
+// Pump every event with tick < horizon (and >= 0) into the scheduler.
+share(all)
+src_pump_all(sc<their<Sched>>, s<their<EventSource>>, horizon<Int>)<Int> -> {
+    n<Int> = s.tick.len()
+    i<Int> = 0
+    pushed<Int> = 0
+    while (i < n) {
+        t<Int> = s.tick.get(i)
+        if (t >= 0 && t < horizon) {
+            sched_push(sc, t, s.target.get(i), s.kind, s.value.get(i))
+            pushed = pushed + 1
+        }
+        i = i + 1
+    }
+    s.emitted = s.emitted + pushed
+    s.cursor = n
+    return pushed
+}
+
+// Pump only the events whose tick is in [cursor_tick, until_tick): the incremental form, for
+// sources that stream in during a run.
+share(all)
+src_pump_until(sc<their<Sched>>, s<their<EventSource>>, until_tick<Int>)<Int> -> {
+    n<Int> = s.tick.len()
+    i<Int> = s.cursor
+    pushed<Int> = 0
+    while (i < n) {
+        t<Int> = s.tick.get(i)
+        if (t >= until_tick) { i = n } else {
+            if (t >= 0) {
+                sched_push(sc, t, s.target.get(i), s.kind, s.value.get(i))
+                pushed = pushed + 1
+            }
+            i = i + 1
+        }
+    }
+    s.cursor = i
+    s.emitted = s.emitted + pushed
+    return pushed
+}
+
+// ---------------------------------------------------------------------------------------------
+// Replication / Experiment
+// ---------------------------------------------------------------------------------------------
+
+share(all)
+struct Replication {
+    name<String>,
+    stream<Int>,
+    horizon<Int>,
+    spikes<Int>,
+    events_scheduled<Int>,
+    events_processed<Int>,
+    stimulus_events<Int>,
+    synaptic_events<Int>,
+    ticks_processed<Int>,
+    max_batch<Int>,
+    wall_ms<Int>,
+    sim_ms<Int>,
+    load_ms<Int>,
+    spike_hash<Int>,
+    determinism_ok<Int>,
+    sched_buckets<Int>,
+    sched_turns<Int>,
+    sched_grows<Int>,
+    sched_recycles<Int>,
+    sched_late<Int>,
+    sched_far<Int>,
+    sched_max_bucket<Int>,
+    sched_arena_high<Int>,
+    beyond_horizon<Int>
+}
+
+share(all)
+replication_new(name<String>, stream<Int>, horizon<Int>)<Replication> -> {
+    r<Replication> = Replication {
+        name = name, stream = stream, horizon = horizon, spikes = 0, events_scheduled = 0,
+        events_processed = 0, stimulus_events = 0, synaptic_events = 0, ticks_processed = 0,
+        max_batch = 0, wall_ms = 0, sim_ms = 0, load_ms = 0, spike_hash = 0, determinism_ok = 0,
+        sched_buckets = 0, sched_turns = 0, sched_grows = 0, sched_recycles = 0,
+        sched_late = 0, sched_far = 0, sched_max_bucket = 0, sched_arena_high = 0,
+        beyond_horizon = 0
+    }
+    return r
+}
+
+share(all)
+struct Experiment {
+    name<String>,
+    n_replications<Int>,
+    ticks<Int>,
+    short_ticks<Int>,
+    sched_window<Int>
+}
+
+share(all)
+experiment_new(name<String>, n_replications<Int>, ticks<Int>, short_ticks<Int>,
+               sched_window<Int>)<Experiment> -> {
+    e<Experiment> = Experiment { name = name, n_replications = n_replications, ticks = ticks,
+                                 short_ticks = short_ticks, sched_window = sched_window }
+    return e
+}
+
+// ---------------------------------------------------------------------------------------------
+// Minimal JSON emission (kept here so the runtime owns its own report format)
+// ---------------------------------------------------------------------------------------------
+
+share(all)
+json_str(key<String>, value<String>)<String> -> {
+    return "  \"" + key + "\": \"" + value + "\",\n"
+}
+
+share(all)
+json_int(key<String>, value<Int>)<String> -> {
+    return "  \"" + key + "\": " + value.to_string() + ",\n"
+}
+
+share(all)
+json_int_last(key<String>, value<Int>)<String> -> {
+    return "  \"" + key + "\": " + value.to_string() + "\n"
+}
+
+share(all)
+json_str_last(key<String>, value<String>)<String> -> {
+    return "  \"" + key + "\": \"" + value + "\"\n"
+}
+
+share(all)
+des_status_message()<String> -> {
+    return "des.vyb: bucketed calendar-queue DES runtime (milestone M2)"
+}

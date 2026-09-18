@@ -1,0 +1,11 @@
+Renormalization closure: R(G_s) vs the biological source graph (v783, thr 5)
+geometry: phase4:hyperbolic_2d_coords.npy+law_fit kind=hyperbolic R=3.543 T=0.969
+
+ scale       N(G_s)        E(G_s)     N(R)       E(R)  composite  deg_wass_n   motif_L1     ARI
+  10.0    1,392,550    27,842,102  139,255  2,700,513 0.000978306         0.0        0.0     1.0
+   5.0      696,275    13,500,829  139,255  2,700,498 0.00150404       6e-06      7e-09 0.991497
+   2.0      278,510     5,186,025  139,255  2,680,470 0.018407118    0.007422 1.0638e-05 0.911867
+
+composite = weighted mean of the normalised distances (lower is closer to G1);
+raw metrics for every scale are kept in closure.json - the composite exists only
+for internal comparison between scales.

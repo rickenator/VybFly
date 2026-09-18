@@ -1,0 +1,132 @@
+// Phase 3 (PROJECT-VYBFLY.md §9): event-driven GPU backend, Vyb-authored NVPTX.
+//
+// Build:
+//   VYB_STDLIB=~/Projects/Vyb/stdlib \
+//   ~/Projects/Vyb/build/vyb --kernel src/vyb_kernels/spike_bucket.vyb --ptx spike_bucket.ptx
+//
+// The doc's target pipeline is
+//     event bucket T -> group by destination -> parallel synaptic accumulation
+//                    -> update affected neuron state -> threshold/firing detection
+//                    -> scatter new events into future buckets
+// and it explicitly forbids a single global event heap on the GPU. This file implements that
+// pipeline over three device arrays per step:
+//
+//   src_ids  [bucket_count]        neuron ids that fired at time t (the bucket)
+//   accum    [n_neurons]           float synaptic accumulation for the update
+//   next_ids [n_neurons] + count   the following bucket, filled by atomic slot reservation
+//
+// Two Void top-level functions lower to PTX `.entry` kernels. Each takes ONE argument: a device
+// pointer to a descriptor array of i64 words. That is deliberate - cuLaunchKernel's kernelParams
+// packing is unreliable for multi-argument kernels (Vyb issue #199 packs one short and libcuda
+// then dereferences a device address), and the repo's verified pattern for many-argument kernels
+// is a single descriptor read with ld_i64. Float parameters travel as integer micro-units
+// (value * 1e6) and are scaled in-kernel, avoiding any f64 bit-reinterpretation.
+//
+//   accumulate_bucket(dsc) words: [accum, src_ids, out_indptr, out_indices, out_syn,
+//                                  n_neurons, g_micro]
+//       out_syn holds INTEGER synapse counts (i32), matching data/processed/.../bin/pairs.syn.i32;
+//       the kernel converts to f64 before scaling. Reading it as f32 would reinterpret the
+//       integer bit patterns and turn every negative (inhibitory) count into a NaN - which is
+//       exactly the failure this pipeline's first run produced, so the dtype is part of the
+//       contract, not an implementation detail.
+//       one BLOCK per fired neuron, its threads walking that neuron's outgoing CSR slice, each
+//       edge adding g * syn_count to accum[target]. A block per source avoids a prefix-sum pass
+//       and keeps scheduling bucket-local (no global heap, no allocation). Sign comes from the
+//       edge list: the host bakes inhibitory transmitters in as negative synapse counts, so the
+//       kernel needs no transmitter branch.
+//
+//   update_and_fire(dsc) words: [accum, v, refr, fired, next_ids, next_count, v_rest_micro,
+//                                v_reset_micro, v_thresh_micro, leak_micro, refractory_ticks,
+//                                n_neurons, t]
+//       leaky integrate-and-fire update for every neuron, threshold detection, refractory
+//       handling, and scatter of the winners into the next bucket via an atomic slot
+//       reservation. accum is consumed and cleared in the same pass.
+//
+// Vyb device-intrinsic typing (verified 2026-09-17): tid_x/blk_x/dim_x and ld_i32 return CInt,
+// which does NOT implicitly convert to Int in an assignment - every such site needs an
+// explicit `as Int` cast. ld_f64 returns Float and needs no cast.
+//
+// COMPILER BUG WORKAROUND (minimal repro in src/vyb_kernels/probes/paren_operand_bug.vyb):
+// an expression of the form `X + Y * (Z)` - a parenthesised sub-expression as the right operand
+// of a multiplication that itself feeds an addition - fails semantic analysis with
+// "Operator '+' is not defined for operands 'Float' and 'ptr<Y>'" (the multiplication's left
+// operand is mis-typed as a pointer). It reproduces outside kernel mode too, so it is a general
+// front-end bug, not a device-code one. The LIF membrane update below is therefore written as
+// three statements with temporaries instead of `v_rest + leak * (vv - v_rest) + a`.
+//
+// Semantics assumptions the numeric gate (CPU DES vs GPU DES) exists to test:
+//   * atomic_add_i32 returns the previous value (CUDA atomicAdd convention), which is what makes
+//     the slot reservation work;
+//   * f32 for synapse counts and f64 for membrane state, matching the CPU reference's dtype.
+// All buffer arguments are device addresses passed as 8-byte Ints.
+
+// ---------------------------------------------------------------- bucket accumulation
+accumulate_bucket(dsc<Int>) -> {
+    accum<Int> = ld_i64(dsc + 0) as Int
+    src_ids<Int> = ld_i64(dsc + 8) as Int
+    out_indptr<Int> = ld_i64(dsc + 16) as Int
+    out_indices<Int> = ld_i64(dsc + 24) as Int
+    out_syn<Int> = ld_i64(dsc + 32) as Int
+    n_neurons<Int> = ld_i64(dsc + 40) as Int
+    g_micro<Float> = 1.0 * (ld_i64(dsc + 48) as Int)
+    b<Int> = blk_x() as Int
+    s<Int> = ld_i32(src_ids + b * 4) as Int
+    lo<Int> = ld_i32(out_indptr + s * 4) as Int
+    nxt<Int> = s + 1
+    hi<Int> = ld_i32(out_indptr + nxt * 4) as Int
+    k<Int> = tid_x() as Int
+    while (k < hi - lo) {
+        edge<Int> = lo + k
+        dst<Int> = ld_i32(out_indices + edge * 4) as Int
+        if (dst < n_neurons) {
+            sraw<Int> = ld_i32(out_syn + edge * 4) as Int
+            synv<Float> = 1.0 * sraw
+            contrib<Float> = g_micro * synv
+            scaled<Float> = contrib / 1000000.0
+            atomic_add_f64(accum + dst * 8, scaled)
+        }
+        k = k + (dim_x() as Int)
+    }
+}
+
+// ---------------------------------------------------------------- LIF update + fire + scatter
+update_and_fire(dsc<Int>) -> {
+    accum<Int> = ld_i64(dsc + 0) as Int
+    v<Int> = ld_i64(dsc + 8) as Int
+    refr<Int> = ld_i64(dsc + 16) as Int
+    fired<Int> = ld_i64(dsc + 24) as Int
+    next_ids<Int> = ld_i64(dsc + 32) as Int
+    next_count<Int> = ld_i64(dsc + 40) as Int
+    v_rest<Float> = 1.0 * (ld_i64(dsc + 48) as Int) / 1000000.0
+    v_reset<Float> = 1.0 * (ld_i64(dsc + 56) as Int) / 1000000.0
+    v_thresh<Float> = 1.0 * (ld_i64(dsc + 64) as Int) / 1000000.0
+    leak<Float> = 1.0 * (ld_i64(dsc + 72) as Int) / 1000000.0
+    refractory_ticks<Int> = ld_i64(dsc + 80) as Int
+    n_neurons<Int> = ld_i64(dsc + 88) as Int
+    t<Int> = ld_i64(dsc + 96) as Int
+
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    if (gid < n_neurons) {
+        a<Float> = ld_f64(accum + gid * 8)
+        vv<Float> = ld_f64(v + gid * 8)
+        dv<Float> = vv - v_rest
+        ldv<Float> = leak * dv
+        v_new<Float> = v_rest + ldv + a
+        rf<Int> = ld_i32(refr + gid * 4) as Int
+        rt<Int> = t + refractory_ticks
+        st_i32(fired + gid * 4, 0)
+        if (t >= rf) {
+            if (v_new >= v_thresh) {
+                st_i32(fired + gid * 4, 1)
+                slot<Int> = atomic_add_i32(next_count, 1) as Int
+                if (slot < n_neurons) {
+                    st_i32(next_ids + slot * 4, gid)
+                }
+                v_new = v_reset
+                st_i32(refr + gid * 4, rt)
+            }
+        }
+        st_f64(v + gid * 8, v_new)
+        st_f64(accum + gid * 8, 0.0)
+    }
+}

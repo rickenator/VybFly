@@ -1,0 +1,11 @@
+des.vyb: bucketed calendar-queue DES runtime (milestone M2)
+fixture: neurons=640 edges=18909 max_delay=8 stimulus_s0=64000 stimulus_s1=32000 replications=4 load_ms=443
+replication main: stream=0 horizon_ticks=20000 spikes=771379 events_scheduled=22766285 events_processed=22766285 ticks_processed=19841 max_batch=1875 buckets=20025 turns_advanced=19999 ring_grows=0 arena_slots=68641 arena_high=68641 recycles=22697644 max_bucket_len=1875 late=0 far=0 beyond=0 primed=64000 sim_ms=5697 wall_ms=5702 spike_hash=8255019552550552538
+replication det_a: stream=0 horizon_ticks=500 spikes=3064 events_scheduled=88176 events_processed=88176 ticks_processed=382 max_batch=644 buckets=525 turns_advanced=499 ring_grows=0 arena_slots=4509 arena_high=4509 recycles=83667 max_bucket_len=644 late=0 far=0 beyond=0 primed=1676 sim_ms=28 wall_ms=29 spike_hash=-943723657370235180
+replication det_b: stream=0 horizon_ticks=500 spikes=3064 events_scheduled=88176 events_processed=88176 ticks_processed=382 max_batch=644 buckets=525 turns_advanced=499 ring_grows=0 arena_slots=4509 arena_high=4509 recycles=83667 max_bucket_len=644 late=0 far=0 beyond=0 primed=1676 sim_ms=75 wall_ms=76 spike_hash=-943723657370235180
+replication alt: stream=1 horizon_ticks=500 spikes=841 events_scheduled=24695 events_processed=24695 ticks_processed=185 max_batch=333 buckets=525 turns_advanced=499 ring_grows=0 arena_slots=2320 arena_high=2320 recycles=22375 max_bucket_len=333 late=0 far=0 beyond=0 primed=835 sim_ms=17 wall_ms=17 spike_hash=-8830484365616964128
+des_summary_written=1
+determinism_ok=1
+primary: spikes=771379 events=22766285 sim_ms=5697 wall_ms=5702 events_per_s=3996188 bio_ms=2000 bio_ms_per_wall_s=350
+phase2-des-done
+0

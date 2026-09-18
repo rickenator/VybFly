@@ -1,0 +1,340 @@
+{
+  "caveat": "the CUDA payload (scripts/cuda/sparse_prop.cu) is a bounded, counter-rich sparse workload, not the project's biological baseline model; the numbers characterise the *machine* at each scale",
+  "milestone": "M13/M14",
+  "per_scale": {
+    "1": {
+      "biological": {
+        "anchor": {
+          "authors": "Panda K, Mittapally R, Chen Q, Bhaskaran A, Reddy P, Meyhofer E, Yadlapalli S",
+          "caveats": [
+            "ex vivo: the brain is explanted and buffer-perfused, not in a behaving fly",
+            "one genotype (y sc v), one sex (female), one age (10 days) -- sex/age/genotype differences of 10-15% are reported within the same study",
+            "calorimeter time constant ~40 s and resolution ~7.6 nW: fast (sub-second) metabolic transients such as spike-driven ATP flux are smoothed away, so this is a slow/steady-state figure",
+            "pairing the measured organ with N0 = 139,255 is an assumption: the neuron count is the FlyWire FAFB v783 whole-brain count, not a count of the measured animal",
+            "metabolic heat output is total tissue metabolism (neurons + glia + housekeeping), not a measure of spiking computation"
+          ],
+          "citation_title": "Direct quantification of the metabolic heat output of individual Drosophila brains",
+          "doi": "10.1016/j.crmeth.2026.101501",
+          "is_drosophila_measurement": true,
+          "key": "drosophila_brain_heat_panda2026",
+          "label": "Drosophila whole-brain metabolic heat output (direct calorimetry)",
+          "method": "nanowatt-resolution biocalorimeter, live explanted brain perfused with Schneider's medium at 4 uL/min; Q = G_th * dT; ~1 h per measurement",
+          "n_neurons": 139255,
+          "not_a_drosophila_measurement": false,
+          "p_watts": 2.56e-07,
+          "per_neuron_picowatts": 1.8383540985961009,
+          "per_neuron_watts": 1.838354098596101e-12,
+          "provenance_extra": {
+            "buffer_flow_sensitivity": "2 uL/min -> ~62 nW and unstable; 4 uL/min -> ~256 nW; 6 uL/min -> ~247 nW (oxygen supply limited at 2)",
+            "dry_mass": "~6.6 ug per female brain; ~38.7 nW/ug",
+            "preprint": "bioRxiv 2025.08.08.669302 (DOI 10.1101/2025.08.08.669302)"
+          },
+          "reported_value": "~256 nW per brain (female, 10-day-old, y sc v)",
+          "species": "Drosophila melanogaster",
+          "url": "https://doi.org/10.1016/j.crmeth.2026.101501",
+          "year": 2026
+        },
+        "joules_over_simulated_time": 1.28e-07,
+        "per_neuron_watts": 1.838354098596101e-12,
+        "power_watts": 2.56e-07,
+        "track_note": "P_bio depends on N only - a property of the scale, not of this run"
+      },
+      "capability": {
+        "available": true,
+        "metrics": {
+          "memory_capacity": 8,
+          "participation_ratio": 182.59642477652721,
+          "stimulus_response_mi_bits": 6.2984023444260835
+        },
+        "source": "results/phase9/capability.json"
+      },
+      "capability_per_watt": {
+        "memory_capacity_per_watt": 0.06563919,
+        "note": "capability unit per measured GPU watt at this scale"
+      },
+      "dt_ms": 0.5,
+      "epochs": 8,
+      "hardware": {
+        "cpu_joules": null,
+        "cpu_mean_watts": null,
+        "gpu_joules": 469.3863774410001,
+        "gpu_mean_watts": 121.87839999999998,
+        "gpu_median_watts": 158.234,
+        "joules_per_spike": 9.540664e-06,
+        "joules_per_synaptic_event": 4.45924116e-07,
+        "track_note": "measured watts on this machine; GPU joules only (the payload is a CUDA kernel), CPU joules reported separately and never summed in"
+      },
+      "harness": {
+        "epochs_identical": 1,
+        "kernel_s": 3.745588,
+        "max_active": 300000,
+        "spikes": 49198504,
+        "stimulus_spikes": 9992,
+        "synaptic_events": 1052614920
+      },
+      "indices_bytes": 10802052,
+      "indptr_bytes": 1114048,
+      "n_edges": 2700513,
+      "n_neurons": 139255,
+      "n_synapses": 34153566,
+      "simulated_biological_seconds": 0.5,
+      "steps": 1000,
+      "syn_bytes": 10802052,
+      "wall_seconds": 3.950169,
+      "wall_seconds_per_bio_second": 7.900337
+    },
+    "10": {
+      "biological": {
+        "anchor": {
+          "authors": "Panda K, Mittapally R, Chen Q, Bhaskaran A, Reddy P, Meyhofer E, Yadlapalli S",
+          "caveats": [
+            "ex vivo: the brain is explanted and buffer-perfused, not in a behaving fly",
+            "one genotype (y sc v), one sex (female), one age (10 days) -- sex/age/genotype differences of 10-15% are reported within the same study",
+            "calorimeter time constant ~40 s and resolution ~7.6 nW: fast (sub-second) metabolic transients such as spike-driven ATP flux are smoothed away, so this is a slow/steady-state figure",
+            "pairing the measured organ with N0 = 139,255 is an assumption: the neuron count is the FlyWire FAFB v783 whole-brain count, not a count of the measured animal",
+            "metabolic heat output is total tissue metabolism (neurons + glia + housekeeping), not a measure of spiking computation"
+          ],
+          "citation_title": "Direct quantification of the metabolic heat output of individual Drosophila brains",
+          "doi": "10.1016/j.crmeth.2026.101501",
+          "is_drosophila_measurement": true,
+          "key": "drosophila_brain_heat_panda2026",
+          "label": "Drosophila whole-brain metabolic heat output (direct calorimetry)",
+          "method": "nanowatt-resolution biocalorimeter, live explanted brain perfused with Schneider's medium at 4 uL/min; Q = G_th * dT; ~1 h per measurement",
+          "n_neurons": 139255,
+          "not_a_drosophila_measurement": false,
+          "p_watts": 2.56e-07,
+          "per_neuron_picowatts": 1.8383540985961009,
+          "per_neuron_watts": 1.838354098596101e-12,
+          "provenance_extra": {
+            "buffer_flow_sensitivity": "2 uL/min -> ~62 nW and unstable; 4 uL/min -> ~256 nW; 6 uL/min -> ~247 nW (oxygen supply limited at 2)",
+            "dry_mass": "~6.6 ug per female brain; ~38.7 nW/ug",
+            "preprint": "bioRxiv 2025.08.08.669302 (DOI 10.1101/2025.08.08.669302)"
+          },
+          "reported_value": "~256 nW per brain (female, 10-day-old, y sc v)",
+          "species": "Drosophila melanogaster",
+          "url": "https://doi.org/10.1016/j.crmeth.2026.101501",
+          "year": 2026
+        },
+        "joules_over_simulated_time": 1.28e-06,
+        "per_neuron_watts": 1.838354098596101e-12,
+        "power_watts": 2.56e-06,
+        "track_note": "P_bio depends on N only - a property of the scale, not of this run"
+      },
+      "capability": {
+        "available": true,
+        "metrics": {
+          "memory_capacity": 96,
+          "participation_ratio": 388.540714761344,
+          "stimulus_response_mi_bits": 6.584962500721156
+        },
+        "source": "results/phase9/capability.json"
+      },
+      "capability_per_watt": {
+        "memory_capacity_per_watt": 0.50152538,
+        "note": "capability unit per measured GPU watt at this scale"
+      },
+      "dt_ms": 0.5,
+      "epochs": 8,
+      "hardware": {
+        "cpu_joules": null,
+        "cpu_mean_watts": null,
+        "gpu_joules": 2120.2677064880004,
+        "gpu_mean_watts": 191.41603571428573,
+        "gpu_median_watts": 212.613,
+        "joules_per_spike": 4.399175e-06,
+        "joules_per_synaptic_event": 1.98320916e-07,
+        "track_note": "measured watts on this machine; GPU joules only (the payload is a CUDA kernel), CPU joules reported separately and never summed in"
+      },
+      "harness": {
+        "epochs_identical": 0,
+        "kernel_s": 10.629482,
+        "max_active": 300000,
+        "spikes": 481969418,
+        "stimulus_spikes": 9992,
+        "synaptic_events": 10691094744
+      },
+      "indices_bytes": 111368408,
+      "indptr_bytes": 11140408,
+      "n_edges": 27842102,
+      "n_neurons": 1392550,
+      "n_synapses": 346934550,
+      "simulated_biological_seconds": 0.5,
+      "steps": 1000,
+      "syn_bytes": 111368408,
+      "wall_seconds": 11.074496,
+      "wall_seconds_per_bio_second": 22.148992
+    },
+    "2": {
+      "biological": {
+        "anchor": {
+          "authors": "Panda K, Mittapally R, Chen Q, Bhaskaran A, Reddy P, Meyhofer E, Yadlapalli S",
+          "caveats": [
+            "ex vivo: the brain is explanted and buffer-perfused, not in a behaving fly",
+            "one genotype (y sc v), one sex (female), one age (10 days) -- sex/age/genotype differences of 10-15% are reported within the same study",
+            "calorimeter time constant ~40 s and resolution ~7.6 nW: fast (sub-second) metabolic transients such as spike-driven ATP flux are smoothed away, so this is a slow/steady-state figure",
+            "pairing the measured organ with N0 = 139,255 is an assumption: the neuron count is the FlyWire FAFB v783 whole-brain count, not a count of the measured animal",
+            "metabolic heat output is total tissue metabolism (neurons + glia + housekeeping), not a measure of spiking computation"
+          ],
+          "citation_title": "Direct quantification of the metabolic heat output of individual Drosophila brains",
+          "doi": "10.1016/j.crmeth.2026.101501",
+          "is_drosophila_measurement": true,
+          "key": "drosophila_brain_heat_panda2026",
+          "label": "Drosophila whole-brain metabolic heat output (direct calorimetry)",
+          "method": "nanowatt-resolution biocalorimeter, live explanted brain perfused with Schneider's medium at 4 uL/min; Q = G_th * dT; ~1 h per measurement",
+          "n_neurons": 139255,
+          "not_a_drosophila_measurement": false,
+          "p_watts": 2.56e-07,
+          "per_neuron_picowatts": 1.8383540985961009,
+          "per_neuron_watts": 1.838354098596101e-12,
+          "provenance_extra": {
+            "buffer_flow_sensitivity": "2 uL/min -> ~62 nW and unstable; 4 uL/min -> ~256 nW; 6 uL/min -> ~247 nW (oxygen supply limited at 2)",
+            "dry_mass": "~6.6 ug per female brain; ~38.7 nW/ug",
+            "preprint": "bioRxiv 2025.08.08.669302 (DOI 10.1101/2025.08.08.669302)"
+          },
+          "reported_value": "~256 nW per brain (female, 10-day-old, y sc v)",
+          "species": "Drosophila melanogaster",
+          "url": "https://doi.org/10.1016/j.crmeth.2026.101501",
+          "year": 2026
+        },
+        "joules_over_simulated_time": 2.56e-07,
+        "per_neuron_watts": 1.838354098596101e-12,
+        "power_watts": 5.12e-07,
+        "track_note": "P_bio depends on N only - a property of the scale, not of this run"
+      },
+      "capability": {
+        "available": true,
+        "metrics": {
+          "memory_capacity": 96,
+          "participation_ratio": 268.5835620022859,
+          "stimulus_response_mi_bits": 6.543295834054489
+        },
+        "source": "results/phase9/capability.json"
+      },
+      "capability_per_watt": {
+        "memory_capacity_per_watt": 0.59593037,
+        "note": "capability unit per measured GPU watt at this scale"
+      },
+      "dt_ms": 0.5,
+      "epochs": 8,
+      "hardware": {
+        "cpu_joules": null,
+        "cpu_mean_watts": null,
+        "gpu_joules": 516.378948083,
+        "gpu_mean_watts": 161.09264705882353,
+        "gpu_median_watts": 169.933,
+        "joules_per_spike": 5.368148e-06,
+        "joules_per_synaptic_event": 2.58287716e-07,
+        "track_note": "measured watts on this machine; GPU joules only (the payload is a CUDA kernel), CPU joules reported separately and never summed in"
+      },
+      "harness": {
+        "epochs_identical": 0,
+        "kernel_s": 3.125115,
+        "max_active": 300000,
+        "spikes": 96193127,
+        "stimulus_spikes": 9992,
+        "synaptic_events": 1999239282
+      },
+      "indices_bytes": 20744100,
+      "indptr_bytes": 2228088,
+      "n_edges": 5186025,
+      "n_neurons": 278510,
+      "n_synapses": 68428042,
+      "simulated_biological_seconds": 0.5,
+      "steps": 1000,
+      "syn_bytes": 20744100,
+      "wall_seconds": 3.32658,
+      "wall_seconds_per_bio_second": 6.653161
+    },
+    "5": {
+      "biological": {
+        "anchor": {
+          "authors": "Panda K, Mittapally R, Chen Q, Bhaskaran A, Reddy P, Meyhofer E, Yadlapalli S",
+          "caveats": [
+            "ex vivo: the brain is explanted and buffer-perfused, not in a behaving fly",
+            "one genotype (y sc v), one sex (female), one age (10 days) -- sex/age/genotype differences of 10-15% are reported within the same study",
+            "calorimeter time constant ~40 s and resolution ~7.6 nW: fast (sub-second) metabolic transients such as spike-driven ATP flux are smoothed away, so this is a slow/steady-state figure",
+            "pairing the measured organ with N0 = 139,255 is an assumption: the neuron count is the FlyWire FAFB v783 whole-brain count, not a count of the measured animal",
+            "metabolic heat output is total tissue metabolism (neurons + glia + housekeeping), not a measure of spiking computation"
+          ],
+          "citation_title": "Direct quantification of the metabolic heat output of individual Drosophila brains",
+          "doi": "10.1016/j.crmeth.2026.101501",
+          "is_drosophila_measurement": true,
+          "key": "drosophila_brain_heat_panda2026",
+          "label": "Drosophila whole-brain metabolic heat output (direct calorimetry)",
+          "method": "nanowatt-resolution biocalorimeter, live explanted brain perfused with Schneider's medium at 4 uL/min; Q = G_th * dT; ~1 h per measurement",
+          "n_neurons": 139255,
+          "not_a_drosophila_measurement": false,
+          "p_watts": 2.56e-07,
+          "per_neuron_picowatts": 1.8383540985961009,
+          "per_neuron_watts": 1.838354098596101e-12,
+          "provenance_extra": {
+            "buffer_flow_sensitivity": "2 uL/min -> ~62 nW and unstable; 4 uL/min -> ~256 nW; 6 uL/min -> ~247 nW (oxygen supply limited at 2)",
+            "dry_mass": "~6.6 ug per female brain; ~38.7 nW/ug",
+            "preprint": "bioRxiv 2025.08.08.669302 (DOI 10.1101/2025.08.08.669302)"
+          },
+          "reported_value": "~256 nW per brain (female, 10-day-old, y sc v)",
+          "species": "Drosophila melanogaster",
+          "url": "https://doi.org/10.1016/j.crmeth.2026.101501",
+          "year": 2026
+        },
+        "joules_over_simulated_time": 6.4e-07,
+        "per_neuron_watts": 1.838354098596101e-12,
+        "power_watts": 1.28e-06,
+        "track_note": "P_bio depends on N only - a property of the scale, not of this run"
+      },
+      "capability": {
+        "available": true,
+        "metrics": {
+          "memory_capacity": 96,
+          "participation_ratio": 339.23639886359825,
+          "stimulus_response_mi_bits": 6.584962500721156
+        },
+        "source": "results/phase9/capability.json"
+      },
+      "capability_per_watt": {
+        "memory_capacity_per_watt": 0.5883695,
+        "note": "capability unit per measured GPU watt at this scale"
+      },
+      "dt_ms": 0.5,
+      "epochs": 8,
+      "hardware": {
+        "cpu_joules": null,
+        "cpu_mean_watts": null,
+        "gpu_joules": 984.3071246185001,
+        "gpu_mean_watts": 163.1627741935484,
+        "gpu_median_watts": 196.072,
+        "joules_per_spike": 4.078076e-06,
+        "joules_per_synaptic_event": 1.88431061e-07,
+        "track_note": "measured watts on this machine; GPU joules only (the payload is a CUDA kernel), CPU joules reported separately and never summed in"
+      },
+      "harness": {
+        "epochs_identical": 0,
+        "kernel_s": 5.702797,
+        "max_active": 300000,
+        "spikes": 241365578,
+        "stimulus_spikes": 9992,
+        "synaptic_events": 5223698901
+      },
+      "indices_bytes": 54003316,
+      "indptr_bytes": 5570208,
+      "n_edges": 13500829,
+      "n_neurons": 696275,
+      "n_synapses": 171970190,
+      "simulated_biological_seconds": 0.5,
+      "steps": 1000,
+      "syn_bytes": 54003316,
+      "wall_seconds": 6.019942,
+      "wall_seconds_per_bio_second": 12.039884
+    }
+  },
+  "phase": 13,
+  "protocol": {
+    "dt_ms": 0.5,
+    "epochs": 8,
+    "exe": "results/energy/build/sparse_prop",
+    "sampling_interval_s": 0.2,
+    "steps": 1000
+  },
+  "title": "energy curves across connectome scales and capability per watt",
+  "track_separation": "the hardware and biological blocks are never summed or conflated; the hardware block measures this machine on a CUDA payload, the biological block is a property of the neuron count alone"
+}
