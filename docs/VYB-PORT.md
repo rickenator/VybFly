@@ -270,12 +270,27 @@ The placement therefore carries a pinned literal for the spread. That value is n
 runner derives it on the host from the cloud's second moments (spacing 850.6 nm, sigma 510.3 nm) and
 asserts the pin matches within 1 nm on every run, so it cannot drift silently.
 
-### Open item: the sibling-damping edit in the Python reference
+### The sibling-damping edit is inert at the published scales (verified)
 
 `src/flyscale/renorm.py` scales the sibling-damping rate beyond the calibrated factor
 (`prob_scale * min(1, 9 / (c - 1))`), so the local-synapse budget stays constant at c=100 instead of
-inflating mean degree from ~19 to ~30. By construction the multiplier is exactly 1 at c = 2, 5 and
-10, so the published ladder must be unchanged - but that has **not** been demonstrated by a run yet:
-two verification attempts produced an empty `scales` block (one run killed early, one exited without
-computing its scale). The 100x path does not use this code at all (generation is on the GPU), so
-nothing shipped depends on it. Verify or revert before the Python upscale is used again.
+inflating mean degree from ~19 to ~30. **Verified by running the c=10 upscale with the published
+arguments** (seed 0, rewire_fraction 0.1, siblings on, sibling_prob_scale 0.1, spectral geometry),
+skipping only the closure comparison:
+
+```
+rerun    : {"n_neurons": 1392550, "n_connections": 27842102, "n_synapses": 346934550,
+            "mean_out_degree": 19.9936, "mean_synapses_per_connection": 12.4608,
+            "density": 1.4357563e-05}                       # 56.6 s
+published: identical to the last digit
+provenance: sibling_prob_scale 0.1, sibling_prob_scale_effective 0.1, sibling_budget_scale 1.0,
+            n_sibling_edges_pre_merge 1079778 (same as published)
+```
+
+So the published 2x/5x/10x ladder is untouched by the change, and the effective rate only departs
+from the requested one above the calibrated factor.
+
+Two earlier attempts to run this check through `scripts/phase6_upscale.py` hit a 25-minute timeout and
+left an empty `scales` block, which the script writes *before* the factor loop. The upscale itself
+takes 56-74 s at c=10, so the timeout was in that script's **closure comparison** at 1.39M nodes /
+27.8M edges, not in the upscale and not a disagreement.
