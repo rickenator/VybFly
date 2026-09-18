@@ -1,6 +1,6 @@
 # FlyScale
 
-### 📄 **[Read the paper (PDF, 24 pages) →](paper.pdf)**
+### 📄 **[Read the paper (PDF) →](paper.pdf)**
 
 A map of a whole fruit-fly brain, redrawn bigger — and an honest test of whether "bigger" still
 behaves like a brain.
