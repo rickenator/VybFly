@@ -46,3 +46,5 @@ minimal language bugs.
 
 This is evidence that the workload reaches paths the test suite does not. The repros are in the
 repository so the claims can be re-checked or refuted.
+
+One of these is filed upstream as [Vyb #301](https://github.com/rickenator/Vyb/issues/301) with the emitted PTX quoted inline, so it can be confirmed or refuted without this repository.

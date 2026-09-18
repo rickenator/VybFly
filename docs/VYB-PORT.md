@@ -241,7 +241,9 @@ values the project already published, not a second implementation.
 ### Root cause (found on upstream main 5167646, 2026-09-18)
 
 32-bit device stores and atomics are **lowered as 64-bit** operations. Minimal repros and the exact
-PTX are in `src/vyb_kernels/probes/probe_width.vyb`:
+PTX are in `src/vyb_kernels/probes/probe_width.vyb`; filed upstream as
+[Vyb #301](https://github.com/rickenator/Vyb/issues/301), because the consuming project exists to
+find exactly this class of defect:
 
 ```
 st_f32(out + i*4, 1.5)      ->  mov.u64 %rd21, 4609434218613702656 ; st.global.u64 [%rd23], %rd21
