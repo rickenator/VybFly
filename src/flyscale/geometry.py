@@ -377,13 +377,13 @@ def hyperbolic_embedding(c, dim: int = 2, edges=None, n_neg: int | None = None,
 
     Objective (the geometric-renormalization formulation): for sampled pairs,
     ``P(connect) = 1 / (1 + exp((d_ij - R) / T))`` with ``d_ij`` the hyperbolic
-    distance, minimising the Bernoulli negative log-likelihood over positive edges
-    and uniformly sampled non-edges (1:1). Optimisation is in the equivalent
+    distance, minimizing the Bernoulli negative log-likelihood over positive edges
+    and uniformly sampled non-edges (1:1). Optimization is in the equivalent
     hyperboloid model, where the distance gradient is ``d(arccosh(<x,y>_M))`` with
     the Minkowski inner product; positions are reported in the Poincare ball.
 
     ``(R, T)`` are refitted by maximum likelihood after each epoch from the current
-    distances (alternating optimisation), which is more stable than carrying them
+    distances (alternating optimization), which is more stable than carrying them
     through the SGD.
 
     Parameters
@@ -1140,7 +1140,7 @@ def self_test(verbose: bool = True) -> dict:
                                          "pass": True}
 
     # 5. hyperbolic SGD learns on a planted hyperbolic disk (the generative model IS a
-    #    distance law in hyperbolic space, so a correct optimiser must recover it)
+    #    distance law in hyperbolic space, so a correct optimizer must recover it)
     nn = 600
     r_h = rng.uniform(0.0, 2.5, size=nn)                          # hyperbolic radii
     ang = rng.uniform(0, 2 * np.pi, size=nn)
@@ -1163,7 +1163,7 @@ def self_test(verbose: bool = True) -> dict:
     sel = np.random.default_rng(7).choice(cand.size, size=20000, replace=False)
     nidx = cand[sel]
     # the achievable ranking quality on this evaluation set is set by the planted
-    # process itself, so the optimiser is scored against that oracle rather than
+    # process itself, so the optimizer is scored against that oracle rather than
     # against an arbitrary fixed constant
     y_ev = np.concatenate([np.ones(ei_.size), np.zeros(nidx.size)])
     d_pos_true = dp[planted]

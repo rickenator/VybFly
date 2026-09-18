@@ -304,7 +304,7 @@ def milestones() -> None:
         ("M13", "energy curves vs scale", "done", "438 / 500 / 946 / 2022 GPU joules"),
         ("M14", "capability per watt", "done (bound)", "0.07 / 0.62 / 0.61 / 0.53; censored"),
         ("M15", "100x graph (~14M neurons)", "gated",
-         "needs the sibling-edge placement vectorised (1.4e9 distances at $c=100$)"),
+         "needs the sibling-edge placement vectorized (1.4e9 distances at $c=100$)"),
     ]
     body = [r"\begin{tabular}{l p{5.0cm} l p{6.0cm}}", r"\toprule",
             r"id & milestone & state & evidence \\", r"\midrule"]
@@ -319,7 +319,7 @@ def milestones() -> None:
 def defects() -> None:
     rows = [
         ("st\\_* stored the operand's LLVM type, not the intrinsic element type",
-         "`st\\_i32(ptr, i64)` emitted an 8-byte store whose high word landed in the neighbouring 4-byte slot",
+         "`st\\_i32(ptr, i64)` emitted an 8-byte store whose high word landed in the neighboring 4-byte slot",
          "kernel-mode data corruption in the GPU pipeline", "fixed upstream (PR \\#273)"),
         ("a parenthesised operand after `*` inside an addition",
          "the multiplication's left operand is typed as a pointer; `p + s * (q)` fails to compile outside kernel mode",

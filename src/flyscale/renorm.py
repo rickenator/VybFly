@@ -569,7 +569,7 @@ def _sample_alt_partner(rng, g, parents: np.ndarray) -> np.ndarray:
 
 
 def _block_from_coords(kind: str, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-    """Distance block between two coordinate blocks, honouring the geometry."""
+    """Distance block between two coordinate blocks, honoring the geometry."""
     return poincare_distance_block(x, y) if kind == "hyperbolic" \
         else euclidean_distance_block(x, y)
 

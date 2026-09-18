@@ -74,7 +74,7 @@ class NvmlBackend:
     Preferred over spawning ``nvidia-smi`` per sample: on this box (RTX 3090, driver
     580.173.02) repeated ``nvidia-smi --query-gpu=power.draw`` calls made from a background
     sampling thread returned a *stale* idle value for the whole run even at ~97% GPU
-    utilisation, while NVML calls from the same thread tracked the load correctly
+    utilization, while NVML calls from the same thread tracked the load correctly
     (22 W idle -> 155 W loaded). See results/energy/README.md.
     """
 

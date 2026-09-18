@@ -1,6 +1,6 @@
 """Phase 8 / M11 — mushroom-body associative learning on the FlyWire v783 connectome.
 
-PROJECT-VYBFLY.md §14 asks for biologically relevant learning mechanisms, prioritising the
+PROJECT-VYBFLY.md §14 asks for biologically relevant learning mechanisms, prioritizing the
 mushroom body (MB), with Kenyon cells (KC) coding stimuli sparsely and dopaminergic circuits
 carrying reward/valence.  This module implements exactly that, on the *real* MB subgraph of
 the canonical v783 dataset:
@@ -430,7 +430,7 @@ class PlasticityConfig:
     (1 where a DAN actually connects to MBON j, else 0), which routes the teaching signal to
     a specific set of MBON dendrites instead of broadcasting it.  `gate` and `pool` are
     deliberately separate: `gate` says which synapses the teaching signal can reach, `pool`
-    says which MBONs the behavioural readout is taken from, so the gate ablation leaves the
+    says which MBONs the behavioral readout is taken from, so the gate ablation leaves the
     readout untouched.
     """
 

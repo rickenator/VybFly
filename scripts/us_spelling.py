@@ -64,6 +64,32 @@ PAIRS: list[tuple[str, str]] = [
     ("towards", "toward"), ("whilst", "while"), ("amongst", "among"), ("learnt", "learned"),
     ("labour", "labor"), ("harbour", "harbor"), ("rumour", "rumor"),
     ("vapours", "vapors"), ("vapour", "vapor"), ("sulphur", "sulfur"),
+    # derived forms and -isation nouns: missed by the first pass and found by a wider sweep
+    ("behavioural", "behavioral"), ("behaviourally", "behaviorally"), ("colouring", "coloring"),
+    ("organised", "organized"), ("organise", "organize"), ("organising", "organizing"),
+    ("organisation", "organization"), ("organisations", "organizations"), ("organiser", "organizer"),
+    ("realised", "realized"), ("realise", "realize"), ("realising", "realizing"),
+    ("realisation", "realization"),
+    ("specialised", "specialized"), ("specialise", "specialize"),
+    ("specialisation", "specialization"), ("specialising", "specializing"),
+    ("emphasised", "emphasized"), ("emphasise", "emphasize"), ("emphasising", "emphasizing"),
+    ("optimisation", "optimization"), ("optimisations", "optimizations"),
+    ("optimising", "optimizing"), ("optimiser", "optimizer"),
+    ("utilisation", "utilization"), ("utilisations", "utilizations"),
+    ("serialisation", "serialization"),
+    ("generalisation", "generalization"), ("generalisations", "generalisations".replace("sations", "zations")),
+    ("categorisation", "categorization"), ("visualisation", "visualization"),
+    ("visualisations", "visualizations"), ("standardisation", "standardization"),
+    ("minimisation", "minimization"), ("minimising", "minimizing"),
+    ("maximisation", "maximization"), ("maximising", "maximizing"),
+    ("characterisation", "characterization"), ("summarisation", "summarization"),
+    ("prioritisation", "prioritization"), ("prioritising", "prioritizing"),
+    ("customisation", "customization"), ("parallelisation", "parallelization"),
+    ("analyser", "analyzer"),
+    ("favourable", "favorable"), ("favourably", "favorably"), ("favourites", "favorites"),
+    ("unfavourable", "unfavorable"),
+    ("honourable", "honorable"), ("honoured", "honored"), ("honouring", "honoring"),
+    ("ageing", "aging"), ("judgement", "judgment"),
 ]
 
 PATTERNS = [(re.compile(rf"\b{re.escape(b)}\b", re.IGNORECASE), b, u) for b, u in PAIRS]
@@ -76,6 +102,26 @@ def _cased(src: str, dst: str, found: str) -> str:
     if found[:1].isupper():
         return dst.capitalize()
     return dst
+
+
+PY_KEY = re.compile(r"""(['\"])([A-Za-z_][A-Za-z0-9_]*)\1(\s*:)""")
+
+
+def convert_python_text(text: str) -> str:
+    """Convert comments, docstrings and printed text, but never a dict key.
+
+    Keys such as {"optimiser": ...} are written into artifacts; renaming one here would desync the
+    code from the JSON already on disk.
+    """
+    keys: list[str] = []
+
+    def stash(m: re.Match) -> str:
+        keys.append(m.group(0))
+        return f"\x00{len(keys) - 1}\x00"
+
+    stashed = PY_KEY.sub(stash, text)
+    converted = convert(stashed)
+    return re.sub(r"\x00(\d+)\x00", lambda m: keys[int(m.group(1))], converted)
 
 
 def convert(text: str) -> str:
@@ -138,7 +184,7 @@ def main() -> None:
         except (UnicodeDecodeError, OSError):
             continue
         if p.suffix == ".py":
-            new = convert(text)
+            new = convert_python_text(text)
         elif p.suffix == ".json":
             new = convert_json_text(text)
         else:

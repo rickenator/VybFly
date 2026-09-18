@@ -476,7 +476,7 @@ def main() -> int:
     X2 = anatomical_xy(c)
     geometries["anatomical_xyz"] = {"coords": X3, "kind": "euclidean"}
     geometries["anatomical_xy"] = {"coords": X2, "kind": "euclidean"}
-    # auxiliary: PCA of the 3-D coordinates to 2-D, and per-axis standardisation (the
+    # auxiliary: PCA of the 3-D coordinates to 2-D, and per-axis standardization (the
     # published z axis has a much smaller range than x/y, so the comparison is also run
     # with each axis standardized to unit variance)
     Xc = X3 - np.nanmean(X3, axis=0)

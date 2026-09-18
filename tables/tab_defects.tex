@@ -4,7 +4,7 @@
 \toprule
 defect found while building this project & reproduction / observed behavior & consequence here & status \\
 \midrule
-st\_* stored the operand's LLVM type, not the intrinsic element type & `st\_i32(ptr, i64)` emitted an 8-byte store whose high word landed in the neighbouring 4-byte slot & kernel-mode data corruption in the GPU pipeline & fixed upstream (PR \#273) \\
+st\_* stored the operand's LLVM type, not the intrinsic element type & `st\_i32(ptr, i64)` emitted an 8-byte store whose high word landed in the neighboring 4-byte slot & kernel-mode data corruption in the GPU pipeline & fixed upstream (PR \#273) \\
 a parenthesised operand after `*` inside an addition & the multiplication's left operand is typed as a pointer; `p + s * (q)` fails to compile outside kernel mode & blocks ordinary arithmetic expressions & fixed upstream (verified on main@51ced31) \\
 `Vec<Vec<T>>` is unusable & four failure modes incl. silent garbage from `.get(i).get(0)` and `.push` into a temporary & forced the DES scheduler into a structure-of-arrays design & open (issue \#284) \\
 re-borrowing an existing borrow segfaults & `f(borrow(v))` where `v` is already borrowed (exit 139) & API shape constraint in the DES runtime & open (issue \#285) \\

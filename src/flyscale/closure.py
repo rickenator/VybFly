@@ -429,7 +429,7 @@ COMPOSITE_WEIGHTS = {
 def composite_score(metrics: dict) -> float | None:
     """Weighted mean of available normalized distances; ARI enters as (1 - ARI).
 
-    Internal optimisation score only - §13 requires the raw metrics to be kept alongside it,
+    Internal optimization score only - §13 requires the raw metrics to be kept alongside it,
     and they are (this dict is stored whole in the results JSON).
     """
     total, used = 0.0, 0.0

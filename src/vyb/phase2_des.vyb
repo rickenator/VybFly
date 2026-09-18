@@ -54,7 +54,7 @@ sched_slack()<Int> -> { return 16 }
 // Small CSV / text helpers (String.to_int does not exist on this build: probe_m2_c)
 // ---------------------------------------------------------------------------------------------
 
-// Parse the first decimal integer in `s`, stopping at the first non-digit (leading '-' honoured).
+// Parse the first decimal integer in `s`, stopping at the first non-digit (leading '-' honored).
 parse_int(s<String>)<Int> -> {
     n<Int> = s.len()
     i<Int> = 0

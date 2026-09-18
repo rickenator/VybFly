@@ -2,7 +2,7 @@
 
     python scripts/phase8_learning.py [--threshold 5] [--seeds 0 1 2 3 4] [--quick]
 
-PROJECT-VYBFLY.md §14: implement biologically relevant learning mechanisms, prioritising
+PROJECT-VYBFLY.md §14: implement biologically relevant learning mechanisms, prioritizing
 the mushroom body; §27 flags "training may dominate architecture" as a primary risk.
 This script builds the benchmark:
 

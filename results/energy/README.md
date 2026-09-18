@@ -177,7 +177,7 @@ Secondary, clearly-derived per-event biology (`mammalian_cortex_per_event`, all
    only (lower bound) plus the `cooldown_gpu` window (upper bound) — e.g. 53.1–55.5 µJ per spike.
 4. **`nvidia-smi` polling from a thread goes stale on this box.** Reproduced repeatedly: a sampler
    thread spawning `nvidia-smi --query-gpu=power.draw` returned a *constant* idle value (≈21 W)
-   for the entire run while GPU utilisation sat at 96 %; the same call from the shell, or NVML from
+   for the entire run while GPU utilization sat at 96 %; the same call from the shell, or NVML from
    the same thread, tracked 21 W → 155 W correctly. The harness therefore reads **NVML through
    `ctypes`** and keeps `nvidia-smi` as the cross-check. `probe_gpu()` records both backends and
    that note.

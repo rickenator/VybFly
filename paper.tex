@@ -59,7 +59,7 @@ adult \textit{Drosophila} connectome\par}
 Can a biological connectome be enlarged? We take the complete adult \textit{Drosophila}
 connectome (FlyWire FAFB v783; 139{,}255 neurons, 2{,}700{,}513 thresholded connections,
 34{,}153{,}566 synapses) and ask whether a synthetic graph can be generated that preserves its
-structural statistics, its propagation dynamics, its behavioural capabilities and its energy
+structural statistics, its propagation dynamics, its behavioral capabilities and its energy
 budget as it grows. The method is a geometric one. We first fit latent coordinates to the
 connectome and ask which space actually predicts connectivity: a 32-dimensional spectral
 embedding predicts held-out connections best (AUC 0.952), a 2-D hyperbolic embedding beats the
@@ -117,7 +117,7 @@ The whole-brain connectome of an adult female \textit{Drosophila} is the first c
 diagram of a brain at synapse resolution~\cite{flywire-flagship,flywire-network}. It contains
 $\approx$139k neurons and $\approx$54.5M synapses (16.8M directed neuron pairs before
 thresholding), and it is not a random graph: it is sparse (connection probability
-$\approx1.4\times10^{-4}$), weighted (a typical connection carries 12.6 synapses), organised into
+$\approx1.4\times10^{-4}$), weighted (a typical connection carries 12.6 synapses), organized into
 79 neuropils, rich-club dominated (30\% of neurons are highly connected), and heavy-tailed in
 degree~\cite{flywire-network}. It is, in short, exactly the kind of object for which a question
 about \emph{scale} is well posed: if this graph is the product of biological growth rules, is
@@ -834,7 +834,7 @@ CPU$\leftrightarrow$GPU counters agree exactly (5{,}052 spikes, 382{,}090 events
 
 Two instrumentation facts are recorded because they affect any reader's own measurements: power
 queried through \code{nvidia-smi --query-gpu=power.draw} from a background sampling thread
-returned a stale idle value at 96\% utilisation, whereas NVML from the same thread tracked
+returned a stale idle value at 96\% utilization, whereas NVML from the same thread tracked
 22$\to$155~W correctly --- hence NVML primary with \code{nvidia-smi} as cross-check; and the
 device takes $\approx$10~s to fall back to idle, so baselines wait for a settled plateau and
 workload energy is reported as a lower/upper range. CPU package and DRAM power are
@@ -883,7 +883,7 @@ capacity as the numerator, which is censored from $2\times$ up, so those values 
 \centering
 \includegraphics[width=0.99\textwidth]{figs/fig\_energy.pdf}
 \caption{Energy across scales. Left: measured GPU joules grow sublinearly. Center: cost per
-spike falls by a factor of two --- a device-utilisation effect, not biological efficiency.
+spike falls by a factor of two --- a device-utilization effect, not biological efficiency.
 Right: the biological-equivalent track is linear in $N$ \emph{by construction}; it is a model
 identity, reported separately precisely so that it cannot be mistaken for a measurement.}
 \label{fig:energy}
@@ -959,7 +959,7 @@ capability side, size buys information and dimensionality in proportion and subl
 respectively, and buys associative capacity that is at least an order of magnitude larger --- but
 it buys no temporal machinery and no measurable advantage for the connectome's own wiring over
 shuffled controls when the task is associative learning. Energy measured across the ladder falls
-per spike for device-utilisation reasons that must not be mistaken for biological efficiency,
+per spike for device-utilization reasons that must not be mistaken for biological efficiency,
 while the biological-equivalent model is linear by construction.
 
 Three things would change our conclusions, and all three are cheap relative to what has already
