@@ -196,3 +196,54 @@ measurement (~29 us/element, ~34k elements/s) is what makes a full 15.1M-element
 but upstream `main` is moving fast right now and the number should be re-measured on the next build
 before it is filed as an issue — an out-of-date performance claim is worse than none.
 
+
+## 100x generation on the GPU (Vyb + NVPTX, 2026-09-18)
+
+`src/vyb_kernels/upscale_kernel.vyb` (kernels) and `src/vyb_kernels/upscale100.vyb` (host runner)
+generate the 100x connectome entirely on the device: occupancy grid -> per-neuron local spacing
+(Newton cube root, unrolled) -> child placement -> density raster -> coordinate streaming. Python is
+not in the loop; `scripts/verify_upscale.py` only *checks* what the kernels wrote.
+
+### What the kernels found (all reproduced with a one-kernel probe)
+
+| Device feature | Verdict on this box (RTX 3090, Vyb 0.7.5) |
+| --- | --- |
+| `st_f32` | **faults the device.** Launch returns 0, the next `cuCtxSynchronize` returns 716 (`INVALID_PC`), and the context is poisoned for every later call. `probe_stf32` in the kernel file is the repro. Use `st_f64` (proven by the phase-3 LIF kernel) or `st_i32`. |
+| array `atomic_add_i32` (`cell_count + idx*4`) | **faults the device** once the index is actually in range. Scalar `atomic_add_i32` (issue #273's neighbour) is fine, and array `atomic_add_f64` works, so the histogram cell counts are f64. |
+| array `atomic_add_f64` | fine (same pattern as the phase-3 synaptic accumulator). |
+| rolled `while` loops with f64 math and a large integer `%` | fine (probe_loop_f64 sums 4096 x 12 uniforms to 24,567.5 against an expected 24,576). |
+| `ld_f32` on a bulk buffer | fine. |
+| bulk `cuMemcpyHtoD_v2`/`DtoH_v2` | fine and fast: read a 60 MB CSR file with `fread` into `malloc`, one call per array. The per-element `cuda_write_i32` loop the phase-3 runner uses would take hours at this size. |
+| 4-byte scalar readback | **misleading.** A 4-byte `cuMemcpyDtoH_v2` into an 8-byte slot leaves garbage in the upper half: a counter of 2,700,513 printed as -4,292,266,783. Allocate 8 bytes for the device counter and copy 8 bytes back. |
+| rolled 12-step loop seeded by `% 4294967296` | fine, but note the value must be *stored* with the same width it is read back with. |
+| `from<loc<CVoid>>(0)` / `addr()` / `loc()` | only valid inside `freedom {}`; nesting a helper that itself contains `freedom` fails, so bulk IO is inlined in the runner. |
+| extern declarations | need `share(all)` on the line before, and a `extern "C" { ... }` block; `fopen`/`fread`/`fwrite`/`malloc` keep the executable free of `io`'s `open` symbol (importing `io` in a `--build` executable segfaults inside `cuInit`). |
+
+### Unit conventions that cost real time
+
+* The canonical `neurons.coords.f32` records are **6 floats per neuron** (`pos_xyz`, `soma_xyz`), so
+  the stride is **24 bytes** and positions are the first three. Reading with stride 12 walks into the
+  soma triples and off the end of the buffer: that produced 7.5% NaN families and families anchored
+  to the wrong cells before it was caught.
+* Coordinates are in **nanometres** (x 21,906..225,720), not micrometres. A "sanity" bound of 1e5 nm
+  silently classified 62% of the brain as invalid.
+* Descriptor floats travel as **micro-units** (value x 1e6), so a 28.076 nm pixel is passed as
+  28,076,000 - passing 28,076 puts every soma millions of pixels off the canvas, and the raster then
+  sums to zero while every launch reports success.
+
+### Verification without a Python oracle
+
+`threshold_count` reproduces 2,700,513 pairs at the 5-synapse rule from the raw CSR (the published
+convention), `coord_checksum` counts 139,241 usable somata and rejects exactly the 14 without a
+position, and each scale's raster must sum to `n_parents * c` exactly. Those are checks against
+values the project already published, not a second implementation.
+
+### The one that actually blocked the deliverable
+
+| Device feature | Verdict |
+| --- | --- |
+| `1.0 * <Int loaded from memory>` inside a kernel (descriptor word, or an element of an `i32` array) | **evaluates to 0 in the arithmetic.** The load itself is fine and the host sees the right value, but the Int-to-Float conversion in the device expression does not take effect: `s = 1.0 * sigma_const / 1000.0` gave `s = 0`, so 98.6% of the 13.9M children landed exactly on their parents while every launch reported success. Substituting a source literal (`s = 510.3`) fixed it instantly and the placement statistics became textbook (mean displacement 816 nm = 1.6 sigma). The same pattern explains an earlier failure in the per-cell spacing path, which also converted a loaded `i32`. |
+
+The placement therefore carries a pinned literal for the spread. That value is not hand-waved: the
+runner derives it on the host from the cloud's second moments (spacing 850.6 nm, sigma 510.3 nm) and
+asserts the pin matches within 1 nm on every run, so it cannot drift silently.

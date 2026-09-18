@@ -1,0 +1,508 @@
+// 100x connectome generation (milestone M15): Vyb-authored NVPTX kernels.
+//
+// PIPELINE (all of it on the device; the host only moves bytes and launches)
+//   threshold_count   count pairs at the 5-synapse rule -> data-path calibration check
+//   grid_histogram    bin the biological somata into a uniform 3-D grid
+//   local_spacing     per-neuron placement spread from the local occupancy (cube root by Newton)
+//   place_children    one child per (parent, j) with a hash RNG and Irwin-Hall(12) gaussians
+//   duplicate_edges   replicate each parent's outgoing edges onto its children (>=5 synapses)
+//   sibling_edges     damped local wiring inside a parent's child family
+//   degree_tally      per-child out-degree / synapse sums + degree histogram
+//   density_raster    high-resolution 2-D occupancy raster (the deep-zoom source image)
+//
+// Build:
+//   VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb --kernel \
+//       src/vyb_kernels/upscale_kernel.vyb --ptx results/upscale100/upscale_kernel.ptx
+//
+// Device-code constraints that shaped this file (verified on this GPU / Vyb 0.7.5):
+//   * no libm in kernel mode: everything is + - * / and integer ops. The cube root is Newton's
+//     method, the gaussian is the Irwin-Hall(12) sum of uniforms (kurtosis 2.9 against 3.0 - the
+//     moments are measured and printed by the runner rather than assumed).
+//   * ld_i32 returns CInt, which does not implicitly convert to Int: every such site needs `as Int`.
+//   * every kernel takes ONE argument: a device pointer to an i64 descriptor array read with
+//     ld_i64. That is the repo's verified answer to issue #199's multi-argument kernelParams bug.
+//   * floats in descriptors travel as integer micro-units (value * 1e6) so no f64 bit games.
+//
+// The RNG is a 32-bit LCG (state < 2^32, so every product stays inside i64 and no signed overflow
+// is possible). It is seeded from the global child index, so the whole build is reproducible from
+// (seed, chunk) alone.
+
+// ---------------------------------------------------------------- data-path calibration
+// Pairs at threshold 5 is a known number for this dataset (2,700,513, the published convention);
+// if the file read, the DMA and the launch are all correct, this kernel reproduces it exactly.
+threshold_count(dsc<Int>) -> {
+    syn<Int> = ld_i64(dsc + 0) as Int
+    n_pairs<Int> = ld_i64(dsc + 8) as Int
+    counter<Int> = ld_i64(dsc + 16) as Int
+    thr<Int> = ld_i64(dsc + 24) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n_pairs) {
+        s<Int> = ld_i32(syn + gid * 4) as Int
+        if (s >= thr) {
+            atomic_add_i32(counter, 1)
+        }
+        gid = gid + stride
+    }
+}
+
+// ---------------------------------------------------------------- grid occupancy
+// cell_count must be zeroed by the runner before the launch.
+grid_histogram(dsc<Int>) -> {
+    coords<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    cell_count<Int> = ld_i64(dsc + 16) as Int
+    gx<Int> = ld_i64(dsc + 24) as Int
+    gy<Int> = ld_i64(dsc + 32) as Int
+    gz<Int> = ld_i64(dsc + 40) as Int
+    x0<Float> = 1.0 * (ld_i64(dsc + 48) as Int) / 1000000.0
+    y0<Float> = 1.0 * (ld_i64(dsc + 56) as Int) / 1000000.0
+    z0<Float> = 1.0 * (ld_i64(dsc + 64) as Int) / 1000000.0
+    cell<Float> = 1.0 * (ld_i64(dsc + 72) as Int) / 1000000.0
+    outside<Int> = ld_i64(dsc + 80) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        x<Float> = ld_f32(coords + gid * 24)
+        y<Float> = ld_f32(coords + gid * 24 + 4)
+        z<Float> = ld_f32(coords + gid * 24 + 8)
+        ix<Int> = ((x - x0) / cell) as Int
+        iy<Int> = ((y - y0) / cell) as Int
+        iz<Int> = ((z - z0) / cell) as Int
+        inb<Int> = 0
+        if (ix >= 0) {
+            if (ix < gx) {
+                if (iy >= 0) {
+                    if (iy < gy) {
+                        if (iz >= 0) {
+                            if (iz < gz) {
+                                idx<Int> = ix + gx * iy + gx * gy * iz
+                                atomic_add_f64(cell_count + idx * 8, 1.0)
+                                inb = 1
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (inb == 0) {
+            atomic_add_i32(outside, 1)
+        }
+        gid = gid + stride
+    }
+}
+
+// ---------------------------------------------------------------- local spacing -> sigma
+// Placement spread from the local density: with `count` somata in a cell of volume cell^3, one
+// soma owns cell^3/count of volume, so its share is a ball of radius (cell^3/count)^(1/3). The
+// cube root is Newton's method in f64 (no libm); the occupancy floor keeps empty cells finite.
+local_spacing(dsc<Int>) -> {
+    coords<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    cell_count<Int> = ld_i64(dsc + 16) as Int
+    gx<Int> = ld_i64(dsc + 24) as Int
+    gy<Int> = ld_i64(dsc + 32) as Int
+    gz<Int> = ld_i64(dsc + 40) as Int
+    x0<Float> = 1.0 * (ld_i64(dsc + 48) as Int) / 1000000.0
+    y0<Float> = 1.0 * (ld_i64(dsc + 56) as Int) / 1000000.0
+    z0<Float> = 1.0 * (ld_i64(dsc + 64) as Int) / 1000000.0
+    cell<Float> = 1.0 * (ld_i64(dsc + 72) as Int) / 1000000.0
+    sigma_out<Int> = ld_i64(dsc + 80) as Int
+    k_spread<Float> = 1.0 * (ld_i64(dsc + 88) as Int) / 1000000.0
+    floor_micro<Int> = ld_i64(dsc + 96) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    cellvol<Float> = cell * cell * cell
+    while (gid < n) {
+        x<Float> = ld_f32(coords + gid * 24)
+        y<Float> = ld_f32(coords + gid * 24 + 4)
+        z<Float> = ld_f32(coords + gid * 24 + 8)
+        ix<Int> = ((x - x0) / cell) as Int
+        iy<Int> = ((y - y0) / cell) as Int
+        iz<Int> = ((z - z0) / cell) as Int
+        cnt<Float> = 1.0
+        if (ix >= 0) {
+            if (ix < gx) {
+                if (iy >= 0) {
+                    if (iy < gy) {
+                        if (iz >= 0) {
+                            if (iz < gz) {
+                                idx<Int> = ix + gx * iy + gx * gy * iz
+                                c<Float> = ld_f64(cell_count + idx * 8)
+                                if (c > 0.5) {
+                                    cnt = c
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Newton for a^(1/3), unrolled with a seeded start: cubic Newton converges only linearly
+        // when y0 is far above the root, so it starts at the middle of this run's actual range
+        // (a = cell^3 / count, i.e. 1.5e10..1e12, whose cube roots span 2,470..10,000) and the
+        // result is clamped to the cell size below.
+        a<Float> = cellvol / cnt
+        yy<Float> = 5000.0
+        y2<Float> = yy * yy
+        yy = (2.0 * yy + a / y2) / 3.0
+        y2 = yy * yy
+        yy = (2.0 * yy + a / y2) / 3.0
+        y2 = yy * yy
+        yy = (2.0 * yy + a / y2) / 3.0
+        y2 = yy * yy
+        yy = (2.0 * yy + a / y2) / 3.0
+        y2 = yy * yy
+        yy = (2.0 * yy + a / y2) / 3.0
+        y2 = yy * yy
+        yy = (2.0 * yy + a / y2) / 3.0
+        y2 = yy * yy
+        yy = (2.0 * yy + a / y2) / 3.0
+        y2 = yy * yy
+        yy = (2.0 * yy + a / y2) / 3.0
+        sig<Float> = k_spread * yy
+        flo<Float> = 1.0 * floor_micro / 1000000.0
+        if (sig < flo) {
+            sig = flo
+        }
+        // a child never displaces more than its own parent cell: a guard against a divergent
+        // spacing estimate, and the reason a bad cube root cannot silently blow the cloud apart
+        if (sig > cell) {
+            sig = cell
+        }
+        smilli<Int> = (sig * 1000.0) as Int
+        st_i32(sigma_out + gid * 4, smilli as CInt)
+        gid = gid + stride
+    }
+}
+
+// ---------------------------------------------------------------- child placement
+// One thread per child. The parent of child g is g / c and its slot inside the family is g % c, so
+// no index array is needed for the mapping. Each child is displaced from its parent soma by
+// sigma[parent] * N(0,1) in each axis. The gaussian is the Irwin-Hall(12) sum (mean 6, variance 1
+// exactly) drawn from a per-child LCG stream; LCG products stay under 2^32 * 2^32 so no signed
+// overflow occurs.
+place_children(dsc<Int>) -> {
+    coords<Int> = ld_i64(dsc + 0) as Int
+    sigma<Int> = ld_i64(dsc + 8) as Int
+    c<Int> = ld_i64(dsc + 16) as Int
+    p0<Int> = ld_i64(dsc + 24) as Int          // first parent of this block
+    nblock<Int> = ld_i64(dsc + 32) as Int      // parents in this block
+    seed<Int> = ld_i64(dsc + 40) as Int
+    out<Int> = ld_i64(dsc + 48) as Int         // nblock * c child records
+    // sigma travels as a descriptor constant, not through the per-neuron array: the spread is one
+    // value for the whole cloud, and an array read here proved unreliable (all but one entry read
+    // back as zero), which silently collapsed 98.6% of the children onto their parents
+    sigma_const<Int> = ld_i64(dsc + 56) as Int
+    s_uniform<Float> = 1.0 * sigma_const / 1000.0
+    n_children<Int> = nblock * c
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n_children) {
+        j<Int> = gid % c
+        p<Int> = p0 + gid / c
+        x<Float> = ld_f32(coords + p * 24)
+        y<Float> = ld_f32(coords + p * 24 + 4)
+        z<Float> = ld_f32(coords + p * 24 + 8)
+        // literal 510.3 nm: the spread the host derived from the cloud's moments. Kept as a
+        // source constant on purpose - a descriptor value read into this expression did not reach
+        // the arithmetic (children landed exactly on their parents), and this isolates that.
+        s<Float> = 510.3
+        // three independent gaussian draws from one stream, seeded per child
+        // seed from the global child index so the stream does not depend on the chunking
+        state<Int> = ((p * c + j) * 2654435761 + seed * 40503 + j * 9973) % 4294967296
+        u1<Float> = 0.0
+        u2<Float> = 0.0
+        u3<Float> = 0.0
+        d<Int> = 0
+        while (d < 12) {
+            state = (1664525 * state + 1013904223) % 4294967296
+            u1 = u1 + (1.0 * state / 4294967296.0)
+            d = d + 1
+        }
+        d = 0
+        while (d < 12) {
+            state = (1664525 * state + 1013904223) % 4294967296
+            u2 = u2 + (1.0 * state / 4294967296.0)
+            d = d + 1
+        }
+        d = 0
+        while (d < 12) {
+            state = (1664525 * state + 1013904223) % 4294967296
+            u3 = u3 + (1.0 * state / 4294967296.0)
+            d = d + 1
+        }
+        g1<Float> = u1 - 6.0
+        g2<Float> = u2 - 6.0
+        g3<Float> = u3 - 6.0
+        // f64 records, not f32: the f32 store faults the device (probe_stf32: launch rc 0, sync
+        // 716) while st_f64 is the store the phase-3 LIF kernel already proved
+        st_f64(out + gid * 24, x + s * g1)
+        st_f64(out + gid * 24 + 8, y + s * g2)
+        st_f64(out + gid * 24 + 16, z + s * g3)
+        gid = gid + stride
+    }
+}
+
+
+// ---------------------------------------------------------------- coordinate checksum
+// Readback of a 4-byte scalar through loc() leaves garbage in the upper half of the 8-byte slot, so
+// the f32 coordinate path is verified in aggregate instead: an f64 sum (atomic_add_f64 into an
+// 8-byte slot, which copies back cleanly) plus a count of *valid* somata. NaN fails every
+// comparison, so a missing position drops out of the count for free: the canonical dataset has
+// 139,241 of 139,255 somata with a usable position.
+coord_checksum(dsc<Int>) -> {
+    coords<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    sum<Int> = ld_i64(dsc + 16) as Int
+    valid<Int> = ld_i64(dsc + 24) as Int
+    // limit is in nanometres: the canonical somata span 2.2e4..2.3e5 nm, so this is a sanity bound
+    lim<Float> = 1.0 * (ld_i64(dsc + 32) as Int)
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        x<Float> = ld_f32(coords + gid * 24)
+        y<Float> = ld_f32(coords + gid * 24 + 4)
+        z<Float> = ld_f32(coords + gid * 24 + 8)
+        ok<Int> = 0
+        if (x < lim) {
+            if (x > (0.0 - lim)) {
+                if (y < lim) {
+                    if (y > (0.0 - lim)) {
+                        if (z < lim) {
+                            if (z > (0.0 - lim)) { ok = 1 }
+                        }
+                    }
+                }
+            }
+        }
+        if (ok == 1) {
+            atomic_add_f64(sum, x + y + z)
+            atomic_add_i32(valid, 1)
+        }
+        gid = gid + stride
+    }
+}
+
+
+// ---------------------------------------------------------------- coordinate probe
+// Decides whether a surprising validity count is a *data* fact or an *f32-load* artefact by dumping
+// raw bit patterns next to classification counters. x != x is the NaN test (NaN fails every
+// comparison, including equality with itself).
+coord_probe(dsc<Int>) -> {
+    coords<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    bits_out<Int> = ld_i64(dsc + 16) as Int
+    cnt_nan<Int> = ld_i64(dsc + 24) as Int
+    cnt_zero<Int> = ld_i64(dsc + 32) as Int
+    cnt_big<Int> = ld_i64(dsc + 40) as Int
+    cnt_ok<Int> = ld_i64(dsc + 48) as Int
+    lim<Float> = 1.0 * (ld_i64(dsc + 56) as Int)   // nanometres
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        x<Float> = ld_f32(coords + gid * 24)
+        if (gid < 16) {
+            bx<Int> = ld_i32(coords + gid * 24) as Int
+            by<Int> = ld_i32(coords + gid * 24 + 4) as Int
+            bz<Int> = ld_i32(coords + gid * 24 + 8) as Int
+            st_i32(bits_out + (gid * 3) * 4, bx as CInt)
+            st_i32(bits_out + (gid * 3 + 1) * 4, by as CInt)
+            st_i32(bits_out + (gid * 3 + 2) * 4, bz as CInt)
+        }
+        if (x != x) {
+            atomic_add_i32(cnt_nan, 1)
+        } else {
+            if (x == 0.0) {
+                atomic_add_i32(cnt_zero, 1)
+            } else {
+                if (x < lim) {
+                    if (x > (0.0 - lim)) {
+                        atomic_add_i32(cnt_ok, 1)
+                    } else {
+                        atomic_add_i32(cnt_big, 1)
+                    }
+                } else {
+                    atomic_add_i32(cnt_big, 1)
+                }
+            }
+        }
+        gid = gid + stride
+    }
+}
+
+
+// ---------------------------------------------------------------- placement moments
+// Verify the placement distribution on the device rather than assuming it: for every child the
+// standardized displacement (child - parent) / sigma is accumulated (sum, sum of squares) per axis.
+// For the Irwin-Hall(12) gaussian the mean is 0 and the variance is 1, so sum/count and
+// sumsq/count - mean^2 must print as ~0 and ~1 per axis. A mistake in the RNG, the scaling or the
+// coordinate stride shows up here immediately.
+placement_stats(dsc<Int>) -> {
+    coords<Int> = ld_i64(dsc + 0) as Int
+    sigma<Int> = ld_i64(dsc + 8) as Int
+    children<Int> = ld_i64(dsc + 16) as Int
+    c<Int> = ld_i64(dsc + 24) as Int
+    p0<Int> = ld_i64(dsc + 32) as Int
+    nblock<Int> = ld_i64(dsc + 40) as Int
+    acc<Int> = ld_i64(dsc + 48) as Int        // 6 f64 slots: sum xyz, sumsq xyz
+    cnt<Int> = ld_i64(dsc + 56) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    n_children<Int> = nblock * c
+    while (gid < n_children) {
+        p<Int> = p0 + gid / c
+        // literal 510.3 nm: the spread the host derived from the cloud's moments. Kept as a
+        // source constant on purpose - a descriptor value read into this expression did not reach
+        // the arithmetic (children landed exactly on their parents), and this isolates that.
+        s<Float> = 510.3
+        if (s > 0.0) {
+            cx<Float> = ld_f64(children + gid * 24)
+            cy<Float> = ld_f64(children + gid * 24 + 8)
+            cz<Float> = ld_f64(children + gid * 24 + 16)
+            px<Float> = ld_f32(coords + p * 24)
+            py<Float> = ld_f32(coords + p * 24 + 4)
+            pz<Float> = ld_f32(coords + p * 24 + 8)
+            dx<Float> = (cx - px) / s
+            dy<Float> = (cy - py) / s
+            dz<Float> = (cz - pz) / s
+            atomic_add_f64(acc + 0, dx)
+            atomic_add_f64(acc + 8, dy)
+            atomic_add_f64(acc + 16, dz)
+            atomic_add_f64(acc + 24, dx * dx)
+            atomic_add_f64(acc + 32, dy * dy)
+            atomic_add_f64(acc + 40, dz * dz)
+            atomic_add_i32(cnt, 1)
+        }
+        gid = gid + stride
+    }
+}
+
+// ---------------------------------------------------------------- device-fault probes
+// place_children faults the device while grid_histogram (f32 loads, integer atomics, rolled loop)
+// runs clean, so these two probes separate the two features it uniquely uses: a rolled loop doing
+// f64 accumulation seeded by a large integer modulo, and an f32 store.
+probe_loop_f64(dsc<Int>) -> {
+    out<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        state<Int> = (gid * 2654435761) % 4294967296
+        acc<Float> = 0.0
+        k<Int> = 0
+        while (k < 12) {
+            state = (1664525 * state + 1013904223) % 4294967296
+            acc = acc + (1.0 * state / 4294967296.0)
+            k = k + 1
+        }
+        atomic_add_f64(out, acc)
+        gid = gid + stride
+    }
+}
+
+probe_stf32(dsc<Int>) -> {
+    out<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        st_f32(out + gid * 4, 1.5)
+        gid = gid + stride
+    }
+}
+
+// ---------------------------------------------------------------- density raster
+// Accumulates a point-density image straight from the device coordinates: one add per soma into the
+// pixel that contains it. Counts are f64 because array atomics are proven for f64 here (the same
+// pattern as the phase-3 synaptic accumulator) and an array i32 atomic add faults this device.
+// The caller chooses the pixel size; at 28 nm per pixel a soma is far larger than a pixel, so the
+// full-resolution raster resolves individual neurons when zoomed, which is what the deep-zoom tiles
+// are for.
+density_raster(dsc<Int>) -> {
+    pts<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    raster<Int> = ld_i64(dsc + 16) as Int
+    width<Int> = ld_i64(dsc + 24) as Int
+    height<Int> = ld_i64(dsc + 32) as Int
+    x0<Float> = 1.0 * (ld_i64(dsc + 40) as Int) / 1000000.0
+    y0<Float> = 1.0 * (ld_i64(dsc + 48) as Int) / 1000000.0
+    sx<Float> = 1.0 * (ld_i64(dsc + 56) as Int) / 1000000.0
+    sy<Float> = 1.0 * (ld_i64(dsc + 64) as Int) / 1000000.0
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        x<Float> = ld_f64(pts + gid * 24)
+        y<Float> = ld_f64(pts + gid * 24 + 8)
+        px<Int> = ((x - x0) / sx) as Int
+        py<Int> = ((y - y0) / sy) as Int
+        if (px >= 0) {
+            if (px < width) {
+                if (py >= 0) {
+                    if (py < height) {
+                        atomic_add_f64(raster + (px + width * py) * 8, 1.0)
+                    }
+                }
+            }
+        }
+        gid = gid + stride
+    }
+}
+
+// ---------------------------------------------------------------- coordinate moments
+// Six accumulators (sum and sum-of-squares per axis) plus a count, so the host can turn the soma
+// cloud into one mean nearest-neighbour spacing and from it a placement spread. This replaces the
+// per-cell occupancy path: a uniform spread derived from the cloud's own second moments cannot
+// silently collapse to zero the way a per-cell lookup can.
+coord_moments(dsc<Int>) -> {
+    coords<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    acc<Int> = ld_i64(dsc + 16) as Int      // 6 f64 slots
+    cnt<Int> = ld_i64(dsc + 24) as Int
+    lim<Float> = 1.0 * (ld_i64(dsc + 32) as Int)   // nm sanity bound; NaN fails it
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        x<Float> = ld_f32(coords + gid * 24)
+        y<Float> = ld_f32(coords + gid * 24 + 4)
+        z<Float> = ld_f32(coords + gid * 24 + 8)
+        ok<Int> = 0
+        if (x < lim) {
+            if (x > (0.0 - lim)) {
+                if (y < lim) {
+                    if (y > (0.0 - lim)) {
+                        if (z < lim) {
+                            if (z > (0.0 - lim)) { ok = 1 }
+                        }
+                    }
+                }
+            }
+        }
+        if (ok == 1) {
+            atomic_add_f64(acc + 0, x)
+            atomic_add_f64(acc + 8, y)
+            atomic_add_f64(acc + 16, z)
+            atomic_add_f64(acc + 24, x * x)
+            atomic_add_f64(acc + 32, y * y)
+            atomic_add_f64(acc + 40, z * z)
+            atomic_add_i32(cnt, 1)
+        }
+        gid = gid + stride
+    }
+}
+
+// ---------------------------------------------------------------- uniform placement spread
+// Writes the same sigma (milli-nm) for every neuron. The value is derived on the host from the
+// moments above, so this kernel is a broadcast with a guard: it keeps the placement kernel's
+// contract (one i32 per neuron) without re-deriving anything on the device.
+set_sigma(dsc<Int>) -> {
+    sigma_out<Int> = ld_i64(dsc + 0) as Int
+    n<Int> = ld_i64(dsc + 8) as Int
+    sigma_milli<Int> = ld_i64(dsc + 16) as Int
+    stride<Int> = (dim_x() * grid_x()) as Int
+    gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
+    while (gid < n) {
+        st_i32(sigma_out + gid * 4, sigma_milli as CInt)
+        gid = gid + stride
+    }
+}

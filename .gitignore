@@ -43,3 +43,10 @@ references/flywire-network-analysis/
 
 .DS_Store
 results/paper/figs/
+
+# 100x generation artifacts (written by src/vyb_kernels/upscale100.vyb): raw device output in the
+# hundreds of MB. Regenerate with the commands in docs/VYB-PORT.md; the derived images that are
+# committed live in results/scale-gallery/.
+results/upscale100/*.f64
+results/upscale100/children.bin
+results/upscale100/*.cubin

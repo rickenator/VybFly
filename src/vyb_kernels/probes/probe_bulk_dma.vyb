@@ -1,0 +1,92 @@
+// Probe: bulk host<->device transfer for the upscale pipeline.
+//
+// The phase-3 runner uploads with cuda_write_i32 one element at a time, which is fine for its
+// 512-neuron fixture but impossible for the 100x build (60 MB of CSR arrays in, hundreds of MB of
+// child coordinates and a density raster out: at a driver call per element that is hours).
+//
+// This probe establishes the bulk path end to end on real bytes:
+//   H2D: the whole file is read with io::read_at into a String and handed to cuMemcpyHtoD_v2 in
+//        ONE call (String auto-extracts its {ptr,len} for a CString-declared parameter).
+//   DtoH: the device bytes are copied back into a malloc'd host buffer in ONE call, then written
+//        with C stdio, and the shell verifies the roundtrip is byte-identical (md5).
+//
+// Run (JIT, io-importing runner; cuda_binding is reachable through the second module path):
+//   VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb \
+//       src/vyb_kernels/probes/probe_bulk_dma.vyb \
+//       --module-path ~/Projects/Vyb/bindings --module-path ~/Projects/Vyb/bindings/cuda
+
+import io::{open_read, open_write, read_at, write_str}
+import cuda::{cuda_init, cuda_device_count, cuda_device, cuda_ctx_retain, cuda_mem_alloc,
+              cuda_mem_free, cuda_read_i32, cuda_sync}
+import cuda_binding::{cuMemcpyHtoD_v2, cuMemcpyDtoH_v2}
+
+// C stdio, for allocating a large host buffer and writing it out without per-element Vyb loops.
+share(all)
+malloc(n<Int>)<loc<CVoid>>
+
+share(all)
+fopen(path<CString>, mode<CString>)<loc<CVoid>>
+
+share(all)
+fwrite(ptr<loc<CVoid>>, size<Int>, count<Int>, fp<loc<CVoid>>)<Int>
+
+share(all)
+fclose(fp<loc<CVoid>>)<Int>
+
+main()<Int> -> {
+    src<String> = "data/processed/canonical_v783/bin/csr.out.indices.i32"
+    nbytes<Int> = 96                                    // 24 int32 words is enough to prove the path
+    out_path<String> = "/tmp/probe_bulk_dma_roundtrip.bin"
+
+    chunk<String> = ""
+    match (open_read(src)) {
+        f -> {
+            match (read_at(f, 0, nbytes)) {
+                s -> { chunk = s }
+                ? -> { println("ERROR read_at"); return 3 }
+            }
+        }
+        ? -> { println("ERROR open src"); return 2 }
+    }
+
+    if (cuda_init() != 0) { println("ERROR cuda_init"); return 7 }
+    if (cuda_device_count() < 1) { println("ERROR no device"); return 8 }
+    dev<CInt> = cuda_device(0)
+    if (cuda_ctx_retain(dev) != 0) { println("ERROR ctx"); return 14 }
+
+    d_buf<Int> = cuda_mem_alloc(nbytes)
+    if (d_buf == 0) { println("ERROR alloc"); return 11 }
+
+    // ---- H2D in one call ----
+    rc_h<CInt> = cuMemcpyHtoD_v2(d_buf, chunk, nbytes)
+    if (cuda_sync() != 0) { println("ERROR sync h2d"); return 12 }
+    println("h2d_rc=" + (rc_h as Int).to_string())
+
+    // ---- DtoH in one call, into a malloc'd host buffer ----
+    host<loc<CVoid>> = malloc(nbytes)
+    rc_d<CInt> = cuMemcpyDtoH_v2(host, d_buf, nbytes)
+    if (cuda_sync() != 0) { println("ERROR sync d2h"); return 12 }
+    println("d2h_rc=" + (rc_d as Int).to_string())
+
+    fp<loc<CVoid>> = fopen(out_path, "wb")
+    if (fwrite(host, 1, nbytes, fp) != nbytes) { println("ERROR fwrite"); return 13 }
+    fclose(fp)
+
+    // spot-check two words through the driver, so the file is not the only evidence
+    w0<Int> = cuda_read_i32(d_buf) as Int
+    w1<Int> = cuda_read_i32(d_buf + 4) as Int
+    println("device_words=" + w0.to_string() + "," + w1.to_string())
+    cuda_mem_free(d_buf)
+
+    match (open_write("/tmp/probe_bulk_dma_status.txt")) {
+        f -> {
+            r<Int?> = write_str(f, "h2d_rc=" + (rc_h as Int).to_string()
+                                   + " d2h_rc=" + (rc_d as Int).to_string()
+                                   + " nbytes=" + nbytes.to_string() + "\n")
+            println("status_written")
+        }
+        ? -> { println("ERROR open_write"); return 15 }
+    }
+    println("probe-bulk-dma-done")
+    return 0
+}

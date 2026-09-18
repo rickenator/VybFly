@@ -448,15 +448,27 @@ def upscale(g: GraphView, law: GeometryLaw, factor: float, seed: int = 0,
     nt = child_edge_nt.astype(np.int8)
 
     if sibling_edges:
+        # The damping exists so the local-synapse contribution stays a documented fraction of the
+        # budget instead of a hidden degree inflation. A constant rate only holds that promise up to
+        # the calibrated factor: with c children each child has c-1 possible siblings, so the expected
+        # extra out-degree grows with c (0.9 edges at c=10, but 9.9 at c=100, which would push mean
+        # degree from ~19 to ~30). Beyond the calibrated factor the rate is divided by (c-1)/(c_cal-1),
+        # which leaves every published scale (2x, 5x, 10x) bit-identical and holds the budget at c=100.
+        c_eff = float(counts.max()) if counts.size else 1.0
+        c_cal = 10.0
+        budget_scale = min(1.0, (c_cal - 1.0) / max(c_eff - 1.0, 1.0))
+        prob_scale_eff = float(sibling_prob_scale) * budget_scale
         sib_pre, sib_post, sib_syn, sib_nt = _sibling_edges(
             law, child_coords, parent_index, family_start, counts, rng, sibling_threshold,
-            prob_scale=sibling_prob_scale)
+            prob_scale=prob_scale_eff)
         pre = np.concatenate([pre, sib_pre])
         post = np.concatenate([post, sib_post])
         syn = np.concatenate([syn, sib_syn])
         nt = np.concatenate([nt, sib_nt])
         n_sibling = int(sib_pre.size)
     else:
+        budget_scale = 1.0
+        prob_scale_eff = 0.0
         n_sibling = 0
 
     pre, post, syn, nt = compact_pairs(pre, post, syn, nt, threshold=1)
@@ -474,6 +486,8 @@ def upscale(g: GraphView, law: GeometryLaw, factor: float, seed: int = 0,
             "perturbation": eps, "sibling_edges": bool(sibling_edges),
             "sibling_threshold": int(sibling_threshold),
             "sibling_prob_scale": float(sibling_prob_scale),
+            "sibling_prob_scale_effective": float(prob_scale_eff),
+            "sibling_budget_scale": float(budget_scale),
             "n_sibling_edges_pre_merge": int(n_sibling),
             "rewire_fraction": float(rewire_fraction),
             "source_n": int(g.n), "source_edges": int(g.pre.size),

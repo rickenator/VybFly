@@ -1,0 +1,708 @@
+// 100x connectome generation runner (milestone M15) - Vyb native CUDA, no CPU-bound generation.
+//
+// Build + run (native build: this file does NOT import io on purpose - the io module emits a global
+// `open` symbol that interposes over libc's open, which libcuda calls internally, and cuInit then
+// segfaults. All file IO here is raw C stdio, and the .ptx is read the same way):
+//
+//   VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb --kernel \
+//       src/vyb_kernels/upscale_kernel.vyb --ptx results/upscale100/upscale_kernel.ptx
+//   VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb \
+//       src/vyb_kernels/upscale100.vyb --module-path ~/Projects/Vyb/bindings \
+//       --build /tmp/upscale100/upscale100 --link -lcuda
+//   /tmp/upscale100/upscale100 [check|place|all]
+//
+// Stages (so the pipeline can be verified one link at a time):
+//   check   data path: bulk read -> DMA -> NVPTX launch -> readback, reproducing the known
+//           2,700,513 pairs at the 5-synapse rule
+//   place   grid histogram -> local spacing -> child placement for one parent block
+//   all     100x over every parent block (chunked: the box is shared with a resident 22 GB
+//           llama-server, so only ~1.5 GB of device memory is free)
+//
+// Everything numeric happens on the device; the host moves bytes, launches and prints. After the
+// first successful run of each stage the exact expected numbers are pinned in this file, so a
+// later regression shows up as a printed mismatch rather than as a silently different artifact.
+
+extern "C" {
+    cuInit(flags<CInt>)<CInt>
+    cuDeviceGetCount(count<loc<CInt>>)<CInt>
+    cuCtxCreate_v2(pctx<loc<loc<CVoid>>>, flags<CInt>, dev<CInt>)<CInt>
+    cuMemGetInfo_v2(free<loc<Int>>, total<loc<Int>>)<CInt>
+    cuModuleLoadData(hmod<loc<loc<CVoid>>>, image<loc<CVoid>>)<CInt>
+    cuModuleGetFunction(hfunc<loc<loc<CVoid>>>, hmod<loc<CVoid>>, name<CString>)<CInt>
+    // grid/block dims declared CInt rather than CUInt: the ABI word is 4 bytes either way and every
+    // value here is far below 2^31, which avoids a cast at each launch site.
+    cuLaunchKernel(f<loc<CVoid>>, gridX<CInt>, gridY<CInt>, gridZ<CInt>, blockX<CInt>, blockY<CInt>, blockZ<CInt>, sharedMemBytes<CInt>, hStream<loc<CVoid>>, kernelParams<loc<CVoid>>, extra<loc<CVoid>>)<CInt>
+    cuMemAlloc_v2(dptr<loc<Int>>, bytesize<Int>)<CInt>
+    cuMemFree_v2(dptr<Int>)<CInt>
+    cuMemcpyHtoD_v2(dstDevice<Int>, srcHost<loc<CVoid>>, ByteCount<Int>)<CInt>
+    cuMemcpyDtoH_v2(dstHost<loc<CVoid>>, srcDevice<Int>, ByteCount<Int>)<CInt>
+    cuMemsetD32_v2(dstDevice<Int>, value<CInt>, N<Int>)<CInt>
+    cuCtxSynchronize()<CInt>
+
+    // raw C stdio + heap (keeps the executable io-/open-free so libcuda stays intact)
+    malloc(size<Int>)<loc<CVoid>>
+    fopen(path<loc<Int8>>, mode<loc<Int8>>)<loc<CVoid>>
+    fseek(fh<loc<CVoid>>, off<Int>, wh<CInt>)<CInt>
+    ftell(fh<loc<CVoid>>)<Int>
+    fread(buf<loc<CVoid>>, esz<Int>, cnt<Int>, fh<loc<CVoid>>)<Int>
+    fwrite(buf<loc<CVoid>>, esz<Int>, cnt<Int>, fh<loc<CVoid>>)<Int>
+    fclose(fh<loc<CVoid>>)<CInt>
+
+    // libm, for the host-side spacing derivation (the native build links -lm)
+    sqrt(x<Float>)<Float>
+    cbrt(x<Float>)<Float>
+}
+
+main()<Int> -> {
+    stage<String> = "check+probe+place"
+    // ---- generation config ----
+    children_per_parent<Int> = 100       // 100x
+    // One block for the whole brain: 139,255 x 100 children is 334 MB of records and the raster is
+    // 377 MB, which fits the ~1.1 GB the box has free beside a resident 22 GB server. Chunked
+    // launches were only ever needed for memory, and running the 100x as many small launches left
+    // every block after the first with a zero spread, so this is both the test of that and the
+    // working configuration.
+    parents_per_block<Int> = 139255
+    blocks_wanted<Int> = 70              // 70 x 2000 parents = all 139,255 (13.9M children)
+    grid_axis<Int> = 30                  // 30^3 cells of 10 um over a 300 um box
+    cell_nm<Int> = 10000
+    k_spread_frac<Float> = 0.6            // sigma = 0.6 * (one soma's share of the cloud)^(1/3)
+    sigma_floor_micro<Int> = 100000      // 100 nm
+    pb<Int> = parents_per_block
+    raster_w<Int> = 8192
+    raster_h<Int> = 5760
+    band_rows<Int> = 512
+    raster_x0_micro<Int> = 10000 * 1000000
+    raster_y0_micro<Int> = 10000 * 1000000
+    raster_sx_micro<Int> = 28076000     // 28.076 nm per pixel over a 230 um box (micro-units = nm x 1e6)
+    raster_sy_micro<Int> = 28073000     // 28.073 nm per pixel over a 161.7 um box
+    n_parents<Int> = 139255
+    n_pairs<Int> = 15091983
+    thr<Int> = 5
+    blk<Int> = 256
+
+    // report values (filled inside the freedom block, printed after it)
+    err<Int> = 0
+    dev_free<Int> = 0
+    dev_total<Int> = 0
+    pairs_at_thr<Int> = -1
+    syn_bytes<Int> = 0
+    coords_bytes<Int> = 0
+    c0<Float> = 0.0
+    valid_somata<Int> = -1
+    pr_nan<Int> = -1
+    pr_zero<Int> = -1
+    pr_big<Int> = -1
+    pr_ok<Int> = -1
+    pr_w0<Int> = 0
+    pr_w1<Int> = 0
+    pr_w2<Int> = 0
+    out_of_box<Int> = -1
+    mom_cnt<Int> = -1
+    mean_x<Float> = 0.0
+    mean_y<Float> = 0.0
+    mean_z<Float> = 0.0
+    var_x<Float> = 0.0
+    var_y<Float> = 0.0
+    var_z<Float> = 0.0
+    children_written<Int> = 0
+    d2h_rc<Int> = 0
+    rc_grid<Int> = 0
+    rc_sig<Int> = 0
+    rc_place<Int> = 0
+    rc_stats<Int> = 0
+    rc_thr<Int> = 0
+    s_rc_grid<Int> = 0
+    s_rc_sig<Int> = 0
+    s_rc_place<Int> = 0
+    s_rc_stats<Int> = 0
+    rc_p1<Int> = 0
+    rc_p2<Int> = 0
+    s_rc_p1<Int> = 0
+    s_rc_p2<Int> = 0
+    probe_f64_sum<Float> = 0.0
+    probe_pair_bits<Int> = 0
+    dlin_bytes<Int> = 0
+    rc_rast<Int> = 0
+    s_rc_rast<Int> = 0
+    blocks_done<Int> = 0
+    scales_written<Int> = 0
+    mom_n<Int> = 0
+    spacing_nm<Float> = 0.0
+    sigma_nm<Float> = 0.0
+    sigma_milli_val<Int> = 0
+    sigma_pinned_milli<Int> = 510300      // must match the literal in place_children
+
+    freedom {
+        if (cuInit(0) != 0) { err = 7 }
+        var<CInt> ndev = 0
+        if (err == 0) {
+            if (cuDeviceGetCount(loc(ndev)) != 0) { err = 8 }
+        }
+        ctx<loc<CVoid>> = from<loc<CVoid>>(0)
+        if (err == 0) {
+            if (cuCtxCreate_v2(loc(ctx), 0, 0) != 0) { err = 14 }
+        }
+        if (err == 0) {
+            if (cuMemGetInfo_v2(loc(dev_free), loc(dev_total)) != 0) { err = 15 }
+        }
+
+        // ---- module + function from the emitted PTX ----
+        hmod<loc<CVoid>> = from<loc<CVoid>>(0)
+        hf_thr<loc<CVoid>> = from<loc<CVoid>>(0)
+        hf_ck<loc<CVoid>> = from<loc<CVoid>>(0)
+        hf_pr<loc<CVoid>> = from<loc<CVoid>>(0)
+        if (err == 0) {
+            pf<loc<CVoid>> = fopen("results/upscale100/upscale_kernel.ptx", "rb")
+            if (pf == from<loc<CVoid>>(0)) { err = 13 }
+            psz<Int> = 0
+            pbuf<loc<CVoid>> = from<loc<CVoid>>(0)
+            if (err == 0) {
+                fseek(pf, 0, 2)
+                psz = ftell(pf)
+                fseek(pf, 0, 0)
+                pbuf = malloc(psz)
+                prd<Int> = fread(pbuf, 1, psz, pf)
+                fclose(pf)
+                if (prd != psz) { err = 24 }
+            }
+            if (err == 0) {
+                if (cuModuleLoadData(loc(hmod), pbuf) != 0) { err = 9 }
+            }
+            if (err == 0) {
+                if (cuModuleGetFunction(loc(hf_thr), hmod, "threshold_count") != 0) { err = 10 }
+            }
+        }
+
+        // ---- device buffers, uploaded in bulk ----
+        d_syn<Int> = 0
+        d_coords<Int> = 0
+        d_cnt<Int> = 0
+        d_sum<Int> = 0
+        d_valid<Int> = 0
+        d_bits<Int> = 0
+        d_nan<Int> = 0
+        d_zero<Int> = 0
+        d_big<Int> = 0
+        d_ok<Int> = 0
+        d_dsc<Int> = 0
+        if (err == 0) {
+            sf<loc<CVoid>> = fopen("data/processed/canonical_v783/bin/csr.out.syn.i32", "rb")
+            if (sf == from<loc<CVoid>>(0)) { err = 16 }
+            ssz<Int> = 0
+            sbuf<loc<CVoid>> = from<loc<CVoid>>(0)
+            if (err == 0) {
+                fseek(sf, 0, 2)
+                ssz = ftell(sf)
+                fseek(sf, 0, 0)
+                sbuf = malloc(ssz)
+                srd<Int> = fread(sbuf, 1, ssz, sf)
+                fclose(sf)
+                syn_bytes = ssz
+                if (srd != ssz) { err = 24 }
+                if (ssz != n_pairs * 4) { err = 16 }
+            }
+            if (err == 0) {
+                if (cuMemAlloc_v2(loc(d_syn), n_pairs * 4) != 0) { err = 11 }
+            }
+            if (err == 0) {
+                if (cuMemcpyHtoD_v2(d_syn, sbuf, n_pairs * 4) != 0) { err = 17 }
+            }
+            cf<loc<CVoid>> = fopen("data/processed/canonical_v783/bin/neurons.coords.f32", "rb")
+            if (cf == from<loc<CVoid>>(0)) { err = 18 }
+            csz<Int> = 0
+            cbuf<loc<CVoid>> = from<loc<CVoid>>(0)
+            if (err == 0) {
+                fseek(cf, 0, 2)
+                csz = ftell(cf)
+                fseek(cf, 0, 0)
+                cbuf = malloc(csz)
+                crd<Int> = fread(cbuf, 1, csz, cf)
+                fclose(cf)
+                coords_bytes = csz
+                if (crd != csz) { err = 24 }
+                if (csz != n_parents * 24) { err = 18 }
+            }
+            if (err == 0) {
+                if (cuMemAlloc_v2(loc(d_coords), csz) != 0) { err = 11 }
+            }
+            if (err == 0) {
+                if (cuMemcpyHtoD_v2(d_coords, cbuf, csz) != 0) { err = 19 }
+            }
+            if (err == 0) {
+                // 8 bytes, not 4: the kernel's 32-bit atomic writes the low word and the host reads
+                // the whole slot back, so the upper word must be zeroed rather than left as garbage
+                if (cuMemAlloc_v2(loc(d_cnt), 8) != 0) { err = 11 }
+            }
+            if (err == 0) {
+                if (cuMemAlloc_v2(loc(d_sum), 8) != 0) { err = 11 }
+            }
+            if (err == 0) {
+                if (cuMemAlloc_v2(loc(d_valid), 8) != 0) { err = 11 }
+            }
+            if (err == 0) {
+                if (cuMemAlloc_v2(loc(d_bits), 256) != 0) { err = 11 }
+            }
+            if (err == 0) {
+                if (cuMemAlloc_v2(loc(d_nan), 8) != 0) { err = 11 }
+            }
+            if (err == 0) {
+                if (cuMemAlloc_v2(loc(d_zero), 8) != 0) { err = 11 }
+            }
+            if (err == 0) {
+                if (cuMemAlloc_v2(loc(d_big), 8) != 0) { err = 11 }
+            }
+            if (err == 0) {
+                if (cuMemAlloc_v2(loc(d_ok), 8) != 0) { err = 11 }
+            }
+            if (err == 0) {
+                if (cuMemAlloc_v2(loc(d_dsc), 160) != 0) { err = 11 }
+            }
+        }
+
+        // ---- threshold_count descriptor [syn, n_pairs, counter, thr] ----
+        if (err == 0) {
+            if (cuMemsetD32_v2(d_cnt, 0, 2) != 0) { err = 20 }
+            if (cuMemsetD32_v2(d_sum, 0, 2) != 0) { err = 20 }
+            if (cuMemsetD32_v2(d_valid, 0, 2) != 0) { err = 20 }
+            nv<Int> = n_pairs
+            tv<Int> = thr
+            if (cuMemcpyHtoD_v2(d_dsc + 0, loc(d_syn), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 8, loc(nv), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 16, loc(d_cnt), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 24, loc(tv), 8) != 0) { err = 21 }
+        }
+        if (err == 0) {
+            slot<loc<CVoid>> = from<loc<CVoid>>(d_dsc)
+            sel<loc<loc<CVoid>>> = loc(slot)
+            pp<loc<CVoid>> = from<loc<CVoid>>(addr(sel))
+            gx<Int> = (n_pairs + blk - 1) / blk
+            rthr<CInt> = cuLaunchKernel(from<loc<CVoid>>(addr(hf_thr)), gx as CInt, 1, 1, blk as CInt, 1, 1,
+                               0, from<loc<CVoid>>(0), loc(pp), from<loc<CVoid>>(0))
+            rc_thr = rthr as Int
+            if (rthr != 0) { err = 12 }
+            cuCtxSynchronize()
+        }
+        if (err == 0) {
+            var<Int> got = 0
+            if (cuMemcpyDtoH_v2(loc(got), d_cnt, 8) != 0) { err = 22 }
+            pairs_at_thr = got
+        }
+        // ---- coord_checksum: f64 sum + count of usable somata ----
+        if (err == 0) {
+            if (cuModuleGetFunction(loc(hf_ck), hmod, "coord_checksum") != 0) { err = 10 }
+        }
+        if (err == 0) {
+            nv2<Int> = n_parents
+            limv<Int> = 10000000
+            if (cuMemcpyHtoD_v2(d_dsc + 0, loc(d_coords), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 8, loc(nv2), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 16, loc(d_sum), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 24, loc(d_valid), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 32, loc(limv), 8) != 0) { err = 21 }
+            slot2<loc<CVoid>> = from<loc<CVoid>>(d_dsc)
+            sel2<loc<loc<CVoid>>> = loc(slot2)
+            pp2<loc<CVoid>> = from<loc<CVoid>>(addr(sel2))
+            gx2<Int> = (n_parents + blk - 1) / blk
+            if (cuLaunchKernel(from<loc<CVoid>>(addr(hf_ck)), gx2 as CInt, 1, 1, blk as CInt, 1, 1,
+                               0, from<loc<CVoid>>(0), loc(pp2), from<loc<CVoid>>(0)) != 0) { err = 12 }
+            cuCtxSynchronize()
+        }
+        // ---- coord_probe: raw bits + classification counters ----
+        if (err == 0) {
+            if (cuModuleGetFunction(loc(hf_pr), hmod, "coord_probe") != 0) { err = 10 }
+        }
+        if (err == 0) {
+            if (cuMemsetD32_v2(d_nan, 0, 2) != 0) { err = 20 }
+            if (cuMemsetD32_v2(d_zero, 0, 2) != 0) { err = 20 }
+            if (cuMemsetD32_v2(d_big, 0, 2) != 0) { err = 20 }
+            if (cuMemsetD32_v2(d_ok, 0, 2) != 0) { err = 20 }
+            nv3<Int> = n_parents
+            limv2<Int> = 10000000
+            if (cuMemcpyHtoD_v2(d_dsc + 0, loc(d_coords), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 8, loc(nv3), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 16, loc(d_bits), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 24, loc(d_nan), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 32, loc(d_zero), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 40, loc(d_big), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 48, loc(d_ok), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 56, loc(limv2), 8) != 0) { err = 21 }
+            slot3<loc<CVoid>> = from<loc<CVoid>>(d_dsc)
+            sel3<loc<loc<CVoid>>> = loc(slot3)
+            pp3<loc<CVoid>> = from<loc<CVoid>>(addr(sel3))
+            gx3<Int> = (n_parents + blk - 1) / blk
+            if (cuLaunchKernel(from<loc<CVoid>>(addr(hf_pr)), gx3 as CInt, 1, 1, blk as CInt, 1, 1,
+                               0, from<loc<CVoid>>(0), loc(pp3), from<loc<CVoid>>(0)) != 0) { err = 12 }
+            cuCtxSynchronize()
+        }
+        if (err == 0) {
+            var<Int> a = 0
+            var<Int> b = 0
+            var<Int> c = 0
+            var<Int> dd = 0
+            if (cuMemcpyDtoH_v2(loc(a), d_nan, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(b), d_zero, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(c), d_big, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(dd), d_ok, 8) != 0) { err = 23 }
+            pr_nan = a
+            pr_zero = b
+            pr_big = c
+            pr_ok = dd
+            var<Int> w0 = 0
+            var<Int> w1 = 0
+            var<Int> w2 = 0
+            if (cuMemcpyDtoH_v2(loc(w0), d_bits, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(w1), d_bits + 8, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(w2), d_bits + 16, 8) != 0) { err = 23 }
+            pr_w0 = w0
+            pr_w1 = w1
+            pr_w2 = w2
+        }
+        // ================= generation: placement + density raster at c = 1, 10, 100 ==========
+        // The same kernels produce every scale: c children per parent, rasterized straight from the
+        // device. 100x also streams its coordinates to disk. Blocks are bounded by the real parent
+        // count (an unbounded final block reads past the coordinate buffer).
+        d_cell<Int> = 0
+        d_sigma<Int> = 0
+        d_children<Int> = 0
+        d_outside<Int> = 0
+        d_acc6<Int> = 0
+        d_mcnt<Int> = 0
+        hf_moments<loc<CVoid>> = from<loc<CVoid>>(0)
+        hf_setsig<loc<CVoid>> = from<loc<CVoid>>(0)
+        d_raster<Int> = 0
+        hf_grid<loc<CVoid>> = from<loc<CVoid>>(0)
+        hf_sig<loc<CVoid>> = from<loc<CVoid>>(0)
+        hf_place<loc<CVoid>> = from<loc<CVoid>>(0)
+        hf_rast<loc<CVoid>> = from<loc<CVoid>>(0)
+        gxg<Int> = (n_parents + blk - 1) / blk
+        if (err == 0) {
+            if (cuModuleGetFunction(loc(hf_grid), hmod, "grid_histogram") != 0) { err = 10 }
+            if (cuModuleGetFunction(loc(hf_sig), hmod, "local_spacing") != 0) { err = 10 }
+            if (cuModuleGetFunction(loc(hf_place), hmod, "place_children") != 0) { err = 10 }
+            if (cuModuleGetFunction(loc(hf_rast), hmod, "density_raster") != 0) { err = 10 }
+        }
+        cells<Int> = grid_axis * grid_axis * grid_axis
+        max_child_bytes<Int> = parents_per_block * children_per_parent * 24
+        raster_bytes<Int> = raster_w * raster_h * 8
+        if (err == 0) {
+            if (cuMemAlloc_v2(loc(d_cell), cells * 8) != 0) { err = 11 }
+            if (cuMemAlloc_v2(loc(d_sigma), n_parents * 4) != 0) { err = 11 }
+            if (cuMemAlloc_v2(loc(d_children), max_child_bytes) != 0) { err = 11 }
+            if (cuMemAlloc_v2(loc(d_outside), 8) != 0) { err = 11 }
+            if (cuMemAlloc_v2(loc(d_acc6), 48) != 0) { err = 11 }
+            if (cuMemAlloc_v2(loc(d_mcnt), 8) != 0) { err = 11 }
+            if (cuMemAlloc_v2(loc(d_raster), raster_bytes) != 0) { err = 11 }
+        }
+        // ---- spacing: cloud moments on the device, one spread for every neuron ----
+        if (err == 0) {
+            if (cuModuleGetFunction(loc(hf_moments), hmod, "coord_moments") != 0) { err = 10 }
+            if (cuModuleGetFunction(loc(hf_setsig), hmod, "set_sigma") != 0) { err = 10 }
+            if (cuMemsetD32_v2(d_acc6, 0, 12) != 0) { err = 20 }
+            if (cuMemsetD32_v2(d_mcnt, 0, 2) != 0) { err = 20 }
+            nv5<Int> = n_parents
+            lim5<Int> = 10000000
+            if (cuMemcpyHtoD_v2(d_dsc + 0, loc(d_coords), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 8, loc(nv5), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 16, loc(d_acc6), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 24, loc(d_mcnt), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 32, loc(lim5), 8) != 0) { err = 21 }
+            slm<loc<CVoid>> = from<loc<CVoid>>(d_dsc)
+            sem<loc<loc<CVoid>>> = loc(slm)
+            ppm2<loc<CVoid>> = from<loc<CVoid>>(addr(sem))
+            rm2<CInt> = cuLaunchKernel(from<loc<CVoid>>(addr(hf_moments)), gxg as CInt, 1, 1, blk as CInt, 1, 1,
+                               0, from<loc<CVoid>>(0), loc(ppm2), from<loc<CVoid>>(0))
+            if (rm2 != 0) { err = 36 }
+            cuCtxSynchronize()
+        }
+        if (err == 0) {
+            var<Float> sx1 = 0.0
+            var<Float> sy1 = 0.0
+            var<Float> sz1 = 0.0
+            var<Float> qx1 = 0.0
+            var<Float> qy1 = 0.0
+            var<Float> qz1 = 0.0
+            var<Int> mc2 = 0
+            if (cuMemcpyDtoH_v2(loc(sx1), d_acc6, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(sy1), d_acc6 + 8, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(sz1), d_acc6 + 16, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(qx1), d_acc6 + 24, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(qy1), d_acc6 + 32, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(qz1), d_acc6 + 40, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(mc2), d_mcnt, 8) != 0) { err = 23 }
+            mom_n = mc2
+            if (mc2 > 0) {
+                nfl<Float> = 1.0 * mc2
+                mu_x<Float> = sx1 / nfl
+                mu_y<Float> = sy1 / nfl
+                mu_z<Float> = sz1 / nfl
+                vx<Float> = qx1 / nfl - mu_x * mu_x
+                vy<Float> = qy1 / nfl - mu_y * mu_y
+                vz<Float> = qz1 / nfl - mu_z * mu_z
+                if (vx > 0.0) {
+                    if (vy > 0.0) {
+                        if (vz > 0.0) {
+                            sdx<Float> = sqrt(vx)
+                            sdy<Float> = sqrt(vy)
+                            sdz<Float> = sqrt(vz)
+                            // one soma's share of the cloud: the +-2 sigma box divided by the count
+                            vol<Float> = (4.0 * sdx) * (4.0 * sdy) * (4.0 * sdz)
+                            per<Float> = vol / nfl
+                            sp<Float> = cbrt(per)
+                            sigp<Float> = k_spread_frac * sp
+                            spacing_nm = sp
+                            sigma_nm = sigp
+                            sigma_milli_val = (sigp * 1000.0) as Int
+                        }
+                    }
+                }
+            }
+        }
+        if (err == 0) {
+            nv6<Int> = n_parents
+            smv<Int> = sigma_milli_val
+            if (cuMemcpyHtoD_v2(d_dsc + 0, loc(d_sigma), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 8, loc(nv6), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 16, loc(smv), 8) != 0) { err = 21 }
+            sls<loc<CVoid>> = from<loc<CVoid>>(d_dsc)
+            ses<loc<loc<CVoid>>> = loc(sls)
+            pps2<loc<CVoid>> = from<loc<CVoid>>(addr(ses))
+            rss2<CInt> = cuLaunchKernel(from<loc<CVoid>>(addr(hf_setsig)), gxg as CInt, 1, 1, blk as CInt, 1, 1,
+                               0, from<loc<CVoid>>(0), loc(pps2), from<loc<CVoid>>(0))
+            if (rss2 != 0) { err = 37 }
+            cuCtxSynchronize()
+            if (sigma_milli_val == 0) { err = 38 }   // a zero spread means the placement is a no-op
+            // the kernel uses a pinned literal (see place_children): an Int loaded from memory and
+            // converted to Float evaluated to 0 in device code, which collapsed the children onto
+            // their parents. The pin is checked against the host-derived value on every run.
+            diff<Int> = sigma_milli_val - sigma_pinned_milli
+            if (diff < 0) { diff = 0 - diff }
+            if (diff > 1000) { err = 39 }
+        }
+        // occupancy grid kept only for the out-of-box diagnostic
+        if (err == 0) {
+            if (cuMemsetD32_v2(d_cell, 0, cells * 2) != 0) { err = 20 }
+            if (cuMemsetD32_v2(d_outside, 0, 2) != 0) { err = 20 }
+            nv4<Int> = n_parents
+            gv<Int> = grid_axis
+            z0v<Int> = 0
+            cv2<Int> = cell_nm * 1000000
+            if (cuMemcpyHtoD_v2(d_dsc + 0, loc(d_coords), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 8, loc(nv4), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 16, loc(d_cell), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 24, loc(gv), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 32, loc(gv), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 40, loc(gv), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 48, loc(z0v), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 56, loc(z0v), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 64, loc(z0v), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 72, loc(cv2), 8) != 0) { err = 21 }
+            if (cuMemcpyHtoD_v2(d_dsc + 80, loc(d_outside), 8) != 0) { err = 21 }
+            slotg<loc<CVoid>> = from<loc<CVoid>>(d_dsc)
+            selg<loc<loc<CVoid>>> = loc(slotg)
+            ppg<loc<CVoid>> = from<loc<CVoid>>(addr(selg))
+            rg2<CInt> = cuLaunchKernel(from<loc<CVoid>>(addr(hf_grid)), gxg as CInt, 1, 1, blk as CInt, 1, 1,
+                               0, from<loc<CVoid>>(0), loc(ppg), from<loc<CVoid>>(0))
+            rc_grid = rg2 as Int
+            sgg<CInt> = cuCtxSynchronize()
+            s_rc_grid = sgg as Int
+            if (rg2 != 0) { err = 31 }
+        }
+        // ---- per scale: place, rasterize, and (at 100x) stream coordinates ----
+        // Every descriptor scalar is declared here, at the top of the freedom block, and only
+        // assigned inside the loops. The cublas fixture does the same; declaring a descriptor
+        // scalar inside a loop body and taking loc() of it is what silently left the placement
+        // spread at zero for every block after the first.
+        c_cur<Int> = 1
+        fh_out<loc<CVoid>> = from<loc<CVoid>>(0)
+        rf<loc<CVoid>> = from<loc<CVoid>>(0)
+        obuf<loc<CVoid>> = from<loc<CVoid>>(0)
+        hb<loc<CVoid>> = from<loc<CVoid>>(0)
+        p0<Int> = 0
+        nb<Int> = 0
+        nch<Int> = 0
+        cbytes<Int> = 0
+        cv3<Int> = 1
+        sdv<Int> = 0
+        smconst<Int> = 0
+        wr<Int> = 0
+        hr<Int> = 0
+        xo<Int> = 0
+        yo<Int> = 0
+        sxn<Int> = 0
+        syn2<Int> = 0
+        rows<Int> = 0
+        bbytes<Int> = 0
+        off<Int> = 0
+        band<Int> = 0
+        wbytes<Int> = 0
+        gxp<Int> = 0
+        gxr<Int> = 0
+        si<Int> = 0
+        ras_name<String> = "results/upscale100/raster_c1.f64"
+        scales<Vec<Int>> = Vec()
+        scales.push(1)
+        scales.push(10)
+        scales.push(100)
+        while (si < scales.len()) {
+            c_cur = scales.get(si)
+            ras_name = "results/upscale100/raster_c1.f64"
+            if (c_cur == 10) { ras_name = "results/upscale100/raster_c10.f64" }
+            if (c_cur == 100) { ras_name = "results/upscale100/raster_c100.f64" }
+            if (err == 0) {
+                if (cuMemsetD32_v2(d_raster, 0, raster_w * raster_h * 2) != 0) { err = 20 }
+            }
+            fh_out = from<loc<CVoid>>(0)
+            if (c_cur == 100) {
+                fh_out = fopen("results/upscale100/children.bin", "wb")
+                if (fh_out == from<loc<CVoid>>(0)) { err = 25 }
+            }
+            p0 = 0
+            while (p0 < n_parents) {
+                nb = parents_per_block
+                if (p0 + nb > n_parents) {
+                    nb = n_parents - p0
+                }
+                nch = nb * c_cur
+                cbytes = nch * 24
+                if (err == 0) {
+                    cv3 = c_cur
+                    sdv = 20260918
+                    smconst = sigma_milli_val
+                    if (cuMemcpyHtoD_v2(d_dsc + 0, loc(d_coords), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 8, loc(d_sigma), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 16, loc(cv3), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 24, loc(p0), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 32, loc(nb), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 40, loc(sdv), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 48, loc(d_children), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 56, loc(smconst), 8) != 0) { err = 21 }
+                    slotp<loc<CVoid>> = from<loc<CVoid>>(d_dsc)
+                    selp<loc<loc<CVoid>>> = loc(slotp)
+                    ppp<loc<CVoid>> = from<loc<CVoid>>(addr(selp))
+                    gxp = (nch + blk - 1) / blk
+                    rp2<CInt> = cuLaunchKernel(from<loc<CVoid>>(addr(hf_place)), gxp as CInt, 1, 1, blk as CInt, 1, 1,
+                                   0, from<loc<CVoid>>(0), loc(ppp), from<loc<CVoid>>(0))
+                    rc_place = rp2 as Int
+                    sps<CInt> = cuCtxSynchronize()
+                    s_rc_place = sps as Int
+                    if (rp2 != 0) { err = 33 }
+                }
+                if (err == 0) {
+                    wr = raster_w
+                    hr = raster_h
+                    xo = raster_x0_micro
+                    yo = raster_y0_micro
+                    sxn = raster_sx_micro
+                    syn2 = raster_sy_micro
+                    if (cuMemcpyHtoD_v2(d_dsc + 0, loc(d_children), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 8, loc(nch), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 16, loc(d_raster), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 24, loc(wr), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 32, loc(hr), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 40, loc(xo), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 48, loc(yo), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 56, loc(sxn), 8) != 0) { err = 21 }
+                    if (cuMemcpyHtoD_v2(d_dsc + 64, loc(syn2), 8) != 0) { err = 21 }
+                    slotr<loc<CVoid>> = from<loc<CVoid>>(d_dsc)
+                    selr<loc<loc<CVoid>>> = loc(slotr)
+                    ppr<loc<CVoid>> = from<loc<CVoid>>(addr(selr))
+                    gxr = (nch + blk - 1) / blk
+                    rr<CInt> = cuLaunchKernel(from<loc<CVoid>>(addr(hf_rast)), gxr as CInt, 1, 1, blk as CInt, 1, 1,
+                                   0, from<loc<CVoid>>(0), loc(ppr), from<loc<CVoid>>(0))
+                    rc_rast = rr as Int
+                    srr<CInt> = cuCtxSynchronize()
+                    s_rc_rast = srr as Int
+                    if (rr != 0) { err = 35 }
+                }
+                if (err == 0) {
+                    if (c_cur == 100) {
+                        obuf = malloc(cbytes)
+                        if (obuf == from<loc<CVoid>>(0)) { err = 27 }
+                        if (err == 0) {
+                            rcd2<CInt> = cuMemcpyDtoH_v2(obuf, d_children, cbytes)
+                            d2h_rc = rcd2 as Int
+                            if (rcd2 != 0) { err = 26 }
+                        }
+                        if (err == 0) {
+                            wbytes = fwrite(obuf, 1, cbytes, fh_out)
+                            children_written = children_written + wbytes
+                        }
+                    }
+                }
+                p0 = p0 + parents_per_block
+                blocks_done = blocks_done + 1
+            }
+            if (c_cur == 100) {
+                fclose(fh_out)
+            }
+            if (err == 0) {
+                rf = fopen(ras_name, "wb")
+                if (rf == from<loc<CVoid>>(0)) { err = 28 }
+                band = 0
+                while (band * band_rows < raster_h) {
+                    rows = band_rows
+                    if ((band + 1) * band_rows > raster_h) {
+                        rows = raster_h - band * band_rows
+                    }
+                    bbytes = rows * raster_w * 8
+                    off = band * band_rows * raster_w * 8
+                    hb = malloc(bbytes)
+                    if (hb == from<loc<CVoid>>(0)) { err = 27 }
+                    if (cuMemcpyDtoH_v2(hb, d_raster + off, bbytes) != 0) { err = 26 }
+                    wb2<Int> = fwrite(hb, 1, bbytes, rf)
+                    band = band + 1
+                }
+                fclose(rf)
+                scales_written = scales_written + 1
+            }
+            si = si + 1
+        }
+        println("generation: blocks=" + blocks_done.to_string() + " scales=" + scales_written.to_string()
+                + " children_bytes=" + children_written.to_string() + " sigma_milli="
+                + sigma_milli_val.to_string() + " spacing_nm=" + ((spacing_nm * 10.0) as Int).to_string()
+                + "/10 sigma_nm=" + ((sigma_nm * 10.0) as Int).to_string() + "/10")
+        // =====================================================================================
+
+        if (err == 0) {
+            var<Float> ssum = 0.0
+            var<Int> vcnt = 0
+            if (cuMemcpyDtoH_v2(loc(ssum), d_sum, 8) != 0) { err = 23 }
+            if (cuMemcpyDtoH_v2(loc(vcnt), d_valid, 8) != 0) { err = 23 }
+            c0 = ssum
+            valid_somata = vcnt
+        }
+    }
+
+    println("upscale100 stage=" + stage)
+    println("device_free_bytes=" + dev_free.to_string() + " total=" + dev_total.to_string())
+    println("probe_loop_f64 rc=" + rc_p1.to_string() + " sync=" + s_rc_p1.to_string()
+            + " sum=" + ((probe_f64_sum * 1000.0) as Int).to_string() + " (expect ~24576 = 4096*6)")
+    println("probe_stf32  rc=" + rc_p2.to_string() + " sync=" + s_rc_p2.to_string()
+            + " (launch clean, sync 716: st_f32 faults the device; probe withdrawn so the context"
+            + " stays usable)")
+    println("launch_rc thr/grid/sig/place/stats=" + rc_thr.to_string() + "/" + rc_grid.to_string() + "/"
+            + rc_sig.to_string() + "/" + rc_place.to_string() + "/" + rc_stats.to_string())
+    println("sync_rc grid/sig/place/stats=" + s_rc_grid.to_string() + "/" + s_rc_sig.to_string() + "/"
+            + s_rc_place.to_string() + "/" + s_rc_stats.to_string())
+    if (err != 0) {
+        println("ERROR err=" + err.to_string() + " (12 thr,31 grid,32 sigma,33 place,34 stats,"
+                + "26 d2h,27 malloc,700=illegal address)")
+        return err
+    }
+    println("syn_bytes=" + syn_bytes.to_string() + " coords_bytes=" + coords_bytes.to_string())
+    println("pairs_at_thr5=" + pairs_at_thr.to_string() + " expected=2700513")
+    println("probe_nan=" + pr_nan.to_string() + " zero=" + pr_zero.to_string()
+            + " big=" + pr_big.to_string() + " ok=" + pr_ok.to_string())
+    println("d2h_rc=" + d2h_rc.to_string() + " d_children_bytes=" + dlin_bytes.to_string())
+    println("probe_bits_pair0=" + pr_w0.to_string() + " pair1=" + pr_w1.to_string()
+            + " pair2=" + pr_w2.to_string())
+    println("coord_sum_milli=" + ((c0 * 1000.0) as Int).to_string()
+            + " valid_somata=" + valid_somata.to_string() + " expected=139241")
+    if (pairs_at_thr == 2700513) {
+        println("check-PASS bulk read + DMA + NVPTX launch + readback reproduced the known count")
+    } else {
+        println("check-FAIL expected 2700513")
+    }
+    return 0
+}
