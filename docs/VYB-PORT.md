@@ -247,3 +247,13 @@ values the project already published, not a second implementation.
 The placement therefore carries a pinned literal for the spread. That value is not hand-waved: the
 runner derives it on the host from the cloud's second moments (spacing 850.6 nm, sigma 510.3 nm) and
 asserts the pin matches within 1 nm on every run, so it cannot drift silently.
+
+### Open item: the sibling-damping edit in the Python reference
+
+`src/flyscale/renorm.py` scales the sibling-damping rate beyond the calibrated factor
+(`prob_scale * min(1, 9 / (c - 1))`), so the local-synapse budget stays constant at c=100 instead of
+inflating mean degree from ~19 to ~30. By construction the multiplier is exactly 1 at c = 2, 5 and
+10, so the published ladder must be unchanged - but that has **not** been demonstrated by a run yet:
+two verification attempts produced an empty `scales` block (one run killed early, one exited without
+computing its scale). The 100x path does not use this code at all (generation is on the GPU), so
+nothing shipped depends on it. Verify or revert before the Python upscale is used again.
