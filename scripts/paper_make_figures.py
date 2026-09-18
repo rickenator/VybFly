@@ -233,8 +233,8 @@ def cover() -> None:
              "139,255 neurons  ·  2,700,513 connections  ·  34,153,566 synapses  ·  a 10x ladder",
              color="#6f8b99", fontsize=9)
     fig.text(0.062, 0.875,
-             "Whether a connectome can be geometrically enlarged while preserving its structure, its dynamics,\n"
-             "its capabilities and its energy budget - measured, not assumed",
+             "to answer whether a connectome can be geometrically enlarged while preserving its structure, dynamics,\n"
+             "capabilities and measured energy budget",
              color="#c8d8df", fontsize=9.5)
     fig.text(0.06, 0.062,
              "Every mark on this cover is measured data. The brain is the FlyWire v783 connectome, all "
