@@ -111,12 +111,12 @@ def cover() -> None:
     axm.invert_yaxis()
     axm.set_aspect("equal")
     axm.set_axis_off()
-    axm.text(0.002, 1.0, "the whole brain - 139,255 neurons at their soma positions",
-             transform=axm.transAxes, color="#93b8c8", fontsize=9, va="top")
-    axm.text(0.002, 0.0,
-             "gold Kenyon cells   ·   magenta MBON   ·   orange DAN   ·   green antennal-lobe "
+    axm.text(0.5, -0.025, "The whole brain — 139,255 neurons at their soma positions",
+             transform=axm.transAxes, color="#93b8c8", fontsize=8, va="top", ha="center")
+    axm.text(0.5, -0.075,
+             "Gold Kenyon cells   ·   magenta MBON   ·   orange DAN   ·   green antennal-lobe "
              "projection neurons",
-             transform=axm.transAxes, color="#5f8296", fontsize=7.2, va="bottom")
+             transform=axm.transAxes, color="#5f8296", fontsize=7.2, va="top", ha="center")
 
     # ---------------- detail: a small real circuit ----------------
     pairs = pd.read_parquet(ROOT / "data" / "processed" / "canonical_v783" / "pairs.parquet")
@@ -207,7 +207,7 @@ def cover() -> None:
     axc.set_xlim(X.min() - 0.16, X.max() + 0.16)
     axc.set_ylim(Y.min() - 0.16, Y.max() + 0.16)
     axc.set_axis_off()
-    axc.set_title(f"detail: a real {len(ids)}-neuron circuit ({len(edges)} connections, "
+    axc.set_title(f"Detail: a real {len(ids)}-neuron circuit ({len(edges)} connections, "
                   f"{int(sum(w for w, _ in edges.values()))} synapses)",
                   color="#8fb4c4", fontsize=7.6, pad=3)
 
@@ -223,28 +223,28 @@ def cover() -> None:
     axi.set_ylim(-1.05, 1.05)
     axi.set_aspect("equal")
     axi.set_axis_off()
-    axi.set_title("the fitted 2-D hyperbolic geometry", color="#8fb4c4", fontsize=7.6, pad=3)
+    axi.set_title("The fitted 2-D hyperbolic geometry", color="#8fb4c4", fontsize=7.6, pad=3)
 
     # ---------------- titles and caption ----------------
     fig.text(0.06, 0.955, "FlyScale", color="#eaf6fb", fontsize=44, weight="bold")
-    fig.text(0.062, 0.928, "geometric scaling of the adult Drosophila connectome",
+    fig.text(0.062, 0.928, "Geometric scaling of the adult Drosophila connectome",
              color="#9ad5e6", fontsize=13)
     fig.text(0.062, 0.905,
              "139,255 neurons  ·  2,700,513 connections  ·  34,153,566 synapses  ·  a 10x ladder",
              color="#6f8b99", fontsize=9)
     fig.text(0.062, 0.875,
-             "whether a connectome can be geometrically enlarged while preserving its structure, its dynamics,\n"
+             "Whether a connectome can be geometrically enlarged while preserving its structure, its dynamics,\n"
              "its capabilities and its energy budget - measured, not assumed",
              color="#c8d8df", fontsize=9.5)
     fig.text(0.06, 0.062,
-             "every mark on this cover is measured data. the brain is the FlyWire v783 connectome, all "
+             "Every mark on this cover is measured data. The brain is the FlyWire v783 connectome, all "
              "139,255 neurons at their soma positions,\n"
-             "with the mushroom-body circuit highlighted; the small panel is a real circuit (edge width = "
+             "with the mushroom-body circuit highlighted. The small panel is a real circuit (edge width = "
              "synapse count, edge color = predicted transmitter,\n"
-             "positions rescaled to fit); the disk is the hyperbolic geometry fitted to the same connectome "
+             "positions rescaled to fit). The disk is the hyperbolic geometry fitted to the same connectome "
              "in section 5.",
              color="#5f7480", fontsize=6.4)
-    fig.text(0.06, 0.016, "every panel in this paper is plotted from a measured artifact - "
+    fig.text(0.06, 0.016, "Every panel in this paper is plotted from a measured artifact - "
                           "no illustrative figures", color="#4c5f69", fontsize=6.5)
     save(fig, "fig_cover.pdf")
 
