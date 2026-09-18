@@ -83,7 +83,7 @@ together, and the paper says so on every page where they appear.
 
 The project runs the same thing twice: a **Python reference** (the oracle every number is checked
 against) and a **Vyb-native production path** — a loader, a discrete-event simulation engine, and GPU
-kernels written in [Vyb](https://github.com/rickenator/Vyb), Rick Goldberg's own language.
+kernels written in [Vyb](https://github.com/rickenator/Vyb).
 
 Building the second one turned out to be the most informative part of the work: it surfaced **twelve
 compiler defects**, including a blocking one where a kernel-mode store wrote eight bytes into a
