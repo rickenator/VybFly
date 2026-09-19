@@ -1,6 +1,6 @@
 # FlyScale
 
-### 📄 **[Read the paper (PDF, downloads directly) →](https://raw.githubusercontent.com/rickenator/VybFly/main/paper.pdf)**
+### 📄 **[Read the paper (PDF, downloads directly) →](https://vybfly-paper-relay.aniviza.workers.dev/paper.pdf)**
 
 *GitHub's in-page preview can't display this PDF, so the link above serves the file directly.
 You can also browse [`paper.pdf`](paper.pdf) in the repo, or open it after `git clone`.*
