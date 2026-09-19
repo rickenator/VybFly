@@ -1,6 +1,9 @@
 # FlyScale
 
-### 📄 **[Read the paper (PDF) →](paper.pdf)**
+### 📄 **[Read the paper (PDF, downloads directly) →](https://raw.githubusercontent.com/rickenator/VybFly/main/paper.pdf)**
+
+*GitHub's in-page preview can't display this PDF, so the link above serves the file directly.
+You can also browse [`paper.pdf`](paper.pdf) in the repo, or open it after `git clone`.*
 
 A map of a whole fruit-fly brain, redrawn bigger — and an honest test of whether "bigger" still
 behaves like a brain.
