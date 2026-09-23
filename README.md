@@ -1,12 +1,15 @@
 # FlyScale
 
-### 📄 **[Read the paper (PDF, downloads directly) →](https://vybfly-paper-relay.aniviza.workers.dev/paper.pdf)**
+### 📄 **[Read the paper → aniviza.com/paper.pdf](https://aniviza.com/paper.pdf)** &nbsp;·&nbsp; **[Landing page](https://aniviza.com/paper.html)**
 
-*GitHub's in-page preview can't display this PDF, so the link above serves the file directly.
-You can also browse [`paper.pdf`](paper.pdf) in the repo, or open it after `git clone`.*
+*25 pages, 5.7 MB. GitHub's in-page preview can't display this PDF, so the links above serve the
+file directly. You can also browse [`paper.pdf`](paper.pdf) in the repo, or open it after
+`git clone`. A counted mirror, which logs how the paper is read, lives at
+[`vybfly-paper-relay.aniviza.workers.dev/paper.pdf`](https://vybfly-paper-relay.aniviza.workers.dev/paper.pdf).*
 
-A map of a whole fruit-fly brain, redrawn bigger — and an honest test of whether "bigger" still
-behaves like a brain.
+A 25-page study of the adult *Drosophila* whole-brain connectome: **discrete event simulation** of
+the FlyWire map on a Vyb-native runtime, scaled across a 10× ladder — and an honest test of whether
+"bigger" still behaves like a brain.
 
 ---
 
