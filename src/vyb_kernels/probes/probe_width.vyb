@@ -1,34 +1,58 @@
-// Minimal repros: 32-bit device stores and atomics are lowered as 64-bit operations.
+// 32-bit device stores and atomics: the five intrinsic forms VybFly relies on, as a regression check.
 //
-// Verified on upstream main 5167646 (2026-09-18) AND on Vyb 0.7.5 - the emitted PTX is
-// byte-identical for both, so this is neither a regression nor a fix.
+// BACKGROUND. On upstream main 5167646 (2026-09-18) and on Vyb 0.7.5, 32-bit device stores and
+// atomics were lowered as 64-bit operations. The emitted PTX was byte-identical for both builds, so
+// it was neither a regression nor a fix. Filed upstream as Vyb #301; fixed in commit efc8cfe
+// ("fix(codegen): 32-bit device stores/atomics honour the intrinsic width (#301)", PRs #302/#303),
+// contained in tag v0.7.6.
+//
+// WHAT IT DID (before the fix):
 //
 //   st_f32(out + i*4, 1.5)
-//       emits:  mov.u64 %rd21, 4609434218613702656   ; st.global.u64 [%rd23], %rd21
+//       emitted:  mov.u64 %rd21, 4609434218613702656   ; st.global.u64 [%rd23], %rd21
 //       i.e. the f64 bit pattern of 1.5 and an EIGHT-byte store through a 4-byte-typed pointer.
-//       Expected: st.global.f32 with 0x3FC00000. Symptom: launch returns 0, the next
-//       cuCtxSynchronize returns 716, and the context is poisoned for every later call.
+//       Symptom: launch returned 0, the next cuCtxSynchronize returned 716, and the context was
+//       poisoned for every later call.
 //
 //   atomic_add_i32(buf + idx*4, 1)
-//       emits:  atom.global.add.u64 %rd32, [%rd31], 1
-//       i.e. an eight-byte atomic into four-byte cells, which writes past the last cell.
-//       Expected: atom.global.add.u32. Same 716 symptom.
+//       emitted:  atom.global.add.u64 %rd32, [%rd31], 1
+//       i.e. an eight-byte atomic into four-byte cells, which wrote past the last cell.
 //
-// The controls below are lowered correctly (st_f64 -> st.global.u64, st_i32 -> st.global.u32,
-// atomic_add_f64 -> atom.global.add.f64) and stay green, which is what isolates the fault to the
-// 32-bit paths rather than to atomics or stores in general.
+//   st_i32(out + i*4, 7)
+//       emitted:  two st.global.u32 halves, i.e. one 8-byte store split in two, so each element
+//       clobbered its neighbour. That is the silent-corruption form: it zeroed every entry but the
+//       first of the per-neuron spacing array and collapsed most of the 100x children onto their
+//       parents while every launch reported success.
+//
+// WHAT IT SHOULD NOW EMIT (Vyb >= 0.7.6, i.e. the fix present) - checked with the command above:
+//
+//   st_f32(out + i*4, one)        ->  st.global.f32        [..], %f1     (runtime Float)
+//   st_f32(out2 + i*4, 1.5)       ->  st.global.u32        [..], 0x3FC00000
+//                                     (the same four bytes; LLVM folds a constant f32 store to its
+//                                      integer bit pattern, so the u32 form is correct, not a defect)
+//   atomic_add_i32(buf + idx*4,1) ->  atom.global.add.u32  [..], 1       (array element)
+//   atomic_add_i32(cnt, 1)        ->  atom.global.add.u32  [..], 1       (scalar cell)
+//   st_i32(out + i*4, 7)          ->  st.global.u32        [..], 7       (ONE four-byte store)
+//
+// Every store and atomic above is four bytes wide and touches only its own element, which is the
+// property the defect violated. Any return to an eight-byte form is a regression.
+//
+// The controls below (st_f64 -> st.global.u64, atomic_add_f64 -> atom.global.add.f64) were always
+// lowered correctly and stay green, which is what isolates any recurrence to the 32-bit paths rather
+// than to stores or atomics in general.
 //
 // Show the evidence (no GPU needed; ptxas validates the module as it is emitted):
 //   VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb --kernel \
 //       src/vyb_kernels/probes/probe_width.vyb --ptx /tmp/probe_width.ptx
 //   grep -E "st.global|atom.global" /tmp/probe_width.ptx
 //
-// Observed on an RTX 3090 through the main runner in src/vyb_kernels/upscale100.vyb before its
-// probe launches were withdrawn: the f32-store kernel and the array-i32-atomic kernel each returned
-// launch 0 with the next cuCtxSynchronize returning 716, and the context stayed poisoned afterwards.
-// The same class shows up as silent corruption rather than a fault when the array is larger than the
-// overrun: writing sigma[139255] as per-neuron 4-byte values left all but the first entry reading
-// zero and collapsed 98.6% of the 100x children onto their parents.
+// The compiler repository carries this defect's own regression fixture,
+// fixtures/kernel/probe15_store_width.vyb, with an on-silicon verifier at
+// fixtures/cuda/probe15_verify.vyb (in /home/rick/Projects/Vyb). On the RTX 3090 the fixture emits
+// st.global.f32 / st.global.u32 / atom.global.add.u32 / atom.global.add.u32 with none of the
+// defects, and the verifier prints "PROBE15 PASS: all 5 intrinsics touch only their own element".
+// This file is VybFly's own copy of the same check: it should now show the correct widths, and it
+// stays in the tree so a recurrence is caught from the consuming side.
 //
 // A host-side runner for these probes is not committed yet; only the kernels and the PTX evidence are.
 
@@ -44,7 +68,7 @@ st_f64_probe(dsc<Int>) -> {
     }
 }
 
-// control: 32-bit integer store (4-byte record, correct)
+// 32-bit integer store (4-byte record): two st.global.u32 halves before the fix, one after
 st_i32_probe(dsc<Int>) -> {
     out<Int> = ld_i64(dsc + 0) as Int
     n<Int> = ld_i64(dsc + 8) as Int
@@ -71,19 +95,25 @@ atomic_f64_probe(dsc<Int>) -> {
     }
 }
 
-// DEFECT 1: f32 store
+// f32 store (4-byte record): st.global.u64 before the fix, four bytes now. Both operand shapes are
+// exercised: a runtime Float (loaded from the descriptor) must emit st.global.f32, and the constant
+// 1.5 emits the equivalent st.global.u32 immediate 0x3FC00000 (LLVM folds a constant f32 store to
+// its integer bit pattern).
 st_f32_probe(dsc<Int>) -> {
     out<Int> = ld_i64(dsc + 0) as Int
+    out2<Int> = ld_i64(dsc + 24) as Int
     n<Int> = ld_i64(dsc + 8) as Int
+    one<Float> = ld_f64(dsc + 16)
     stride<Int> = (dim_x() * grid_x()) as Int
     gid<Int> = (blk_x() * dim_x() + tid_x()) as Int
     while (gid < n) {
-        st_f32(out + gid * 4, 1.5)
+        st_f32(out + gid * 4, one)
+        st_f32(out2 + gid * 4, 1.5)
         gid = gid + stride
     }
 }
 
-// DEFECT 2: 32-bit array atomic with a computed index
+// 32-bit array atomic with a computed index: atom.global.add.u64 before the fix, add.u32 after
 atomic_i32_array_probe(dsc<Int>) -> {
     buf<Int> = ld_i64(dsc + 0) as Int
     cnt<Int> = ld_i64(dsc + 8) as Int

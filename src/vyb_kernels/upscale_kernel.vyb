@@ -190,9 +190,9 @@ place_children(dsc<Int>) -> {
     nblock<Int> = ld_i64(dsc + 32) as Int      // parents in this block
     seed<Int> = ld_i64(dsc + 40) as Int
     out<Int> = ld_i64(dsc + 48) as Int         // nblock * c child records
-    // sigma travels as a descriptor constant, not through the per-neuron array: the spread is one
-    // value for the whole cloud, and an array read here proved unreliable (all but one entry read
-    // back as zero), which silently collapsed 98.6% of the children onto their parents
+    // sigma travels as a descriptor constant (milli-nm) rather than through the per-neuron array:
+    // the spread is one value for the whole cloud, and the array it would read was the one the
+    // width defect (#301) had been zeroing out. The descriptor word is the simplest correct source.
     sigma_const<Int> = ld_i64(dsc + 56) as Int
     s_uniform<Float> = 1.0 * sigma_const / 1000.0
     n_children<Int> = nblock * c
@@ -204,10 +204,10 @@ place_children(dsc<Int>) -> {
         x<Float> = ld_f32(coords + p * 24)
         y<Float> = ld_f32(coords + p * 24 + 4)
         z<Float> = ld_f32(coords + p * 24 + 8)
-        // literal 510.3 nm: the spread the host derived from the cloud's moments. Kept as a
-        // source constant on purpose - a descriptor value read into this expression did not reach
-        // the arithmetic (children landed exactly on their parents), and this isolates that.
-        s<Float> = 510.3
+        // the spread from the descriptor word (sigma in milli-nm). The source literal that used to
+        // be pinned here was a workaround for Vyb #301 (32-bit stores lowered as 64-bit), fixed in
+        // efc8cfe, v0.7.6; the descriptor path works now and the pin is gone.
+        s<Float> = s_uniform
         // three independent gaussian draws from one stream, seeded per child
         // seed from the global child index so the stream does not depend on the chunking
         state<Int> = ((p * c + j) * 2654435761 + seed * 40503 + j * 9973) % 4294967296
@@ -235,8 +235,9 @@ place_children(dsc<Int>) -> {
         g1<Float> = u1 - 6.0
         g2<Float> = u2 - 6.0
         g3<Float> = u3 - 6.0
-        // f64 records, not f32: the f32 store faults the device (probe_stf32: launch rc 0, sync
-        // 716) while st_f64 is the store the phase-3 LIF kernel already proved
+        // f64 records: the artifact format is fixed (24 bytes per xyz record, read back by
+        // scripts/verify_upscale.py as f64), so this is a dtype choice, not a workaround. The f32
+        // store that used to fault the device was Vyb #301 and no longer does as of efc8cfe, v0.7.6.
         st_f64(out + gid * 24, x + s * g1)
         st_f64(out + gid * 24 + 8, y + s * g2)
         st_f64(out + gid * 24 + 16, z + s * g3)
@@ -352,10 +353,11 @@ placement_stats(dsc<Int>) -> {
     n_children<Int> = nblock * c
     while (gid < n_children) {
         p<Int> = p0 + gid / c
-        // literal 510.3 nm: the spread the host derived from the cloud's moments. Kept as a
-        // source constant on purpose - a descriptor value read into this expression did not reach
-        // the arithmetic (children landed exactly on their parents), and this isolates that.
-        s<Float> = 510.3
+        // per-neuron sigma (milli-nm) read back from the array the spacing kernel wrote. This read
+        // returned zero for all but the first entry while #301 was open (the 4-byte store was
+        // emitted as 8 bytes, so each element clobbered its neighbour) and is reliable as of the fix
+        // in efc8cfe, v0.7.6. The literal that used to stand in for it was that workaround.
+        s<Float> = 1.0 * (ld_i32(sigma + p * 4) as Int) / 1000.0
         if (s > 0.0) {
             cx<Float> = ld_f64(children + gid * 24)
             cy<Float> = ld_f64(children + gid * 24 + 8)
@@ -379,9 +381,10 @@ placement_stats(dsc<Int>) -> {
 }
 
 // ---------------------------------------------------------------- device-fault probes
-// place_children faults the device while grid_histogram (f32 loads, integer atomics, rolled loop)
-// runs clean, so these two probes separate the two features it uniquely uses: a rolled loop doing
-// f64 accumulation seeded by a large integer modulo, and an f32 store.
+// These two probes were written while place_children faulted the device: they separate a rolled loop
+// doing f64 accumulation seeded by a large integer modulo from an f32 store. Both are exercised by
+// src/vyb_kernels/probes/probe_width.vyb, which is the regression check for Vyb #301 (fixed in
+// efc8cfe, v0.7.6); they are kept here as the in-file controls.
 probe_loop_f64(dsc<Int>) -> {
     out<Int> = ld_i64(dsc + 0) as Int
     n<Int> = ld_i64(dsc + 8) as Int
@@ -414,8 +417,9 @@ probe_stf32(dsc<Int>) -> {
 
 // ---------------------------------------------------------------- density raster
 // Accumulates a point-density image straight from the device coordinates: one add per soma into the
-// pixel that contains it. Counts are f64 because array atomics are proven for f64 here (the same
-// pattern as the phase-3 synaptic accumulator) and an array i32 atomic add faults this device.
+// pixel that contains it. Counts are f64 by dtype choice - the 8-byte slot matches the readback path
+// and the phase-3 synaptic accumulator uses the same layout - not as a workaround: 32-bit array
+// atomics are usable again as of Vyb #301's fix (efc8cfe, v0.7.6).
 // The caller chooses the pixel size; at 28 nm per pixel a soma is far larger than a pixel, so the
 // full-resolution raster resolves individual neurons when zoomed, which is what the deep-zoom tiles
 // are for.

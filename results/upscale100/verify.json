@@ -1,0 +1,20 @@
+{
+ "children": 13925500,
+ "expected_children": 13925500,
+ "parents_with_position": 139241,
+ "displacement_nm": {
+  "x_mean": -0.0010143879750247528,
+  "x_sd": 510.3625259731669,
+  "y_mean": 0.00034739042027575245,
+  "y_sd": 510.36262621341893,
+  "z_mean": 0.0019290806555029754,
+  "z_sd": 510.36493163673634,
+  "median": 790.2913645842248,
+  "p90": 1272.066185254008,
+  "p99": 1690.4497719670746,
+  "max": 2898.2710883847185
+ },
+ "fraction_within_one_cell": 1.0,
+ "fraction_inside_bbox_plus_cell": 0.9998994650102331,
+ "source": "results/upscale100/children.bin written by src/vyb_kernels/upscale100.vyb"
+}

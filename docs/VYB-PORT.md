@@ -206,20 +206,27 @@ not in the loop; `scripts/verify_upscale.py` only *checks* what the kernels wrot
 
 ### What the kernels found (all reproduced with a one-kernel probe)
 
-| Device feature | Verdict on this box (RTX 3090, Vyb 0.7.5) |
+The two device faults below were both Vyb #301 (32-bit stores and atomics lowered as 64-bit
+operations). Those rows record what was observed while it was open and what the compiler emits now
+that it is fixed; see "Root cause" below for the fix and its verification.
+
+| Device feature | Verdict on this box (RTX 3090) |
 | --- | --- |
-| `st_f32` | **faults the device.** Launch returns 0, the next `cuCtxSynchronize` returns 716 (`INVALID_PC`), and the context is poisoned for every later call. `probe_stf32` in the kernel file is the repro. Use `st_f64` (proven by the phase-3 LIF kernel) or `st_i32`. |
-| array `atomic_add_i32` (`cell_count + idx*4`) | **faults the device** once the index is actually in range. Scalar `atomic_add_i32` (issue #273's neighbour) is fine, and array `atomic_add_f64` works, so the histogram cell counts are f64. |
+| `st_f32` | **faulted the device** while #301 was open: the launch returned 0, the next `cuCtxSynchronize` returned 716 (`INVALID_PC`), and the context was poisoned for every later call, because the store was emitted as `st.global.u64`. Fixed: it now emits `st.global.f32`. `probe_stf32` in the kernel file is the repro. |
+| array `atomic_add_i32` (`cell_count + idx*4`) | **faulted the device** while #301 was open, once the index was actually in range: the atomic was emitted as `atom.global.add.u64`, eight bytes into four-byte cells. Fixed: it now emits `atom.global.add.u32`; the histogram cell counts are f64 by choice, not because an array i32 atomic is broken. Scalar `atomic_add_i32` (issue #273's neighbour) was always fine. |
 | array `atomic_add_f64` | fine (same pattern as the phase-3 synaptic accumulator). |
 | rolled `while` loops with f64 math and a large integer `%` | fine (probe_loop_f64 sums 4096 x 12 uniforms to 24,567.5 against an expected 24,576). |
 | `ld_f32` on a bulk buffer | fine. |
 | bulk `cuMemcpyHtoD_v2`/`DtoH_v2` | fine and fast: read a 60 MB CSR file with `fread` into `malloc`, one call per array. The per-element `cuda_write_i32` loop the phase-3 runner uses would take hours at this size. |
-| 4-byte scalar readback | **misleading.** A 4-byte `cuMemcpyDtoH_v2` into an 8-byte slot leaves garbage in the upper half: a counter of 2,700,513 printed as -4,292,266,783. Allocate 8 bytes for the device counter and copy 8 bytes back. |
+| 4-byte scalar readback | **misleading, and not a compiler defect.** A 4-byte `cuMemcpyDtoH_v2` into an 8-byte slot leaves garbage in the upper half: a counter of 2,700,513 printed as -4,292,266,783. Allocate 8 bytes for the device counter and copy 8 bytes back. This one is host-side, so the fix changes nothing about it. |
 | rolled 12-step loop seeded by `% 4294967296` | fine, but note the value must be *stored* with the same width it is read back with. |
 | `from<loc<CVoid>>(0)` / `addr()` / `loc()` | only valid inside `freedom {}`; nesting a helper that itself contains `freedom` fails, so bulk IO is inlined in the runner. |
 | extern declarations | need `share(all)` on the line before, and a `extern "C" { ... }` block; `fopen`/`fread`/`fwrite`/`malloc` keep the executable free of `io`'s `open` symbol (importing `io` in a `--build` executable segfaults inside `cuInit`). |
 
 ### Unit conventions that cost real time
+
+None of these is a compiler defect and none of them changed with the fix; they are usage traps in
+this dataset and this host interface.
 
 * The canonical `neurons.coords.f32` records are **6 floats per neuron** (`pos_xyz`, `soma_xyz`), so
   the stride is **24 bytes** and positions are the first three. Reading with stride 12 walks into the
@@ -238,37 +245,77 @@ convention), `coord_checksum` counts 139,241 usable somata and rejects exactly t
 position, and each scale's raster must sum to `n_parents * c` exactly. Those are checks against
 values the project already published, not a second implementation.
 
-### Root cause (found on upstream main 5167646, 2026-09-18)
+### Root cause: 32-bit lowering (found on upstream main 5167646, 2026-09-18; fixed in efc8cfe, v0.7.6)
 
-32-bit device stores and atomics are **lowered as 64-bit** operations. Minimal repros and the exact
+32-bit device stores and atomics were **lowered as 64-bit** operations. Minimal repros and the exact
 PTX are in `src/vyb_kernels/probes/probe_width.vyb`; filed upstream as
 [Vyb #301](https://github.com/rickenator/Vyb/issues/301), because the consuming project exists to
-find exactly this class of defect:
+find exactly this class of defect. It was fixed in commit efc8cfe
+(`fix(codegen): 32-bit device stores/atomics honour the intrinsic width (#301)`, PRs #302/#303) and
+is contained in tag v0.7.6.
+
+What it emitted on main 5167646:
 
 ```
 st_f32(out + i*4, 1.5)      ->  mov.u64 %rd21, 4609434218613702656 ; st.global.u64 [%rd23], %rd21
-atomic_add_i32(buf + i*4, 1) -> atom.global.add.u64 %rd28, [%rd27], 1
+atomic_add_i32(buf + i*4, 1) ->  atom.global.add.u64 %rd28, [%rd27], 1
 st_i32(out + i*4, 7)         ->  two st.global.u32 halves (one 8-byte store split in two)
 ```
 
-Expected: `st.global.f32` / `atom.global.add.u32` / one `st.global.u32`. The 64-bit lowering is
+What it emits now, re-checked by rebuilding this project's own probe
+(`vyb --kernel src/vyb_kernels/probes/probe_width.vyb --ptx ...`):
+
+```
+st_f32(out + i*4, one)       ->  st.global.f32        [..], %f1        (runtime Float)
+st_f32(out2 + i*4, 1.5)      ->  st.global.u32        [..], 0x3FC00000  (constant folded; same 4 bytes)
+atomic_add_i32(buf + i*4, 1) ->  atom.global.add.u32  [..], 1          (array element)
+atomic_add_i32(cnt, 1)       ->  atom.global.add.u32  [..], 1          (scalar cell)
+st_i32(out + i*4, 7)         ->  st.global.u32        [..], 7          (one 4-byte store)
+```
+
+Every one of those is four bytes wide and touches only its own element. The 64-bit lowering was
 harmless when the destination really is an 8-byte slot (which is why a *scalar* `atomic_add_i32`
-counter survives) and destructive when it is not: an array atomic writes past the last cell, and an
-`i32` array written element-wise is clobbered by its own left neighbour - which is precisely what
-turned every sigma entry except the first into zero.
+counter survived) and destructive when it is not: an array atomic wrote past the last cell, and an
+`i32` array written element-wise was clobbered by its own left neighbour - which is precisely what
+turned every sigma entry except the first into zero, and so collapsed 98.6% of the 13.9M children
+onto their parents while every launch reported success. Finding it took hours of bisecting device
+faults against wrong strides, unit errors and chunking bugs; the cost is recorded because that is
+what running the workload bought.
 
 Controls that lower correctly and stay green: `st_f64` -> `st.global.u64`, `atomic_add_f64` ->
 `atom.global.add.f64`.
 
-### The one that actually blocked the deliverable
+The fix is verified on this box (RTX 3090, Vyb 0.7.6) two ways. The compiler repository's own
+regression fixture `fixtures/kernel/probe15_store_width.vyb` emits `st.global.f32` / `st.global.u32`
+x2 / `atom.global.add.u32` x2 with none of the defects, and its on-silicon verifier
+`fixtures/cuda/probe15_verify.vyb` prints
+`PROBE15 PASS: all 5 intrinsics touch only their own element`.
 
-| Device feature | Verdict |
-| --- | --- |
-| `1.0 * <Int loaded from memory>` inside a kernel (descriptor word, or an element of an `i32` array) | **evaluates to 0 in the arithmetic.** The load itself is fine and the host sees the right value, but the Int-to-Float conversion in the device expression does not take effect: `s = 1.0 * sigma_const / 1000.0` gave `s = 0`, so 98.6% of the 13.9M children landed exactly on their parents while every launch reported success. Substituting a source literal (`s = 510.3`) fixed it instantly and the placement statistics became textbook (mean displacement 816 nm = 1.6 sigma). The same pattern explains an earlier failure in the per-cell spacing path, which also converted a loaded `i32`. |
+### The workaround the defect forced, and its removal
 
-The placement therefore carries a pinned literal for the spread. That value is not hand-waved: the
-runner derives it on the host from the cloud's second moments (spacing 850.6 nm, sigma 510.3 nm) and
-asserts the pin matches within 1 nm on every run, so it cannot drift silently.
+While #301 was open the 100x children could not be placed. `place_children` takes the spread from a
+descriptor word (sigma in milli-nm, divided by 1000); its first attempt also read the per-neuron
+sigma array, but that array was the one the width bug was corrupting - all but the first entry read
+back as zero - so children landed exactly on their parents. Pinning the spread as a source literal
+(`s = 510.3`) restored correct placement (mean displacement 816 nm, 1.6 sigma for a 3-D gaussian) and
+the runner cross-checked the pin against the host-derived value on every run.
+
+The pin is gone now that the defect is fixed. `place_children` multiplies the descriptor word out as
+it was written (`s_uniform = 1.0 * sigma_const / 1000.0`), the runner carries neither the pinned
+constant nor the tolerance comparison, and the host still derives the value from the cloud's second
+moments (spacing 850.6 nm, sigma 510.3 nm) and prints it. The f64 raster cell counts and the f64
+child records stay as they are, but as dtype choices for the artifact layout rather than as
+workarounds: 32-bit array atomics and 32-bit stores are usable again as of the fix.
+
+Re-run on the RTX 3090 with the pin removed: 13,925,500 child records, **0.000000% of them exactly on
+their parent**, mean |child - parent| **816.5 nm** (1.60 sigma, per-axis sd 510.36 nm), and each
+scale's raster summing to `n_parents * c` exactly. The full-resolution raster pass needs about 775 MB
+of device memory for the whole brain (334 MB of child records plus a 377 MB f64 raster) and the box
+had only ~155 MB free beside the resident model at the time, so the 8192x5760 rasters on disk are the
+artifacts generated on 2026-09-18 rather than fresh ones - the post-fix run above used the same
+kernels and the same seed with the placement chunked and a reduced raster size to fit. Chunking does
+not change the child records: re-running with a different block size leaves `children.bin`
+byte-identical.
 
 ### The sibling-damping edit is inert at the published scales (verified)
 

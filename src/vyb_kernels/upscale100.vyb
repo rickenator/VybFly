@@ -131,7 +131,6 @@ main()<Int> -> {
     spacing_nm<Float> = 0.0
     sigma_nm<Float> = 0.0
     sigma_milli_val<Int> = 0
-    sigma_pinned_milli<Int> = 510300      // must match the literal in place_children
 
     freedom {
         if (cuInit(0) != 0) { err = 7 }
@@ -472,12 +471,9 @@ main()<Int> -> {
             if (rss2 != 0) { err = 37 }
             cuCtxSynchronize()
             if (sigma_milli_val == 0) { err = 38 }   // a zero spread means the placement is a no-op
-            // the kernel uses a pinned literal (see place_children): an Int loaded from memory and
-            // converted to Float evaluated to 0 in device code, which collapsed the children onto
-            // their parents. The pin is checked against the host-derived value on every run.
-            diff<Int> = sigma_milli_val - sigma_pinned_milli
-            if (diff < 0) { diff = 0 - diff }
-            if (diff > 1000) { err = 39 }
+            // the spread now reaches the kernel through the descriptor word (place_children divides
+            // it by 1000), so there is no source-literal pin to cross-check any more: the value the
+            // runner derived above and printed below is the value the kernel uses.
         }
         // occupancy grid kept only for the out-of-box diagnostic
         if (err == 0) {
@@ -676,9 +672,10 @@ main()<Int> -> {
 
     println("upscale100 stage=" + stage)
     println("device_free_bytes=" + dev_free.to_string() + " total=" + dev_total.to_string())
-    println("note: the probe_loop_f64 / probe_stf32 launches are withdrawn from this runner "
-            + "(a device fault poisons the context); the numbers below are initializer zeros, "
-            + "not measurements. The real repros are src/vyb_kernels/probes/probe_width*.vyb")
+    println("note: the probe_loop_f64 / probe_stf32 launches are withdrawn from this runner as a "
+            + "workaround for Vyb #301 (a device fault poisons the context) while it was open; the "
+            + "numbers below are initializer zeros, not measurements. The defect is fixed in efc8cfe "
+            + "(v0.7.6) and the repros live in src/vyb_kernels/probes/probe_width.vyb")
 
     println("launch_rc thr/grid/sig/place/stats=" + rc_thr.to_string() + "/" + rc_grid.to_string() + "/"
             + rc_sig.to_string() + "/" + rc_place.to_string() + "/" + rc_stats.to_string())
