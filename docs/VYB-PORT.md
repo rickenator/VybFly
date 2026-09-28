@@ -155,6 +155,13 @@ VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb src/vyb/probes/probe_a
 VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb src/vyb/probes/probe_c_module_buffer_boundary.vyb --module-path src/vyb/probes
 ```
 
+> **Resolved since this table was written.** All seven issues from that re-check are closed
+> upstream (#281-#287, all closed 2026-09-18), each with a cited fix in Vyb's 0.7.6 changelog:
+> #281 `6f67c77`, #282 `19364b1`, #283 `eceefff`, #284 `8d680c5`, #285 `c4353a4`, #286 `b8ffe7c`,
+> #287 `7019b84`. The rows below stay as the dated record of what `main` at `51ced31` (0.7.5) did;
+> they are not a statement about the current build. For the same reason the store-width defect found
+> later (#301) is described as fixed rather than reproducing - see the root-cause section below.
+
 ## Status on the current upstream build (re-checked 2026-09-17)
 
 Every constraint above was re-run against a fresh build of `main@51ced31` (Vyb 0.7.5, Debug) in a
