@@ -5,8 +5,15 @@ upscale100.vyb -> results/upscale100/raster_c{1,10,100}.f64, one f64 atomic add 
 poster shows what the device actually computed rather than a re-plot of coordinates. The 0.1x panel
 is the coarse-grained replica from the phase-5 artifact, labelled as such.
 
-At 100x the cloud is a silhouette: 13.9M somata at 28 nm/pixel saturate every pixel they touch. That
-is the finding, and the footnote points at the deep-zoom asset, which resolves individual neurons.
+Tone mapping: each panel is mapped to *its own* density ceiling (the 99.98th percentile of its
+counts, log scale) and prints that ceiling. A single shared ceiling puts the 1x and 10x panels below
+the darkest ramp stop - they render black - because occupancy differs by more than an order of
+magnitude across the ladder (0.29% of pixels hold a soma at 1x, 16.30% at 100x). What is comparable
+panel-to-panel is the frame, not the brightness; occupancy and the ceiling are printed on each panel.
+
+Nothing saturates at 100x: the busiest pixel holds 22 somata and the mean over occupied pixels is
+1.81, so the panel resolves structure rather than reading as a silhouette. The deep-zoom asset is
+the full-resolution view of the same raster.
 
     python scripts/scale_poster.py [--png-dpi 200]
 """
@@ -33,24 +40,50 @@ RAMP = LinearSegmentedColormap.from_list(
     "scale", ["#05080c", "#123048", "#1f6f8b", "#63c8dd", "#eafcff"])
 
 W, H = 8192, 5760          # raster size produced by the kernels
-DISPLAY = (2048, 1440)     # per-panel display resolution (block-mean downsample)
+DISPLAY = (2048, 1440)     # per-panel display resolution (block-max downsample)
 
 
-GLOBAL_VMAX = 24.0     # counts per pixel: the 100x panel's ceiling, shared by all four panels
+class Panel:
+    """One density panel: tone-mapped image + the numbers printed on it."""
+
+    def __init__(self, img, ceiling, occupancy, pooled_max, mean_occupied):
+        self.img = img
+        self.ceiling = ceiling
+        self.occupancy = occupancy
+        self.pooled_max = pooled_max
+        self.mean_occupied = mean_occupied
 
 
-def load_raster(c: int) -> np.ndarray:
+def load_panel(c: int) -> Panel:
+    """Tone-map one kernel raster for display.
+
+    Downsampling takes the *maximum* count in each display block rather than the mean: at 1x only
+    0.29% of raster pixels hold a soma, so a mean over a 4x4 block rounds most single somata away and
+    the panel renders as an empty field. The maximum keeps every occupied block visible.
+
+    The tone map is per panel: log1p(count) / log1p(ceiling) with ceiling = that panel's own 99.98th
+    percentile, which is the mapping scripts/deep_zoom.py uses for the 100x asset. A shared ceiling
+    is not usable across the ladder - see the module docstring.
+    """
     a = np.memmap(RES / "upscale100" / f"raster_c{c}.f64", dtype="<f8", mode="r", shape=(H, W))
+    occupied = int(np.count_nonzero(a))
+    total = float(a.sum())
     fy, fx = H // DISPLAY[1], W // DISPLAY[0]
-    ds = np.asarray(a, dtype=np.float32)
-    ds = ds[: DISPLAY[1] * fy, : DISPLAY[0] * fx].reshape(DISPLAY[1], fy, DISPLAY[0], fx).mean(axis=(1, 3))
-    # shared density scale: log1p(count) / log1p(GLOBAL_VMAX) for every panel, so the brightness
-    # difference across the poster is the actual density difference rather than a per-panel autoscale
-    return np.clip(np.log1p(ds) / np.log1p(GLOBAL_VMAX), 0.0, 1.0)
+    pooled = np.asarray(
+        np.asarray(a, dtype=np.float32)[: DISPLAY[1] * fy, : DISPLAY[0] * fx]
+        .reshape(DISPLAY[1], fy, DISPLAY[0], fx).max(axis=(1, 3)),
+        dtype=np.float64)
+    ceiling = float(np.percentile(pooled, 99.98))
+    if ceiling <= 0:
+        ceiling = 1.0
+    img = np.clip(np.log1p(pooled) / np.log1p(ceiling), 0.0, 1.0)
+    return Panel(img=img, ceiling=ceiling, occupancy=100.0 * occupied / (W * H),
+                 pooled_max=float(pooled.max()),
+                 mean_occupied=(total / occupied) if occupied else 0.0)
 
 
-def panel(ax, img, title, note):
-    ax.imshow(img, origin="lower", cmap=RAMP, aspect="equal", interpolation="nearest",
+def panel(ax, p: Panel, title, note):
+    ax.imshow(p.img, origin="lower", cmap=RAMP, aspect="equal", interpolation="nearest",
               vmin=0.0, vmax=1.0)
     ax.set_facecolor(BG)
     ax.set_xticks([])
@@ -152,33 +185,43 @@ def main() -> int:
     gsx, gsy = 28.076, 28.073
     panel_pts(axes[0], cent,
               f"0.1x\n{n01:,} groups   ·   {e01:,} connections",
-              "phase-5 grouping; drawn as points (16k somata sit below the shared density scale)",
+              f"phase-5 coarse grouping: {n01:,} somata coarser than one 28 nm pixel, drawn as points",
               (gx0, gy0, gsx, gsy))
 
-    # 1x / 10x / 100x panels: straight from the Vyb kernels' own rasters
+    # 1x / 10x / 100x panels: straight from the Vyb kernels' own rasters, each tone-mapped to its
+    # own density (see the module docstring) and labelled with its measured occupancy and ceiling
+    measured: dict[int, Panel] = {}
     for ax, (c, n, e, note) in zip(axes[1:], [
-        (1, 139241, 2700513, "the real brain: FlyWire v783 somata, 139,241 of 139,255 placed"),
+        (1, 139241, 2700513, "the real brain: FlyWire v783, 139,241 of 139,255 somata placed"),
         (10, n10, e10, "subdivided ladder top rung (10 children per soma)"),
-        (100, n100, e100, "Vyb/CUDA kernels: at this density the cloud is a silhouette"),
+        (100, n100, e100, "Vyb/CUDA kernels; no pixel saturates, the panel resolves structure"),
     ]):
-        img = load_raster(c)
+        p = load_panel(c)
+        measured[c] = p
         title = f"{c}x\n{n:,} neurons"
         if e:
             title += f"   ·   {e:,} connections"
-        panel(ax, img, title, note)
+        note = (f"{note}\n{p.occupancy:.2f}% of pixels hold a soma · log scale to its own ceiling "
+                f"{p.ceiling:.0f} counts/px (busiest pixel {p.pooled_max:.0f})")
+        panel(ax, p, title, note)
+        print(f"  panel {c:>3}x: occupancy {p.occupancy:.2f}%  ceiling {p.ceiling:.0f}  "
+              f"busiest display pixel {p.pooled_max:.0f}  mean/occupied raster px {p.mean_occupied:.3f}")
 
     fig.suptitle("The same connectome at four scales, one rendering",
                  color="#eafcff", fontsize=46, weight="bold")
+    p1, p10, p100 = measured[1], measured[10], measured[100]
     foot = (
         "1x, 10x and 100x are the device rasters from the Vyb NVPTX kernels in src/vyb_kernels/upscale_kernel.vyb "
-        "(one atomic add per soma), not a re-plot.\n"
-        "All four panels share one density scale (log counts per 28 nm pixel, ceiling 24), so a brighter panel is a denser one; "
-        "every panel is scaled to its own extent, so what changes across the poster is point density, not framing. "
-        "Mean degree stays ~19 partners per neuron at every scale.\n"
-        f"100x is real data: {n100:,} somata from 139,255 parents, each child placed within its parent's local "
-        "spacing, then rasterized at 28 nm per pixel. 13.9M somata fill every pixel they touch, which is why the "
-        "panel reads as a white silhouette —\nsee results/scale-gallery/zoom-100x.html (or zoom-100x.png) to "
-        "resolve individual neurons at full resolution."
+        "(one atomic add per soma), not a re-plot; 0.1x is the phase-5 grouping, drawn as points.\n"
+        "All four panels share one frame (the same 8192 x 5760 grid, 28.08 nm per pixel, each scaled to its own extent), "
+        "but each density panel is tone-mapped to its own ceiling - printed on the panel - because occupancy differs by "
+        f"over an order of magnitude across the ladder ({p1.occupancy:.2f}% of pixels hold a soma at 1x, "
+        f"{p10.occupancy:.2f}% at 10x, {p100.occupancy:.2f}% at 100x): on one shared scale the 1x and 10x panels fall "
+        "below the darkest ramp stop and render black.\n"
+        f"Nothing saturates at 100x. Its busiest pixel holds {p100.pooled_max:.0f} somata and the mean over occupied "
+        f"pixels is {p100.mean_occupied:.2f}, so the panel resolves structure instead of reading as a silhouette; the "
+        "ladder's real change is how much of the frame the cloud fills. Mean degree stays ~19 partners per neuron at "
+        "every scale. Full resolution: results/scale-gallery/zoom-100x.html (or zoom-100x.png)."
     )
     fig.text(0.5, 0.012, foot, color="#6f8794", fontsize=14, ha="center", va="bottom", linespacing=1.75)
 
