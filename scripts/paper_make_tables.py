@@ -285,7 +285,7 @@ def milestones() -> None:
         ("M2", "Vyb discrete-event runtime", "PASS",
          "spike-for-spike against an independent reference, 4/4 replications"),
         ("M3", "event-driven GPU backend", "PASS",
-         r"CPU $\approx$ GPU on the fixture; 0 launch errors (required upstream fix \#270)"),
+         r"CPU $\approx$ GPU on the fixture; 0 launch errors (required upstream fix \#270); the ladder engine is bit-exact to $100\times$"),
         ("M4", "energy instrumentation", "done",
          "GPU power, counters, parity; RAPL unavailable as non-root"),
         ("M5", "latent geometry", "done",
@@ -303,8 +303,8 @@ def milestones() -> None:
          "discrimination and dimensionality grow; temporal/sequence depth flat"),
         ("M13", "energy curves vs scale", "done", "438 / 500 / 946 / 2022 GPU joules"),
         ("M14", "capability per watt", "done (bound)", "0.07 / 0.62 / 0.61 / 0.53; censored"),
-        ("M15", "100x graph (~14M neurons)", "gated",
-         "needs the sibling-edge placement vectorized (1.4e9 distances at $c=100$)"),
+        ("M15", "100x graph + simulation (~14M neurons)", "done (sim)",
+         "graph built in Vyb (270,051,300 edges); 8 epochs on two Sparks in 17.14 s, bit-exact to the CPU engine"),
     ]
     body = [r"\begin{tabular}{l p{5.0cm} l p{6.0cm}}", r"\toprule",
             r"id & milestone & state & evidence \\", r"\midrule"]
@@ -362,8 +362,51 @@ def criteria() -> None:
     write("tab_criteria.tex", "\n".join(body) + "\n")
 
 
+# ------------------------------------------------------------------ ladder engine
+def ladder_engine() -> None:
+    """The ladder past 10x: one GB10, two GB10s over RDMA, the 3090, and the C++ reference.
+
+    Every cell comes from results/paper/data.json:ladder_engine, which is collected from
+    results/energy/vyb_ladder.json:gpu_engine. A dash is a scale that was not run on that
+    device (the C++ reference is single-threaded and was run to 40x).
+    """
+    d = D.get("ladder_engine") or {}
+    one = d.get("one_gb10_sim_s") or {}
+    two = d.get("rdma_two_gb10_sim_s") or {}
+    r3 = d.get("rtx3090_sim_s") or {}
+    ref = d.get("cpp_reference_s") or {}
+    sp = d.get("speedup_vs_one_gb10") or {}
+    one["80x"] = d.get("one_gb10_80x_s")
+    runs = (D.get("ladder_split_runs") or {}).get("runs") or []
+    for r in runs:                                   # 100x (and any later scale) comes from the run
+        k = f"{r['scale']:g}x"
+        one[k] = r.get("one_gb10_s")
+        two[k] = r.get("two_gb10_sim_s")
+        sp[k] = r.get("speedup")
+        if r.get("rtx3090_sim_s") is not None:
+            r3[k] = r["rtx3090_sim_s"]
+    order = ["1x", "2x", "5x", "10x", "20x", "40x", "80x", "100x"]
+    order = [k for k in order if any(k in m for m in (one, two, r3, ref))]
+    body = [r"\begin{tabular}{l r r r r r r}", r"\toprule",
+            r"scale & neurons & one GB10 & two GB10s (RDMA) & speedup & RTX 3090 & C++ ref (1 thread) \\",
+            r"\midrule"]
+    for k in order:
+        factor = float(k[:-1])
+        n = f"{int(round(139255 * factor)):,}".replace(",", "{,}")
+        cells = [f"${k.replace('x', r'\times')}$", n]
+        for m in (one, two, sp, r3, ref):
+            v = m.get(k)
+            cells.append("--" if v in (None, "") else f"{v:.2f}" if isinstance(v, float) else str(v))
+        body.append(" & ".join(cells) + r" \\")
+    body += [r"\midrule",
+             r"\multicolumn{7}{l}{\footnotesize seconds for 8 epochs $\times$ 1000 steps at $dt=0.5$~ms, "
+             r"$\texttt{VYBFLY\_MAX\_ACTIVE}=n$; every Vyb GPU number is bit-exact against the reference} \\",
+             r"\bottomrule", r"\end{tabular}"]
+    write("tab_ladder_gpu.tex", "\n".join(body) + "\n", resize=True)
+
+
 if __name__ == "__main__":
     for fn in (dataset, gate, geometry, downscale, dynamics, upscale, closure, capability,
-               energy, criteria, milestones, defects):
+               energy, criteria, milestones, defects, ladder_engine):
         fn()
     print(f"tables written to {TAB.relative_to(ROOT)}")

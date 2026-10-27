@@ -2,7 +2,7 @@
 
 ### 📄 **[Read the paper → aniviza.com/paper.pdf](https://aniviza.com/paper.pdf)** &nbsp;·&nbsp; **[Landing page](https://aniviza.com/paper.html)**
 
-*25 pages, 5.7 MB. GitHub's in-page preview can't display this PDF, so the links above serve the
+*26 pages, 5.7 MB. GitHub's in-page preview can't display this PDF, so the links above serve the
 file directly. You can also browse [`paper.pdf`](paper.pdf) in the repo, or open it after
 `git clone`. A counted mirror, which logs how the paper is read, lives at
 [`vybfly-paper-relay.aniviza.workers.dev/paper.pdf`](https://vybfly-paper-relay.aniviza.workers.dev/paper.pdf).*
@@ -288,6 +288,34 @@ version of this note put most of the rest down to a 12.3 to 12.6 s fired-list co
 That was wrong: the copy ran on the legacy stream, so `dtoh_ms` also counted the wait for that
 step's GPU work. The copy itself is about 2 to 3% of the step.
 
+#### 100x: 13.9M neurons, and the graph built in Vyb
+
+The largest scale run so far is **100x**: 13,925,500 neurons and 270,051,300 edges. Both halves of
+it are now Vyb. The graph comes from `src/vyb/upscale_graph.vyb`, which reads the canonical 1x
+out-CSR, applies the 5-synapse rule, and writes the c-times CSR the ladder engines read — no Python
+in the graph path. It reproduces the published `s1` files byte for byte at factor 1 (md5-identical
+indptr, indices and syn), builds the 100x graph in about two and a half minutes, and its subdivision
+keeps each child's inherited partner set, so `E = 100 x E_1x` exactly (degree 19.39, the parent's).
+Its header states the one difference from the Python generator: the target child inside a partner
+family comes from a hash of (edge, child), not a softmax over the fitted geometry, and sibling edges
+are omitted — statistics preserved, microstructure different.
+
+The run, 8 epochs x 1000 steps (`results/ladder/split_runs.json`):
+
+| 100x, 8 epochs | sim | load | digests |
+|---|---|---|---|
+| two GB10s, RDMA | **17.14 s** | 21.1 s per rank | bit-exact |
+| one GB10 | 37.91 s | 4.5 s | bit-exact |
+| RTX 3090 | 24.62 s | 39.0 s | bit-exact |
+| 16 CPU cores (Vyb `ladder_prop`) | 248.1 s | 3.7 s | oracle |
+
+All four agree digit for digit: `digest_sum` 637865169974127257, `digest_xor` 1325515887917234,
+4,786,725,072 spikes, 102,365,909,896 synaptic events, `overflow` 0. Two Sparks are 2.21x one GB10
+and 14.5x the 16-core CPU engine. The stimulus is the same mt19937_64 schedule the other scales use
+(`scripts/make_stim.cpp` reproduces the published `stim_s1.bin`/`stim_s80.bin` byte for byte), and
+the CPU engine needed `VYBFLY_MAX_ACTIVE` — its 300,000-entry active list, inherited from the C++
+reference, silently dropped 1.6e9 spikes at this scale before.
+
 The zero-copy exchange (`VYBFLY_SPLIT_ZC`, default 1, used with two ranks and the overlapped push)
 removes even that. The GB10's GPU shares the host's memory, so the send and receive buffers are pinned in place
 with `cuMemHostRegister` and the kernels use them directly. The update kernel writes the fired list
@@ -378,6 +406,15 @@ Then any phase — for example the scaling ladder and its closure test:
 .venv/bin/python scripts/phase7_closure.py     --from-saved --factors 2 5 10
 .venv/bin/python scripts/phase9_capability.py  --stage all                    # capability battery
 .venv/bin/python scripts/assess_success_criteria.py                           # the verdicts
+```
+
+A scale's harness inputs are built in Vyb too — the graph and the stimulus schedule:
+
+```sh
+g++ -O2 -o make_stim scripts/make_stim.cpp                      # same schedule as sparse_prop
+VYBFLY_FACTOR=100 VYBFLY_OUT=results/ladder/s100 \
+  "$VYB/build/vyb" src/vyb/upscale_graph.vyb                    # 1x CSR -> 100x CSR
+./make_stim 13925500 results/ladder/s100/stim_s100.bin          # n = 139255 * factor
 ```
 
 The Vyb side needs the Vyb toolchain (`VYB` and `VYB_STDLIB` env vars; defaults assume
@@ -479,7 +516,7 @@ limitations section and its honesty-log appendix.
 | M5–M8 geometry, downscaling, upscaling, closure | **done** — see section 5 of the paper |
 | M9 dynamic validation of the replicas | **done** — 85–95% active-set overlap |
 | M11–M14 learning, capability, energy scaling, capability per watt | **done** — including the negative control result |
-| M15 100× ~14M neurons | **graph done, propagation not attempted** — the 100× graph itself exists and is verified (`results/upscale100/`: 13,925,500 child records, 0.000000% on their parent, placement re-run after #301 with the workaround pin removed — `docs/VYB-PORT.md` §100x). No ladder run at 100× yet: 80× (11.1M neurons, 225M edges) on two Sparks is the largest simulated scale |
+| M15 100× ~14M neurons | **done** — the 100× graph is built by Vyb (`src/vyb/upscale_graph.vyb`: 13,925,500 neurons, 270,051,300 edges; at factor 1 its CSR is byte-identical to the published 1×) and 8 epochs run on two Sparks in **17.14 s**, bit-exact against the Vyb CPU engine (`results/ladder/split_runs.json`). One GB10: 37.91 s; RTX 3090: 24.62 s; 16 CPU cores: 248.1 s |
 
 ## Credits and data
 

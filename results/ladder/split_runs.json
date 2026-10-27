@@ -1,0 +1,91 @@
+{
+  "protocol": "8 epochs x 1000 steps, dt 0.5 ms, 5-synapse graph, VYBFLY_MAX_ACTIVE = n (uncapped), stimulus = sparse_prop's built-in mt19937_64(1337) schedule for that n (scripts/make_stim.cpp reproduces the published s1/s80 files byte-for-byte)",
+  "graph_builder": {
+    "program": "src/vyb/upscale_graph.vyb",
+    "what": "reads the canonical 1x out-CSR, applies the 5-synapse rule, and writes the c-times CSR in Vyb (no Python in the graph path)",
+    "edges_100x": 270051300,
+    "n_100x": 13925500,
+    "validation": "at factor 1 the three output files are md5-identical to the published s1 CSR (indptr e8e3c7906bc9a3240b0968e279966158, indices 22ac60e4d80635eeede8580f5718f8df, syn b71c97ae704d777d5e3e0fa5fb8feef0)",
+    "policy_note": "target child within the partner family is (edge + 7919*k) mod c; sibling edges omitted (see the header of the program)"
+  },
+  "runs": [
+    {
+      "scale": 10,
+      "n_neurons": 1392550,
+      "n_edges": 27842102,
+      "net": "rdma",
+      "zero_copy": true,
+      "one_gb10_s": 4.19,
+      "two_gb10_sim_s": 2.613,
+      "speedup": 1.6,
+      "digest_sum": 42322697548985024,
+      "digest_xor": 188222298830040,
+      "bit_exact": true
+    },
+    {
+      "scale": 40,
+      "n_neurons": 5570200,
+      "n_edges": 112346000,
+      "net": "rdma",
+      "zero_copy": true,
+      "one_gb10_s": 14.707,
+      "two_gb10_sim_s": 8.046,
+      "speedup": 1.83,
+      "bit_exact": true
+    },
+    {
+      "scale": 80,
+      "n_neurons": 11140400,
+      "n_edges": 224835333,
+      "net": "rdma",
+      "zero_copy": true,
+      "one_gb10_s": 34.05,
+      "two_gb10_sim_s": 15.602,
+      "speedup": 2.18,
+      "digest_sum": 508755035752662158,
+      "digest_xor": 103693891554914,
+      "bit_exact": true
+    },
+    {
+      "scale": 100,
+      "n_neurons": 13925500,
+      "n_edges": 270051300,
+      "net": "rdma",
+      "zero_copy": false,
+      "zero_copy_note": "the two ranks ran different Vyb checkouts (lefty vyb-k, righty ursela-fly/vyb), so rank 1 took the copy path (dtoh_ms 13.9 s); the digests are unaffected",
+      "one_gb10_s": 37.905,
+      "two_gb10_sim_s": 17.141,
+      "speedup": 2.21,
+      "spikes": 4786725072,
+      "stimulus_spikes": 9992,
+      "synaptic_events": 102365909896,
+      "epoch0_spikes": 598340634,
+      "overflow": 0,
+      "exact_order": 1,
+      "epochs_identical": 1,
+      "load_ms_per_rank": 21096,
+      "digest_sum": 637865169974127257,
+      "digest_xor": 1325515887917234,
+      "bit_exact": true,
+      "rtx3090_sim_s": 24.616,
+      "rtx3090_note": "4.62x the one-GB10 time at that scale; 3,831,400 of 270,051,300 edges escape the u8 weight code to f32",
+      "rtx3090_load_ms": 39029
+    }
+  ],
+  "oracle_100x": {
+    "engine": "src/vyb/ladder_prop.vyb (Vyb CPU, 16 threads, godzilla)",
+    "sim_s": 248.138,
+    "load_ms": 3651,
+    "overflow": 0,
+    "epochs_identical": 1,
+    "digest_sum": 637865169974127257,
+    "digest_xor": 1325515887917234,
+    "matches_two_gb10": true,
+    "note": "the CPU engine's max_active was hardcoded to 300000, which overflowed 1.6e9 spikes at 100x; it now reads VYBFLY_MAX_ACTIVE like the GPU engines do"
+  },
+  "hosts": {
+    "two_spark": "lefty (192.168.192.1) + righty (192.168.192.2), DGX Spark GB10, direct 200 GbE, RoCE v2",
+    "one_gb10": "lefty",
+    "cpu_oracle": "godzilla, i9-10850K, 16 threads"
+  }
+}

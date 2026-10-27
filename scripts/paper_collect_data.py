@@ -314,6 +314,59 @@ if dcur:
 else:
     data["energy_curves"] = None
 
+# ---------------------------------------------------------------- ladder engine (GPU, two Sparks)
+dl = load("energy/vyb_ladder.json")
+if dl:
+    ge = dl.get("gpu_engine") or {}
+    r3090 = ge.get("rtx3090") or {}
+    gb10 = ge.get("gb10_uncontended") or {}
+    split = ge.get("split_two_gb10") or {}
+    rdma = split.get("rdma_sim_s") or {}
+    u8 = ge.get("u8_weight_codes") or {}
+    ref = {}
+    for k, v in (dl.get("scales") or {}).items():
+        ref[k] = (v or {}).get("cpp_1thread_s")
+    data["ladder_engine"] = {
+        "engine": ge.get("engine"),
+        "method": ge.get("method"),
+        "gb10_host": gb10.get("host"),
+        "one_gb10_sim_s": gb10.get("sim_s"),
+        "one_gb10_80x_s": (rdma.get("one_gb10_80x") or [None])[0],
+        "rtx3090_sim_s": r3090.get("sim_s"),
+        "rdma_two_gb10_sim_s": {k: (v[0] if isinstance(v, list) and v else v)
+                                for k, v in rdma.items()
+                                if k and k[0].isdigit()},
+        "speedup_vs_one_gb10": rdma.get("speedup_best_vs_one_gb10"),
+        "cpp_reference_s": ref,
+        "u8_weight_codes": {"host": u8.get("host"), "env": u8.get("env")},
+        "digest_80x": rdma.get("digest_80x"),
+    }
+    SOURCES["ladder_engine"] = "results/energy/vyb_ladder.json:gpu_engine"
+else:
+    data["ladder_engine"] = None
+
+# ---- the split runs as actually executed (one record per scale, digests included)
+dsplit = load("ladder/split_runs.json")
+if dsplit:
+    data["ladder_split_runs"] = dsplit
+    SOURCES["ladder_split_runs"] = "results/ladder/split_runs.json"
+else:
+    data["ladder_split_runs"] = None
+
+# ---- the 100x graph exists as an artifact even where no run at that scale was
+dups = load("upscale100/verify.json")
+if dups:
+    data["upscale_100x"] = {
+        "children": dups.get("children"),
+        "expected_children": dups.get("expected_children"),
+        "fraction_within_one_cell": dups.get("fraction_within_one_cell"),
+        "displacement_nm_sd": (dups.get("displacement_nm") or {}).get("x_sd"),
+        "source": dups.get("source"),
+    }
+    SOURCES["upscale_100x"] = "results/upscale100/verify.json"
+else:
+    data["upscale_100x"] = None
+
 # ---------------------------------------------------------------- assessment (verdicts)
 da = load("assessment.json")
 if da:

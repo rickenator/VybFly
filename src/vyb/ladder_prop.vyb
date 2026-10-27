@@ -418,7 +418,8 @@ main()<Int> -> {
     decay1<Float> = 0.9
     e<Eng> = Eng {
         n = n, ne = ne, nt = nt, shift = shift, blk = blk, nblk = nblk,
-        steps = steps, epochs = epochs, max_active = 300000, refr_steps = refr_steps,
+        steps = steps, epochs = epochs, max_active = env_int("VYBFLY_MAX_ACTIVE", 300000),
+        refr_steps = refr_steps,
         vth = vth1, decay = decay1,
         ip = ip, rec = rec,
         cur = alloc0(n, 4), vm = alloc0(n, 4), refr = alloc0(n, 4), flag = alloc0(n, 1),

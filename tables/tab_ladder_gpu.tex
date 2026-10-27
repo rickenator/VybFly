@@ -1,0 +1,21 @@
+{\small\setlength{\tabcolsep}{3pt}
+\resizebox{0.96\textwidth}{!}{\%
+\begin{tabular}{l r r r r r r}
+\toprule
+scale & neurons & one GB10 & two GB10s (RDMA) & speedup & RTX 3090 & C++ ref (1 thread) \\
+\midrule
+$1\times$ & 139{,}255 & 0.77 & -- & -- & 0.98 & 8.32 \\
+$2\times$ & 278{,}510 & 0.93 & -- & -- & 0.90 & 14.97 \\
+$5\times$ & 696{,}275 & 2.22 & -- & -- & 1.71 & 43.45 \\
+$10\times$ & 1{,}392{,}550 & 4.19 & 2.61 & 1.60 & 2.46 & 88.06 \\
+$20\times$ & 2{,}785{,}100 & 7.45 & 4.54 & 1.64 & 4.04 & -- \\
+$40\times$ & 5{,}570{,}200 & 14.71 & 8.05 & 1.83 & 8.72 & -- \\
+$80\times$ & 11{,}140{,}400 & 34.05 & 15.60 & 2.18 & -- & -- \\
+$100\times$ & 13{,}925{,}500 & 37.91 & 17.14 & 2.21 & 24.62 & -- \\
+\midrule
+\multicolumn{7}{l}{\footnotesize seconds for 8 epochs $\times$ 1000 steps at $dt=0.5$~ms, $\texttt{VYBFLY\_MAX\_ACTIVE}=n$; every Vyb GPU number is bit-exact against the reference} \\
+\bottomrule
+\end{tabular}
+
+}
+}

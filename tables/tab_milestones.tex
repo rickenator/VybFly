@@ -6,7 +6,7 @@ id & milestone & state & evidence \\
 M0 & reproduce FlyWire graph statistics & done & 11/11 required checks vs published values; 7/9 advisory \\
 M1 & CPU neural baseline (LIF, whole connectome) & done & dense $=$ sparse spike-for-spike (0 delta, $\rho=1.0$); 1.0 s in 120 s wall \\
 M2 & Vyb discrete-event runtime & PASS & spike-for-spike against an independent reference, 4/4 replications \\
-M3 & event-driven GPU backend & PASS & CPU $\approx$ GPU on the fixture; 0 launch errors (required upstream fix \#270) \\
+M3 & event-driven GPU backend & PASS & CPU $\approx$ GPU on the fixture; 0 launch errors (required upstream fix \#270); the ladder engine is bit-exact to $100\times$ \\
 M4 & energy instrumentation & done & GPU power, counters, parity; RAPL unavailable as non-root \\
 M5 & latent geometry & done & spectral 32-D wins (0.952); hyperbolic beats anatomical 3-D \\
 M6 & downscaling 0.5/0.25/0.1x & done & composites 0.179 / 0.267 / 0.276 \\
@@ -18,7 +18,7 @@ M11 & plasticity / associative learning & done & acquisition AUC 0.51 to 1.00; g
 M12 & capability scaling benchmarks & done & discrimination and dimensionality grow; temporal/sequence depth flat \\
 M13 & energy curves vs scale & done & 438 / 500 / 946 / 2022 GPU joules \\
 M14 & capability per watt & done (bound) & 0.07 / 0.62 / 0.61 / 0.53; censored \\
-M15 & 100x graph (~14M neurons) & gated & needs the sibling-edge placement vectorized (1.4e9 distances at $c=100$) \\
+M15 & 100x graph + simulation (~14M neurons) & done (sim) & graph built in Vyb (270,051,300 edges); 8 epochs on two Sparks in 17.14 s, bit-exact to the CPU engine \\
 \midrule
 \multicolumn{4}{l}{\footnotesize $^{\dagger}$ closure demonstrates invertibility of the generator, not self-similarity (see \S 9).} \\
 \bottomrule

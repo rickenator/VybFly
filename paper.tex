@@ -73,7 +73,10 @@ connection law $P(\text{connect}\mid \text{distance}) = 1/(1+e^{(d-R)/T})$. The 
 ladder of graphs at $2\times$, $5\times$ and $10\times$ (up to 1{,}392{,}550 neurons and 27.8M
 connections) whose connection count scales as $N^{1.0175}$ ($R^2=0.9995$) --- sparsity is
 preserved, mean degree and mean connection strength stay bounded --- and which renormalizes back
-to the biological graph almost exactly ($R(G_{10})$ returns 2{,}700{,}513 connections with a
+to the biological graph almost exactly. The ladder is then pushed to $80\times$ and $100\times$
+(13{,}925{,}500 neurons, 270{,}051{,}300 connections) on a Vyb GPU engine split across two DGX
+Sparks, where eight epochs of the enlarged connectome simulate in 17.1~s and match a CPU oracle
+digit for digit ($R(G_{10})$ returns 2{,}700{,}513 connections with a
 degree-distribution distance of 0 and community ARI 1.0). Capability grows on some axes
 (stimulus-discrimination information $\propto N^{1.014}$, participation ratio $\propto
 N^{0.318}$, memory capacity $\geq 96$ associations versus 8 at $1\times$) and is flat on others
@@ -449,6 +452,7 @@ alternate stream (500) & 185 & 841 & 23{,}860 & 65 & match \\
 \end{table}
 
 \subsection{M3: GPU kernels, and how a four-byte store cost a milestone}
+\label{sec:gpu-fix}
 The event-driven GPU backend is written in Vyb device code: \code{accumulate\_bucket} walks the
 CSR slice of each fired neuron and accumulates synaptic input into target neurons with atomic
 adds (one block per source, no prefix-sum pass), and \code{update\_and\_fire} performs the LIF
@@ -657,6 +661,71 @@ The near-exact agreement at $10\times$ is partly a consequence of the generator'
 invertibility rather than self-similarity.}
 \label{fig:closure}
 \end{figure}
+
+\subsection{The ladder past ten: a Vyb GPU engine, and two Sparks}
+\label{sec:ladder-gpu}
+The ladder above stops at $10\times$ because the workload's shape changes there: a step becomes a
+scatter over tens of millions of edges, and the only commodity accelerator in reach is a GPU. The
+existing CUDA kernel for this workload ($\S\ref{sec:gpu-fix}$, \code{sparse\_prop.cu}) accumulates
+with float \code{atomicAdd} and is therefore inexact, which is fatal for a project whose every
+number is a digest. We replaced it with an engine written in Vyb: \code{src/vyb/ladder\_gpu.vyb}
+driving NVPTX kernels from \code{src/vyb\_kernels/ladder\_gpu\_kernel.vyb}, with the PTX committed so
+it runs on a stock compiler. Exactness comes from two choices. The push kernel only \emph{sets bits}
+in a bitmap over the CSC positions of a target's in-edges (a warp per active source, one
+\code{red.global.or} per out-edge). The update kernel gives one thread per neuron, walks that
+target's bitmap range in ascending source order with eight weight loads in flight, and sums in
+exactly the reference order. No float atomics are involved, so the digests match the reference at
+every scale rather than approximately.
+
+The engine also turned out to be fast, which was not the point. On one GB10 (DGX Spark, 273~GB/s
+unified memory) it runs the 8-epoch workload in 4.17~s at $10\times$, 14.71~s at $40\times$ and
+34.05~s at $80\times$; on an RTX 3090 (936~GB/s) the same workload takes 2.46, 8.72 and 24.62~s.
+Against the CUDA kernel it replaces, on the same GPU and at the scales where both were run, it is
+2.4--4.8$\times$ faster --- and exact rather than inexact (Table~\ref{tab:ladder-gpu}).
+
+Two Sparks can also hold one connectome. \code{src/vyb/ladder\_gpu\_split.vyb} cuts the graph by
+target at half the in-edges, so each rank keeps every source row but only its own edges, and the
+ranks swap their fired-id lists each step over the direct 200~GbE link. Over TCP the exchange costs
+enough to lose at $10\times$ and to win only $1.30\times$ at $40\times$; over RoCE~v2
+(\code{VYBFLY\_SPLIT\_NET=rdma}, no root needed) the split wins at every scale:
+$1.60\times$ at $10\times$, $1.64\times$ at $20\times$, $1.83\times$ at $40\times$,
+$2.18\times$ at $80\times$ and $2.21\times$ at $100\times$. A zero-copy exchange
+(\code{VYBFLY\_SPLIT\_ZC}) sends and receives straight out of device memory through pinned host
+buffers --- the same physical memory on GB10 --- which removes the per-step device-to-host copy
+(12.3--12.5~s of an $80\times$ run become 0.04~s) but buys only about 2\%, because by then the step
+is bound by the kernels, not the wire.
+
+At $100\times$ the ladder has 13{,}925{,}500 neurons and 270{,}051{,}300 edges --- the largest
+scale in this paper --- and the graph itself is now built by Vyb as well
+(\code{src/vyb/upscale\_graph.vyb}, $\S\ref{app:artifacts}$): the one Python stage in the graph path
+is gone. Eight epochs of the $100\times$ ladder produce $4.787\times10^{9}$ spikes and
+$1.024\times10^{11}$ synaptic events. On two Sparks that takes 17.14~s of simulation; on one GB10,
+37.91~s; on 16 CPU cores of the reference machine, 248.1~s. All three agree bit for bit
+(\code{digest\_sum} 637865169974127257, \code{digest\_xor} 1325515887917234, \code{overflow} 0).
+
+\begin{table}[t]
+\centering
+\caption{The ladder past $10\times$, timed on four devices. Every Vyb GPU number is bit-exact
+against the reference (identical spike counts, event counts and both digests); a dash is a scale
+that was not run on that device. The C++ reference is single-threaded and was run to $40\times$;
+at $80\times$ and $100\times$ the oracle is the Vyb CPU engine, which is bit-identical to the C++
+reference at every scale where both were run. Source: \code{results/ladder/split\_runs.json} and
+\code{results/energy/vyb\_ladder.json}.}
+\label{tab:ladder-gpu}
+\input{tables/tab\_ladder\_gpu.tex}
+\end{table}
+
+We state the scope of the $100\times$ graph plainly, because it is not the same object the smaller
+scales are. Its subdivision keeps every child's inherited partner set --- so out-degree, connection
+strength and sparsity are preserved exactly ($E = 100 \times E_{1\times}$) --- but the concrete
+target child within a partner family is chosen by a hash of (edge, child) rather than by a fresh
+draw from the fitted geometry. The geometric rule costs $c$ distance evaluations per edge
+($2.7\times10^{10}$ at $c=100$) and is why that stage lived in numpy; the substitute leaves the
+graph's statistics intact and its microstructure different. Sibling edges are likewise omitted,
+which keeps mean degree at the parent's 19.39 instead of the ~20.3 the damped rule would produce.
+The $100\times$ result in this paper is therefore a \emph{simulation} result at the largest scale we
+can currently hold, not a closure or capability result: those need the geometric generator, and we
+have not run them at $100\times$.
 
 \subsection{Dynamic validation of the downscaled replicas}
 \label{sec:dynamics}
@@ -1084,6 +1153,21 @@ It had copied superseded protocol-v2 values; re-measured against the current pro
 A hand-written expectation vector for the accumulate-kernel probe. &
 The kernel was right and our expectation was wrong (one term mis-multiplied). Fixed by
 recomputing the expected values from the network definition. \\
+The $100\times$ graph was ``gated'' on vectorizing the sibling-edge placement. &
+It was not gated on anything: the placement defect (\#301) had already been fixed and its
+workaround pin removed, and the $100\times$ child records were verified months before this
+paper's first draft. What was missing was the \\emph{simulation} at that scale, not the graph.
+Corrected in \\S\\ref{sec:ladder-gpu}. \\
+Graph generation needed Python. &
+True until this revision, and the reason the $20\times$--$80\times$ CSR files had no in-repo
+provenance. \code{src/vyb/upscale\_graph.vyb} now builds them in Vyb; at factor 1 its output is
+byte-identical to the published $1\times$ CSR, and it built the $100\times$ graph in about two
+and a half minutes. \\
+Reporting a $100\times$ run without its caveat. &
+The first $100\times$ CPU run reported digests with \code{overflow} $=1.6\times10^{9}$: the CPU
+engine hardcoded a 300{,}000-entry active list (the C++ reference's default), which silently drops
+spikes at that scale. It now reads \code{VYBFLY\_MAX\_ACTIVE}; the run in this paper has
+\code{overflow} $=0$. \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -1,0 +1,253 @@
+// upscale_graph.vyb -- build a subdivided ladder graph, in Vyb, from the 1x connectome.
+//
+// The ladder's graph *generation* used to be the one Python stage in the pipeline: the
+// simulator is Vyb, but the 20x/40x/80x CSR files came out of scripts/phase6_upscale.py.
+// This program removes that stage. It reads the canonical 1x out-CSR and writes the c-times
+// CSR that the ladder engines (src/vyb/ladder_*.vyb) read directly:
+//
+//   <out>/bin/csr.out.indptr.i64    N + 1 int64, N = n * c
+//   <out>/bin/csr.out.indices.i32    one int32 target child per edge
+//   <out>/bin/csr.out.syn.i32        one int32 synapse count per edge, same order
+//
+// Policy (the subdivision the paper describes, with the one difference stated below):
+//   * child i of parent p is i = p * c + k, so every parent has exactly c children;
+//   * each child inherits the parent's full out-edge set -- the parent's partner q becomes
+//     a partner family q*c .. q*c+c-1 -- so out-degree, strength and sparsity are preserved
+//     by construction (E = c * E_parent exactly);
+//   * the concrete target child inside the partner family is (edge_index + 7919*k) mod c.
+//     The Python generator drew it from a softmax over the fitted geometry instead, which at
+//     c=100 means 100 acosh evaluations per edge (2.7e10 in total) -- the reason that stage
+//     moved to numpy in the first place. The substitute is deterministic, spreads every
+//     child's edges across the whole partner family, and leaves the graph's degree and
+//     strength statistics identical; it does NOT reproduce the geometry-weighted
+//     microstructure, so a graph built here is not byte-comparable to one built by
+//     phase6_upscale.py at the same factor.
+//   * sibling (intra-family) edges are not generated. At c=100 the Python generator's damped
+//     rate adds ~0.9 to a 19.4-edge degree; leaving them out keeps the degree exactly the
+//     parent's, which is the invariant the ladder tables report.
+//
+// Rows are emitted in ascending source order, so each target's in-edge list comes out in
+// ascending source order too -- what the ladder loader's exactness check requires.
+//
+// Run:
+//   VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb src/vyb/upscale_graph.vyb
+//   VYBFLY_FACTOR=100 VYBFLY_OUT=results/ladder/s100 ...
+//
+// Verify a build against the 1x graph:
+//   scripts/verify_upscaled_csr.py is the Python cross-check; the in-Vyb check is that the
+//   reported edge count equals c * E_1x and the loader accepts the file (it refuses a CSR
+//   whose rows are not strictly ascending).
+
+import io::{close, open_read, open_write, read_all, write_str}
+import env::{env_get}
+import time::{time_nanos}
+import fs::{mkdir}
+
+extern "C" {
+    calloc(n<Int>, sz<Int>)<Int>
+}
+
+env_int(name<String>, d<Int>)<Int> -> {
+    match (env_get(name)) {
+        s -> { return s.to_int() }
+        ? -> { return d }
+    }
+}
+
+slurp(path<String>)<String> -> {
+    text<String> = ""
+    match (open_read(path)) {
+        f -> {
+            match (read_all(f)) { s -> { text = s } ? -> { } }
+            close(f)
+        }
+        ? -> { }
+    }
+    return text
+}
+
+alloc0(n<Int>, sz<Int>)<Int> -> { var<Int> p = 0
+    freedom { p = calloc(n, sz) }
+    return p }
+
+ld64(p<Int>)<Int> -> { var<Int> r = 0
+    freedom { r = at(from<loc<Int>>(p)) }
+    return r }
+st64(p<Int>, v<Int>) -> { freedom { at(from<loc<Int>>(p)) = v } }
+ld32(p<Int>)<Int> -> { var<Int32> r = 0
+    freedom { r = at(from<loc<Int32>>(p)) }
+    return r as Int }
+st32(p<Int>, v<Int>) -> { freedom { at(from<loc<Int32>>(p)) = v as Int32 } }
+
+// One flush of a raw buffer into an open file, as a String view over the bytes.
+flush(f<File>, buf<Int>, bytes<Int>)<Bool> -> {
+    var<String> payload = ""
+    freedom { payload = String::from_bytes(from<loc<Int8>>(buf), bytes) }
+    ok<Bool> = false
+    match (write_str(f, payload)) { n -> { ok = (n == bytes) } ? -> { } }
+    return ok
+}
+
+// Write the three CSR files into already-open handles. Returns the edge count, or an
+// error code >= 20 (the caller closes the files).
+write_all(factor<Int>, syn_min<Int>, f_ip<File>, f_dst<File>, f_syn<File>, ip<Int>, dst<Int>,
+          syn<Int>, n<Int>, big_e<Int>)<Int> -> {
+    per_flush<Int> = 262144
+    ibuf<Int> = alloc0(per_flush, 4)
+    sbuf<Int> = alloc0(per_flush, 4)
+    pbuf<Int> = alloc0(per_flush, 8)
+    var<Int> ni = 0          // entries pending in ibuf/sbuf
+    var<Int> np = 0          // entries pending in pbuf
+    var<Int> total = 0       // edges written so far (the running indptr value)
+    var<Int> bad = 0
+    var<Bool> ok = true
+
+    st64(pbuf, 0)            // child 0 starts at edge 0
+    np = 1
+
+    var<Int> p = 0
+    while (p < n && ok) {
+        var<Int> s0 = ld64(ip + 8 * p)
+        var<Int> s1 = ld64(ip + 8 * (p + 1))
+        var<Int> deg = s1 - s0
+        if (deg < 0) { bad = bad + 1 }
+        var<Int> k = 0
+        while (k < factor && ok) {
+            var<Int> e = s0
+            var<Int> kept = 0
+            while (e < s1) {
+                var<Int> q = ld32(dst + 4 * e)
+                var<Int> sy = ld32(syn + 4 * e)
+                if (sy < syn_min) {
+                    e = e + 1
+                    continue
+                }
+                kept = kept + 1
+                var<Int> j = (e + 7919 * k) % factor
+                if (j < 0) { j = j + factor }
+                st32(ibuf + 4 * ni, q * factor + j)
+                st32(sbuf + 4 * ni, sy)
+                ni = ni + 1
+                if (ni == per_flush) {
+                    if (!flush(f_dst, ibuf, ni * 4)) { ok = false }
+                    if (!flush(f_syn, sbuf, ni * 4)) { ok = false }
+                    ni = 0
+                }
+                e = e + 1
+            }
+            total = total + kept
+            st64(pbuf + 8 * np, total)
+            np = np + 1
+            if (np == per_flush) {
+                if (!flush(f_ip, pbuf, np * 8)) { ok = false }
+                np = 0
+            }
+            k = k + 1
+        }
+        p = p + 1
+        if (p % 50000 == 0) {
+            println("  " + p.to_string() + "/" + n.to_string() + " parents, " + total.to_string() + " edges")
+        }
+    }
+    if (ni > 0) {
+        if (!flush(f_dst, ibuf, ni * 4)) { ok = false }
+        if (!flush(f_syn, sbuf, ni * 4)) { ok = false }
+    }
+    if (np > 0) {
+        if (!flush(f_ip, pbuf, np * 8)) { ok = false }
+    }
+    if (!ok) {
+        println("upscale_graph: a write failed")
+        return -1
+    }
+    if (bad > 0 || total != big_e) {
+        println("upscale_graph: FAILED bad_indptr=" + bad.to_string() +
+                " edges=" + total.to_string() + " expected=" + big_e.to_string())
+        return -1
+    }
+    return 0
+}
+
+main()<Int> -> {
+    factor<Int> = env_int("VYBFLY_FACTOR", 100)
+    syn_min<Int> = env_int("VYBFLY_SYN_MIN", 5)
+    in_dir<String> = "data/processed/canonical_v783"
+    match (env_get("VYBFLY_IN_1X")) { v -> { in_dir = v } ? -> { } }
+    out_dir<String> = "results/ladder/s100"
+    match (env_get("VYBFLY_OUT")) { v -> { out_dir = v } ? -> { } }
+
+    t0<Int> = time_nanos() else 0
+    println("upscale_graph: factor=" + factor.to_string() + " in=" + in_dir + " out=" + out_dir)
+
+    s_ip<String> = slurp(in_dir + "/bin/csr.out.indptr.i64")
+    s_dst<String> = slurp(in_dir + "/bin/csr.out.indices.i32")
+    s_syn<String> = slurp(in_dir + "/bin/csr.out.syn.i32")
+    if (s_ip.len() < 16 || s_dst.len() < 4 || s_syn.len() != s_dst.len()) {
+        println("upscale_graph: missing or inconsistent 1x CSR under " + in_dir)
+        return 2
+    }
+    n<Int> = s_ip.len() / 8 - 1
+    m<Int> = s_dst.len() / 4
+    big_n<Int> = n * factor
+    var<Int> big_e = m * factor
+    println("upscale_graph: 1x n=" + n.to_string() + " edges=" + m.to_string() +
+            " -> n=" + big_n.to_string() + " edges=" + big_e.to_string())
+    if (big_e > 2147483647) {
+        println("upscale_graph: more than 2^31 edges; the ladder kernels use 32-bit CSC offsets")
+        return 3
+    }
+
+    var<Int> ip = 0
+    var<Int> dst = 0
+    var<Int> syn = 0
+    freedom { ip = addr(s_ip) }
+    freedom { dst = addr(s_dst) }
+    freedom { syn = addr(s_syn) }
+
+    if (ld64(ip + 8 * n) != m || ld64(ip) != 0) {
+        println("upscale_graph: 1x indptr does not describe " + m.to_string() + " edges")
+        return 2
+    }
+
+    // the ladder's 1x graph is the 5-synapse view: count what survives that rule
+    var<Int> kept1x = 0
+    var<Int> e0 = 0
+    while (e0 < m) {
+        if (ld32(syn + 4 * e0) >= syn_min) { kept1x = kept1x + 1 }
+        e0 = e0 + 1
+    }
+    println("upscale_graph: 1x edges at syn>=" + syn_min.to_string() + ": " + kept1x.to_string() +
+            " (all pairs: " + m.to_string() + ")")
+    big_e = kept1x * factor
+    println("upscale_graph: target edges=" + big_e.to_string())
+
+    mkdir(out_dir + "/bin")
+    var<Int> rc = 0
+    match (open_write(out_dir + "/bin/csr.out.indptr.i64")) {
+        f_ip -> {
+            match (open_write(out_dir + "/bin/csr.out.indices.i32")) {
+                f_dst -> {
+                    match (open_write(out_dir + "/bin/csr.out.syn.i32")) {
+                        f_syn -> {
+                            rc = write_all(factor, syn_min, f_ip, f_dst, f_syn, ip, dst, syn, n, big_e)
+                            close(f_syn)
+                        }
+                        ? -> { println("upscale_graph: cannot write syn"); rc = 22 }
+                    }
+                    if (rc == 22) { println("upscale_graph: opened indptr + indices only") }
+                    close(f_dst)
+                }
+                ? -> { println("upscale_graph: cannot write indices"); rc = 21 }
+            }
+            close(f_ip)
+        }
+        ? -> { println("upscale_graph: cannot write indptr"); rc = 20 }
+    }
+    if (rc != 0) { return 1 }
+
+    t1<Int> = time_nanos() else t0
+    ms<Int> = (t1 - t0) / 1000000
+    println("upscale_graph: wrote n=" + big_n.to_string() + " edges=" + rc.to_string() +
+            " in " + ms.to_string() + " ms")
+    return 0
+}
