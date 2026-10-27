@@ -63,7 +63,9 @@ repo do not depend on any of them: they produce the same digests on stock Vyb 0.
   (`VYB_KEEP_NOINLINE=1` restores the old behaviour).
 - **The JIT optimizes for the generic x86-64 CPU.** Patch: use the host CPU name and features
   (`VYB_JIT_GENERIC=1` restores generic). Neither patch moved the ladder's numbers measurably: its
-  hot loops were already hand-inlined `freedom` blocks and are memory bound. They are kept because
+  hot loops were already hand-inlined `freedom` blocks and are memory bound. A clean A/B
+  (2 repetitions, idle machine, builds interleaved) put the best engine at each scale within
+  ±2% of stock; only `ladder_seg` gained, by 2–3%. They are kept because
   they are correct defaults for any compute-bound Vyb code.
 - **`__vyb_runtime_push/pop_call_frame` surrounds every call**, including `time_nanos()` and trivial
   helpers (65 pairs in one scatter function, 169 sites in `ladder_desc`). On the branch, these calls

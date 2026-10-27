@@ -127,8 +127,12 @@ are in `results/energy/vyb_ladder.json`.
 | 10x | 10.69 G | 31.03 s | **17.82 s** (desc) | 600 M | 4.46 | 673 MB | 88.06 s | 10.68 s |
 
 The "now" column was measured with a Vyb build that includes the JIT changes in the open Vyb
-PR (inlining at `-O2`, a host-CPU target machine). Stock Vyb gives identical digests, but it
-can be slower. The compiler friction this work turned up is in `docs/DOGFOODING.md`.
+PR (inlining at `-O2`, a host-CPU target machine). Those changes do not matter here. A clean
+back-to-back rerun on an idle machine (2 repetitions per engine and scale, both builds
+interleaved) gave identical digests on stock Vyb 0.7.7, and the best engine at each scale ran
+within about 2% of the PR build: 1.22 s at 1x, 2.60 s at 2x, 7.72 s at 5x and 17.97 s at 10x.
+Only `ladder_seg` gained, by 2–3%. The compiler friction this work turned up is in
+`docs/DOGFOODING.md`.
 
 ## Jargon decoder
 
@@ -183,6 +187,16 @@ g++ -O3 -march=native -ffp-contract=off -o sparse_prop_cpu scripts/cpu/sparse_pr
 VYBFLY_LADDER_DIR=results/energy/curves/s10 VYBFLY_LADDER_STIM=stim_s10.bin \
 VYBFLY_THREADS=16 VYBFLY_EPOCHS=8 \
     $VYB --module-path $VYB_STDLIB src/vyb/ladder_desc.vyb      # or ladder_prop / ladder_seg
+```
+
+`scripts/cpu/run_ladder.sh` picks the engine for you with the same environment variables. It
+chooses `ladder_prop` below 10 M edges (1x and 2x) and `ladder_desc` at or above that (5x and
+10x), which matches the measured crossover. Set `VYBFLY_ENGINE` to force a particular engine:
+
+```sh
+VYBFLY_LADDER_DIR=results/energy/curves/s10 VYBFLY_LADDER_STIM=stim_s10.bin \
+VYBFLY_THREADS=16 VYBFLY_EPOCHS=8 VYB=$VYB \
+    scripts/cpu/run_ladder.sh --module-path $VYB_STDLIB
 ```
 
 Compare the `digest_sum` and `digest_xor` values on the engine's `RESULT` line against the
