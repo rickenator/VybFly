@@ -1,0 +1,589 @@
+{
+ "workload": "sparse_prop LIF, dt 0.5 ms, 8 epochs x 1000 steps = 4 bio-s, 500 stim neurons (mt19937_64 seed 1337), max_active 300000",
+ "host": "godzilla i9-10850K 10C/20T, CPU only, 16 threads, Vyb 0.7.7 JIT -O2",
+ "scales": {
+  "1x": {
+   "synaptic_events": 1052614752,
+   "digest_sum": 432283706853001,
+   "digest_xor": 34756029970386,
+   "digest_matches_cpp_reference": true,
+   "gpu_kernel_s": 3.75,
+   "cpp_1thread_s": 8.32,
+   "vyb_baseline_1928e58": {
+    "sim_s": 1.55,
+    "rss_mb": 119,
+    "events_per_s": 679106291.6129032,
+    "wall_per_bio_s": 0.3875
+   },
+   "ladder_prop_f98bd19": {
+    "sim_s": 1.21,
+    "rss_mb": 146,
+    "events_per_s": 869929547.1074381,
+    "wall_per_bio_s": 0.3025
+   },
+   "ladder_desc_dd64dd5": {
+    "sim_s": 1.374,
+    "rss_mb": 137,
+    "events_per_s": 766095161.5720524,
+    "wall_per_bio_s": 0.3435
+   },
+   "best": "ladder_prop",
+   "speedup_vs_baseline": 1.2809917355371903,
+   "vs_gpu_kernel": 0.32266666666666666,
+   "ladder_desc_4byte_descriptors": {
+    "sim_s": 1.368,
+    "rss_mb": 136,
+    "events_per_s": 769455228.0701754,
+    "wall_per_bio_s": 0.342,
+    "vyb": "stock 0.7.7 (e4af3343)",
+    "reps": 2,
+    "stat": "min"
+   },
+   "ab_stock_vs_jit_pr": {
+    "stock_ladder_prop_sim_s": 1.216,
+    "stock_ladder_seg_sim_s": 2.274,
+    "stock_ladder_desc_sim_s": 1.341,
+    "pr_jit_inline_host_cpu_ladder_prop_sim_s": 1.204,
+    "pr_jit_inline_host_cpu_ladder_seg_sim_s": 2.171,
+    "pr_jit_inline_host_cpu_ladder_desc_sim_s": 1.324
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 0.798,
+    "load_s": 0.211,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true,
+    "spikes_synaptic_events_epoch0_match": true,
+    "overflow": 0,
+    "epochs_identical": true,
+    "events_per_s": 1319066105.2631578,
+    "vs_gpu_kernel_3090": 4.6992481203007515,
+    "vs_sparse_prop_cu_gb10": 4.593984962406014
+   },
+   "sparse_prop_cu_gb10": {
+    "kernel_s": 3.666,
+    "spikes": 49198504,
+    "synaptic_events": 1052614920,
+    "exact": false,
+    "note": "float atomicAdd accumulation: spikes/synaptic events drift from the exact reference"
+   },
+   "vyb_cpu_dgx_spark_arm": {
+    "ladder_prop_16t": 0.964,
+    "digest_matches_cpp_reference": true,
+    "stat": "single run"
+   },
+   "vyb_gpu_3090": {
+    "sim_s": 0.983,
+    "load_s": 0.19,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   }
+  },
+  "2x": {
+   "synaptic_events": 1999239704,
+   "digest_sum": 1687309896003680,
+   "digest_xor": 209510598293101,
+   "digest_matches_cpp_reference": true,
+   "gpu_kernel_s": 3.15,
+   "cpp_1thread_s": 14.97,
+   "vyb_baseline_1928e58": {
+    "sim_s": 4.16,
+    "rss_mb": 162,
+    "events_per_s": 480586467.3076923,
+    "wall_per_bio_s": 1.04
+   },
+   "ladder_prop_f98bd19": {
+    "sim_s": 2.605,
+    "rss_mb": 193,
+    "events_per_s": 767462458.3493283,
+    "wall_per_bio_s": 0.65125
+   },
+   "ladder_desc_dd64dd5": {
+    "sim_s": 2.793,
+    "rss_mb": 195,
+    "events_per_s": 715803689.2230576,
+    "wall_per_bio_s": 0.69825
+   },
+   "best": "ladder_prop",
+   "speedup_vs_baseline": 1.596928982725528,
+   "vs_gpu_kernel": 0.826984126984127,
+   "ladder_desc_4byte_descriptors": {
+    "sim_s": 2.616,
+    "rss_mb": 192,
+    "events_per_s": 764235360.8562691,
+    "wall_per_bio_s": 0.654,
+    "vyb": "stock 0.7.7 (e4af3343)",
+    "reps": 2,
+    "stat": "min"
+   },
+   "ab_stock_vs_jit_pr": {
+    "stock_ladder_prop_sim_s": 2.597,
+    "stock_ladder_seg_sim_s": 4.199,
+    "stock_ladder_desc_sim_s": 2.712,
+    "pr_jit_inline_host_cpu_ladder_prop_sim_s": 2.562,
+    "pr_jit_inline_host_cpu_ladder_seg_sim_s": 4.077,
+    "pr_jit_inline_host_cpu_ladder_desc_sim_s": 2.746
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 0.894,
+    "load_s": 0.237,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true,
+    "spikes_synaptic_events_epoch0_match": true,
+    "overflow": 0,
+    "epochs_identical": true,
+    "events_per_s": 2236286022.3713646,
+    "vs_gpu_kernel_3090": 3.523489932885906,
+    "vs_sparse_prop_cu_gb10": 3.403803131991052
+   },
+   "sparse_prop_cu_gb10": {
+    "kernel_s": 3.043,
+    "spikes": 96193120,
+    "synaptic_events": 1999239202,
+    "exact": false,
+    "note": "float atomicAdd accumulation: spikes/synaptic events drift from the exact reference"
+   },
+   "vyb_cpu_dgx_spark_arm": {
+    "ladder_prop_16t": 1.88,
+    "ladder_prop_20t": 1.91,
+    "digest_matches_cpp_reference": true,
+    "stat": "single run"
+   },
+   "vyb_gpu_3090": {
+    "sim_s": 0.896,
+    "load_s": 0.244,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   }
+  },
+  "5x": {
+   "synaptic_events": 5223696696,
+   "digest_sum": 10603612839520728,
+   "digest_xor": 920725555419712,
+   "digest_matches_cpp_reference": true,
+   "gpu_kernel_s": 5.74,
+   "cpp_1thread_s": 43.45,
+   "vyb_baseline_1928e58": {
+    "sim_s": 13.11,
+    "rss_mb": 282,
+    "events_per_s": 398451311.67048055,
+    "wall_per_bio_s": 3.2775
+   },
+   "ladder_prop_f98bd19": {
+    "sim_s": 8.429,
+    "rss_mb": 340,
+    "events_per_s": 619729113.2993238,
+    "wall_per_bio_s": 2.10725
+   },
+   "ladder_desc_dd64dd5": {
+    "sim_s": 7.808,
+    "rss_mb": 371,
+    "events_per_s": 669018531.7622951,
+    "wall_per_bio_s": 1.952
+   },
+   "best": "ladder_desc (4-byte descriptors)",
+   "speedup_vs_baseline": 1.748,
+   "vs_gpu_kernel": 1.3066202090592334,
+   "ladder_desc_4byte_descriptors": {
+    "sim_s": 7.5,
+    "rss_mb": 363,
+    "events_per_s": 696492892.8,
+    "wall_per_bio_s": 1.875,
+    "vyb": "stock 0.7.7 (e4af3343)",
+    "reps": 2,
+    "stat": "min"
+   },
+   "ab_stock_vs_jit_pr": {
+    "stock_ladder_prop_sim_s": 8.464,
+    "stock_ladder_seg_sim_s": 10.779,
+    "stock_ladder_desc_sim_s": 7.724,
+    "pr_jit_inline_host_cpu_ladder_prop_sim_s": 8.336,
+    "pr_jit_inline_host_cpu_ladder_seg_sim_s": 10.66,
+    "pr_jit_inline_host_cpu_ladder_desc_sim_s": 7.895
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 2.15,
+    "load_s": 0.334,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true,
+    "spikes_synaptic_events_epoch0_match": true,
+    "overflow": 0,
+    "epochs_identical": true,
+    "events_per_s": 2429626370.2325583,
+    "vs_gpu_kernel_3090": 2.6697674418604653,
+    "vs_sparse_prop_cu_gb10": 2.46
+   },
+   "sparse_prop_cu_gb10": {
+    "kernel_s": 5.289,
+    "spikes": 241365656,
+    "synaptic_events": 5223701330,
+    "exact": false,
+    "note": "float atomicAdd accumulation: spikes/synaptic events drift from the exact reference"
+   },
+   "vyb_cpu_dgx_spark_arm": {
+    "ladder_desc_16t": 5.741,
+    "ladder_desc_20t": 5.658,
+    "ladder_prop_20t": 4.245,
+    "digest_matches_cpp_reference": true,
+    "stat": "single run"
+   },
+   "vyb_gpu_3090": {
+    "sim_s": 1.705,
+    "load_s": 0.473,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   }
+  },
+  "10x": {
+   "synaptic_events": 10691095088,
+   "digest_sum": 42322697548985024,
+   "digest_xor": 188222298830040,
+   "digest_matches_cpp_reference": true,
+   "gpu_kernel_s": 10.68,
+   "cpp_1thread_s": 88.06,
+   "vyb_baseline_1928e58": {
+    "sim_s": 31.03,
+    "rss_mb": 490,
+    "events_per_s": 344540608.7012568,
+    "wall_per_bio_s": 7.7575
+   },
+   "ladder_prop_f98bd19": {
+    "sim_s": 20.739,
+    "rss_mb": 601,
+    "events_per_s": 515506778.91894495,
+    "wall_per_bio_s": 5.18475
+   },
+   "ladder_desc_dd64dd5": {
+    "sim_s": 17.82,
+    "rss_mb": 673,
+    "events_per_s": 599949219.3041526,
+    "wall_per_bio_s": 4.455
+   },
+   "best": "ladder_desc (4-byte descriptors)",
+   "speedup_vs_baseline": 1.87040385774563,
+   "vs_gpu_kernel": 1.553370786516854,
+   "ladder_desc_4byte_descriptors": {
+    "sim_s": 16.59,
+    "rss_mb": 667,
+    "events_per_s": 644430083.6648583,
+    "wall_per_bio_s": 4.1475,
+    "vyb": "stock 0.7.7 (e4af3343)",
+    "reps": 2,
+    "stat": "min"
+   },
+   "ab_stock_vs_jit_pr": {
+    "stock_ladder_prop_sim_s": 20.729,
+    "stock_ladder_seg_sim_s": 22.5,
+    "stock_ladder_desc_sim_s": 17.967,
+    "pr_jit_inline_host_cpu_ladder_prop_sim_s": 20.75,
+    "pr_jit_inline_host_cpu_ladder_seg_sim_s": 21.842,
+    "pr_jit_inline_host_cpu_ladder_desc_sim_s": 18.164
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 3.94,
+    "load_s": 0.551,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true,
+    "spikes_synaptic_events_epoch0_match": true,
+    "overflow": 0,
+    "epochs_identical": true,
+    "events_per_s": 2713475910.6598983,
+    "vs_gpu_kernel_3090": 2.7106598984771573,
+    "vs_sparse_prop_cu_gb10": 2.612690355329949
+   },
+   "sparse_prop_cu_gb10": {
+    "kernel_s": 10.294,
+    "spikes": 481969421,
+    "synaptic_events": 10691094744,
+    "kernel_s_other_run": 11.102,
+    "exact": false,
+    "note": "float atomicAdd accumulation: spikes/synaptic events drift from the exact reference"
+   },
+   "vyb_cpu_dgx_spark_arm": {
+    "ladder_desc_16t": 12.476,
+    "ladder_desc_20t": 11.061,
+    "ladder_prop_20t": 7.524,
+    "digest_matches_cpp_reference": true,
+    "stat": "single run"
+   },
+   "vyb_gpu_3090": {
+    "sim_s": 2.456,
+    "load_s": 0.855,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   }
+  },
+  "20x": {
+   "n_neurons": 2785100,
+   "n_edges": 56025628,
+   "synaptic_events": 21518820680,
+   "spikes": 964396384,
+   "epoch0_spikes": 120549548,
+   "digest_sum": 110300691024608500,
+   "digest_xor": 1818773348471592,
+   "cpp_sparse_prop_cpu_uncapped_s": 174.37,
+   "vyb_gpu_3090": {
+    "sim_s": 4.04,
+    "load_s": 1.534,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 7.445,
+    "load_s": 0.966,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   },
+   "vyb_gpu_split_two_gb10": {
+    "sim_s": 6.638,
+    "digest_matches_cpp_reference": true
+   }
+  },
+  "40x": {
+   "n_neurons": 5570200,
+   "n_edges": 112293649,
+   "synaptic_events": 43044008456,
+   "spikes": 1921498960,
+   "epoch0_spikes": 240187370,
+   "digest_sum": 239142599791732164,
+   "digest_xor": 1733953483748172,
+   "cpp_sparse_prop_cpu_uncapped_s": 320.58,
+   "vyb_gpu_3090": {
+    "sim_s": 8.716,
+    "load_s": 2.933,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 14.707,
+    "load_s": 1.898,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   }
+  }
+ },
+ "ab_note": "Clean A/B, idle CPU, 2 reps (min), builds interleaved: stock Vyb 0.7.7 vs the jit inline/host-CPU PR; 4-byte descriptors measured on stock. CPU only (CUDA_VISIBLE_DEVICES empty).",
+ "gpu_engine": {
+  "engine": "src/vyb/ladder_gpu.vyb + src/vyb_kernels/ladder_gpu_kernel.vyb (PTX committed)",
+  "host": "DGX Spark (GB10, sm_121, 273 GB/s unified LPDDR5X), shared with a resident LLM server; PTX emitted for sm_86 and JIT-compiled by the driver",
+  "vyb": "host runner on stock Vyb 0.7.7 (c14d4768) on the Sparks, Vyb perf/kernel-friction (bbe08ae5) on the 3090; kernel PTX from Vyb perf/kernel-friction (atomics/ballot/popc/ctz from perf/kernel-atomics-bits, plus shfl_xor_i64)",
+  "method": "exact without float atomics: push sets bits of a CSC-position bitmap (red.global.or), update walks each target's bitmap range in ascending source order (ctz) with 8 weight loads in flight per round, summing in the reference order",
+  "rtx3090": {
+   "host": "Godzilla, RTX 3090 (sm_86, 936 GB/s), GPU idle",
+   "reps": 3,
+   "stat": "min",
+   "sim_s": {
+    "1x": 0.983,
+    "2x": 0.896,
+    "5x": 1.705,
+    "10x": 2.456,
+    "20x": 4.04,
+    "40x": 8.716
+   },
+   "load_s": {
+    "1x": 0.19,
+    "2x": 0.244,
+    "5x": 0.473,
+    "10x": 0.855,
+    "20x": 1.534,
+    "40x": 2.933
+   },
+   "digests_match_cpp_reference": true,
+   "vs_gpu_kernel_3090": {
+    "1x": 3.81,
+    "2x": 3.52,
+    "5x": 3.37,
+    "10x": 4.35
+   }
+  },
+  "profile_10x_us_per_step": {
+   "update": 408,
+   "push": 112,
+   "note": "nsys, 2 epochs; update is near the GB10 bandwidth floor (~75 MB/step)"
+  },
+  "history_10x_sim_s": {
+   "v1 one-at-a-time ctz walk": 5.975,
+   "4 loads in flight": 4.525,
+   "8 loads in flight": 4.194,
+   "+ 32-bit cptr": 3.94
+  },
+  "gb10_uncontended": {
+   "host": "DGX Spark, GPU otherwise idle (LLM server down)",
+   "reps": "3 (1x-10x), 2 (20x, 40x)",
+   "stat": "min",
+   "sim_s": {
+    "1x": 0.77,
+    "2x": 0.93,
+    "5x": 2.22,
+    "10x": 4.17,
+    "20x": 7.445,
+    "40x": 14.707
+   },
+   "note": "no faster than the earlier runs beside the resident LLM server (10x 3.94 s): bandwidth-bound"
+  },
+  "max_active": "VYBFLY_MAX_ACTIVE (default 300000); 20x/40x run with it = n, matching sparse_prop_cpu --max-active n",
+  "split_two_gb10": {
+   "engine": "src/vyb/ladder_gpu_split.vyb",
+   "method": "cut by target at half the in-edges; each rank keeps all source rows with its own edges; fired-id lists swapped over TCP on the direct 200 GbE link each step",
+   "bit_exact": {
+    "10x": true,
+    "20x": true,
+    "40x": true
+   },
+   "20x_sim_s": {
+    "one_gb10": 7.445,
+    "two_serialized_exchange": 8.851,
+    "two_duplex_exchange": 7.505,
+    "two_duplex_overlapped_push": [
+     6.638,
+     7.3
+    ],
+    "two_duplex_no_overlap": 6.788
+   },
+   "20x_profile_ms_per_rank": {
+    "gpu": [
+     3699,
+     4103
+    ],
+    "network": [
+     3132,
+     3528
+    ],
+    "dtoh": [
+     144,
+     151
+    ]
+   },
+   "10x_sim_s": {
+    "one_gb10": 4.19,
+    "two_serialized_exchange": 6.09
+   },
+   "link": {
+    "pingpong_8B_busy_poll_us": 36,
+    "pingpong_240KB_each_way_busy_poll_us": 475,
+    "pingpong_8B_blocking_us": 798,
+    "wmem_max_bytes": 212992
+   },
+   "finding": "over TCP the per-step exchange (~0.35 ms at 20x) eats most of the halved GPU time (10x loses, 40x wins 1.30x); over RDMA the split beats one GB10 at 10x (1.60x), 20x (1.64x), 40x (1.83x) and 80x (2.18x)",
+   "40x_sim_s": {
+    "one_gb10": 14.707,
+    "two_duplex_overlapped_push": [
+     11.352,
+     12.29
+    ],
+    "speedup_best": 1.3,
+    "env": "VYBFLY_MAX_ACTIVE=5570200 (uncapped, as the 40x reference)"
+   },
+   "rdma_sim_s": {
+    "note": "VYBFLY_SPLIT_NET=rdma (RoCE v2 write-with-immediate, no root), duplex+overlap on, 8 epochs, VYBFLY_MAX_ACTIVE=n; every run bit-exact vs the C++ reference",
+    "10x": [
+     2.613,
+     2.63
+    ],
+    "20x": [
+     4.54,
+     4.57
+    ],
+    "40x": [
+     8.046,
+     8.178
+    ],
+    "speedup_best_vs_one_gb10": {
+     "10x": 1.6,
+     "20x": 1.64,
+     "40x": 1.83,
+     "80x": 2.18
+    },
+    "80x": [
+     15.602,
+     15.621
+    ],
+    "one_gb10_80x": [
+     34.05,
+     34.102
+    ],
+    "digest_80x": {
+     "digest_sum": 508755035752662158,
+     "digest_xor": 103693891554914,
+     "n_neurons": 11140400,
+     "n_edges": 224835333
+    }
+   },
+   "zero_copy": {
+    "env": "VYBFLY_SPLIT_ZC (default 1; two ranks + overlapped push); 0 = device buffers + copies",
+    "method": "send/recv buffers pinned with cuMemHostRegister (GB10 unified memory); update kernel writes the fired list into the send buffer, push kernel reads the peer list from the receive buffer; 8-byte count download per step",
+    "gpudirect_rdma": "not available without root: DMA_BUF_SUPPORTED=0, GPU_DIRECT_RDMA_SUPPORTED=0, ibv_reg_mr on a device pointer fails; ibv_reg_mr on pinned host memory works and is the same physical memory on GB10",
+    "dtoh_correction": "the earlier 80x dtoh_ms 12.3-12.6 s was mostly the legacy-stream wait for the step's GPU work; the copy itself is ~2-3%",
+    "sim_s": {
+     "10x_rdma": {
+      "zc0": 2.61,
+      "zc1": 2.51
+     },
+     "10x_tcp": {
+      "zc0": 4.752,
+      "zc1": 4.101
+     },
+     "40x_rdma": {
+      "zc0": 8.06,
+      "zc1": 7.814
+     },
+     "80x_rdma": {
+      "zc0": 15.662,
+      "zc1": 15.284,
+      "zc1_repeat": 15.376
+     }
+    },
+    "40x_rank1_profile_s_zc1": {
+     "gpu_wait": 7.27,
+     "dtoh": 0.04,
+     "network": 0.48
+    },
+    "bit_exact": {
+     "10x": true,
+     "40x": true,
+     "80x": true
+    },
+    "80x": "measured: copies gone, ~2% faster; the step is GPU-bound (digest 508755035752662158/103693891554914, 3841086096 spikes)",
+    "80x_profile_s_zc1": {
+     "gpu_wait": [
+      14.384,
+      13.338
+     ],
+     "dtoh": 0.041,
+     "network": [
+      0.828,
+      1.896
+     ],
+     "note": "[rank 0, rank 1], first ZC=1 run"
+    },
+    "80x_profile_s_zc0": {
+     "gpu_wait": 0.0,
+     "dtoh": [
+      12.506,
+      12.322
+     ],
+     "network": [
+      1.01,
+      1.385
+     ],
+     "note": "[rank 0, rank 1]; with copies the legacy-stream GPU wait is booked as dtoh"
+    }
+   }
+  }
+ },
+ "arm_cpu": {
+  "host": "DGX Spark righty, 20 Arm cores (10 X925 + 10 A725), stock Vyb 0.7.7, beside a resident LLM server",
+  "finding": "ladder_prop beats ladder_desc at 5x and 10x on Arm (10x 7.52 s vs 11.06 s, 5x 4.25 vs 5.66 s), so run_ladder.sh auto picks ladder_prop on aarch64"
+ }
+}

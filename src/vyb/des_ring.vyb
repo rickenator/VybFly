@@ -1,0 +1,232 @@
+// des_ring.vyb - delay-ring accumulator scheduler: an exact fast path for the M2 DES runtime.
+//
+// The calendar queue in des.vyb stores every event as an arena record on a per-tick linked chain,
+// then drain_tick copies each tick's chain into a Delivery buffer and kernel_tick groups the batch
+// by destination. When every delay is bounded (1 <= delay < n_buckets) the same semantics can be
+// had with no per-event record at all: "group by destination" is done at PUSH time, straight into
+// a per-bucket accumulator. Bucket b = tick & mask owns
+//     acc[b*n + i]    the summed weight of all arrivals for entity i at that tick
+//     mark[b*n + i]   1 once entity i has at least one arrival at that tick
+//     touched[b*n ..] the entities with >= 1 arrival, in first-arrival order
+//     ev_count[b]     the number of events delivered at that tick (the Delivery batch size)
+// so a pushed event costs one mark test and one add, and a tick costs O(touched) to integrate.
+//
+// Equivalence with des.vyb (the contract in its header is unchanged):
+//   * an entity is touched at tick t iff >= 1 event targets it at t, in both engines;
+//   * its batch sum is the same integer sum (integer addition commutes, so the push order and the
+//     order of entities inside a tick cannot change any vm, any spike or the canonical record);
+//   * a tick is "processed" iff it delivers >= 1 event, as drain_tick returns only such ticks;
+//   * events_scheduled / stimulus / synaptic counters count exactly the pushes des.vyb counts.
+// The M2 gate (scripts/vyb_des_check.py) checks this spike for spike against the Python oracle.
+//
+// Vec(n) builds n zero-initialized elements (not just capacity), so the tables start cleared.
+// Bounded memory: 3 * n_buckets * n words + 2 * n_buckets, independent of the event count.
+
+import des::{EntityState, Recorder, EventSource, lif_leak, rec_spike,
+             event_type_stimulus, event_type_synaptic}
+
+share(all)
+struct Ring {
+    n<Int>,
+    nb<Int>,                 // bucket count, a power of two > max_delay
+    mask<Int>,
+    acc<Vec<Int>>,
+    mark<Vec<Int>>,
+    touched<Vec<Int>>,
+    tl_len<Vec<Int>>,
+    ev_count<Vec<Int>>,
+    fired<Vec<Int>>,         // entities that fired in the tick just integrated
+    n_fired<Int>,
+    total_pushed<Int>,
+    stim_pushed<Int>,
+    syn_pushed<Int>,
+    far_events<Int>,         // pushes outside [t, t + nb): must stay 0
+    max_batch<Int>,
+    max_touched<Int>
+}
+
+// Smallest power of two strictly greater than max_delay (and at least 2).
+share(all)
+ring_buckets_for(max_delay<Int>)<Int> -> {
+    nb<Int> = 2
+    while (nb <= max_delay) { nb = nb * 2 }
+    return nb
+}
+
+share(all)
+ring_new(n<Int>, max_delay<Int>)<Ring> -> {
+    nb<Int> = ring_buckets_for(max_delay)
+    r<Ring> = Ring {
+        n = n, nb = nb, mask = nb - 1,
+        acc = Vec(nb * n), mark = Vec(nb * n), touched = Vec(nb * n),
+        tl_len = Vec(nb), ev_count = Vec(nb), fired = Vec(n), n_fired = 0,
+        total_pushed = 0, stim_pushed = 0, syn_pushed = 0, far_events = 0,
+        max_batch = 0, max_touched = 0
+    }
+    return r
+}
+
+// Deliver one event for `target` at absolute tick `t` (caller guarantees now <= t < now + nb).
+share(all)
+ring_push(r<their<Ring>>, t<Int>, target<Int>, value<Int>) -> {
+    b<Int> = t & r.mask
+    base<Int> = b * r.n
+    slot<Int> = base + target
+    if (r.mark.get(slot) == 0) {
+        r.mark.set(slot, 1)
+        r.acc.set(slot, value)
+        k<Int> = r.tl_len.get(b)
+        r.touched.set(base + k, target)
+        r.tl_len.set(b, k + 1)
+    } else {
+        r.acc.set(slot, r.acc.get(slot) + value)
+    }
+    r.ev_count.set(b, r.ev_count.get(b) + 1)
+    r.total_pushed = r.total_pushed + 1
+}
+
+// Tick-major index of an EventSource: row[t]..row[t+1] are positions in `order` of the events of
+// tick t (0 <= t < horizon). Counting sort, so the pass is O(events + horizon).
+share(all)
+struct StimIndex {
+    horizon<Int>,
+    row<Vec<Int>>,
+    order<Vec<Int>>
+}
+
+share(all)
+stim_index(s<their<EventSource>>, horizon<Int>)<StimIndex> -> {
+    x<StimIndex> = StimIndex { horizon = horizon, row = Vec(horizon + 1), order = Vec() }
+    i<Int> = 0
+    m<Int> = s.tick.len()
+    used<Int> = 0
+    i = 0
+    while (i < m) {
+        t<Int> = s.tick.get(i)
+        if (t >= 0 && t < horizon) {
+            x.row.set(t + 1, x.row.get(t + 1) + 1)
+            used = used + 1
+        }
+        i = i + 1
+    }
+    t2<Int> = 0
+    while (t2 < horizon) {
+        x.row.set(t2 + 1, x.row.get(t2) + x.row.get(t2 + 1))
+        t2 = t2 + 1
+    }
+    cur<Vec<Int>> = Vec(horizon)
+    t2 = 0
+    while (t2 < horizon) {
+        cur.set(t2, x.row.get(t2))
+        t2 = t2 + 1
+    }
+    x.order = Vec(used)
+    i = 0
+    while (i < m) {
+        t<Int> = s.tick.get(i)
+        if (t >= 0 && t < horizon) {
+            p<Int> = cur.get(t)
+            x.order.set(p, i)
+            cur.set(t, p + 1)
+        }
+        i = i + 1
+    }
+    return x
+}
+
+// Push every external event of tick t into the ring.
+share(all)
+ring_pump_tick(r<their<Ring>>, x<their<StimIndex>>, s<their<EventSource>>, t<Int>) -> {
+    lo<Int> = x.row.get(t)
+    hi<Int> = x.row.get(t + 1)
+    j<Int> = lo
+    while (j < hi) {
+        e<Int> = x.order.get(j)
+        ring_push(r, t, s.target.get(e), s.value.get(e))
+        j = j + 1
+    }
+    r.stim_pushed = r.stim_pushed + (hi - lo)
+}
+
+// Events waiting at tick t (0 = the tick is not processed).
+share(all)
+ring_events_at(r<their<Ring>>, t<Int>)<Int> -> { return r.ev_count.get(t & r.mask) }
+
+// Integrate every entity touched at tick t exactly once (same arithmetic as des.kernel_tick),
+// record spikes, collect fired entities into r.fired[0..n_fired), and recycle the bucket.
+// Returns the number of entities that fired.
+share(all)
+ring_kernel_tick(r<their<Ring>>, st<their<EntityState>>, rec<their<Recorder>>, t<Int>)<Int> -> {
+    b<Int> = t & r.mask
+    base<Int> = b * r.n
+    nt<Int> = r.tl_len.get(b)
+    ne<Int> = r.ev_count.get(b)
+    if (ne > r.max_batch) { r.max_batch = ne }
+    if (nt > r.max_touched) { r.max_touched = nt }
+    nf<Int> = 0
+    k<Int> = 0
+    while (k < nt) {
+        i<Int> = r.touched.get(base + k)
+        slot<Int> = base + i
+        w<Int> = r.acc.get(slot)
+        r.acc.set(slot, 0)
+        r.mark.set(slot, 0)
+        if (t >= st.refractory_until.get(i)) {
+            v<Int> = lif_leak(st.vm.get(i), st.vrest.get(i), st.decay_k.get(i),
+                              t - st.last_update.get(i))
+            v = v + w
+            st.last_update.set(i, t)
+            if (v >= st.threshold.get(i)) {
+                st.vm.set(i, st.vreset.get(i))
+                st.refractory_until.set(i, t + st.refr_ticks.get(i))
+                st.spike_count.set(i, st.spike_count.get(i) + 1)
+                r.fired.set(nf, i)
+                nf = nf + 1
+                rec_spike(rec, t, i)
+            } else {
+                st.vm.set(i, v)
+            }
+        } else {
+            st.last_update.set(i, t)
+        }
+        k = k + 1
+    }
+    r.tl_len.set(b, 0)
+    r.ev_count.set(b, 0)
+    r.n_fired = nf
+    return nf
+}
+
+// CSR fan-out of every entity that fired at tick t: one synaptic event per out-edge at t + delay,
+// dropped when t + delay >= horizon (exactly the filter phase2_des.vyb applies).
+share(all)
+ring_scatter(r<their<Ring>>, indptr<their<Vec<Int>>>, post<their<Vec<Int>>>,
+             delay<their<Vec<Int>>>, weight<their<Vec<Int>>>, t<Int>, horizon<Int>) -> {
+    q<Int> = 0
+    pushed<Int> = 0
+    while (q < r.n_fired) {
+        src<Int> = r.fired.get(q)
+        e<Int> = indptr.get(src)
+        e_end<Int> = indptr.get(src + 1)
+        while (e < e_end) {
+            d<Int> = delay.get(e)
+            at_t<Int> = t + d
+            if (at_t < horizon) {
+                if (d >= 1 && d < r.nb) {
+                    ring_push(r, at_t, post.get(e), weight.get(e))
+                    pushed = pushed + 1
+                } else {
+                    r.far_events = r.far_events + 1
+                }
+            }
+            e = e + 1
+        }
+        q = q + 1
+    }
+    r.syn_pushed = r.syn_pushed + pushed
+}
+
+share(all)
+des_ring_status_message()<String> -> {
+    return "des_ring.vyb: delay-ring accumulator scheduler (exact fast path for bounded delays)"
+}

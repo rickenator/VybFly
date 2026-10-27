@@ -1,0 +1,421 @@
+// ladder_gpu.vyb - Vyb GPU engine for the FlyScale 1x-10x ladder workload (host side).
+//
+// Same model, inputs and RESULT line as ladder_prop.vyb, run on the GPU through the CUDA driver
+// API. The device code is src/vyb_kernels/ladder_gpu_kernel.vyb (compiled to PTX by
+// `vyb --kernel`); see its header for the exact, atomics-order-independent scheme. The host:
+//   * computes the built-in weights in double exactly as ladder_prop / sparse_prop.cu do,
+//   * builds the CSC view the kernels need: cptr (in-edge offsets per target), cpos[e] (the CSC
+//     position of CSR edge e; in-edges are laid out by ascending source, i.e. the reference's
+//     accumulation order) and wc (weights in CSC order),
+//   * checks the precondition for bit-exactness: CSR rows strictly ascending (so no duplicate
+//     (source, target) pair),
+//   * compacts the stimulus to its valid ids per step (the reference skips invalid ids),
+//   * runs epochs x steps launches of push + update with no per-step host sync.
+//
+// Config via environment: VYBFLY_LADDER_DIR, VYBFLY_LADDER_STIM, VYBFLY_EPOCHS (8),
+// VYBFLY_STEPS (1000), VYBFLY_SYN_GAIN (6), VYBFLY_REFR_STEPS (20), VYBFLY_GPU_PTX (path of the
+// kernel PTX, default src/vyb_kernels/ladder_gpu_kernel.ptx), VYBFLY_GPU_BLOCK (256),
+// VYBFLY_GPU_PUSH_BLOCKS (2048), VYBFLY_GPU_DEVICE (0), VYBFLY_MAX_ACTIVE (300000: the
+// reference's --max-active; the 20x/40x runs lift it to n, see README).
+import io::{open_read, read_all}
+import env::{env_get}
+import time::{time_nanos}
+
+extern "C" {
+    calloc(n<Int>, sz<Int>)<Int>
+    cuInit(flags<CUInt>)<CInt>
+    cuDeviceGet(device<loc<CInt>>, ordinal<CInt>)<CInt>
+    cuCtxCreate_v2(pctx<loc<loc<CVoid>>>, flags<CUInt>, dev<CInt>)<CInt>
+    cuModuleLoadData(hmod<loc<loc<CVoid>>>, image<CString>)<CInt>
+    cuModuleGetFunction(hfunc<loc<loc<CVoid>>>, hmod<loc<CVoid>>, name<CString>)<CInt>
+    cuMemAlloc_v2(dptr<loc<Int>>, bytesize<Int>)<CInt>
+    cuMemcpyHtoD_v2(dstDevice<Int>, srcHost<loc<CVoid>>, ByteCount<Int>)<CInt>
+    cuMemcpyDtoH_v2(dstHost<loc<CVoid>>, srcDevice<Int>, ByteCount<Int>)<CInt>
+    cuMemsetD32_v2(dstDevice<Int>, ui<CUInt>, n<Int>)<CInt>
+    cuCtxSynchronize()<CInt>
+    cuda_launch_n(f<loc<CVoid>>, gridX<CUInt>, gridY<CUInt>, gridZ<CUInt>,
+                  blockX<CUInt>, blockY<CUInt>, blockZ<CUInt>,
+                  kernelParams<Int>, nargs<Int>)<CInt>
+}
+
+ld64(p<Int>)<Int> -> { var<Int> r = 0
+    freedom { r = at(from<loc<Int>>(p)) }
+    return r }
+st64(p<Int>, v<Int>) -> { freedom { at(from<loc<Int>>(p)) = v } }
+ld32(p<Int>)<Int> -> { var<Int32> r = 0
+    freedom { r = at(from<loc<Int32>>(p)) }
+    return r as Int }
+st32(p<Int>, v<Int>) -> { freedom { at(from<loc<Int32>>(p)) = v as Int32 } }
+
+alloc0(n<Int>, sz<Int>)<Int> -> { var<Int> p = 0
+    freedom { p = calloc(n, sz) }
+    return p }
+
+// device allocation (0 on failure)
+dalloc(bytes<Int>)<Int> -> {
+    var<Int> d = 0
+    freedom {
+        rc<CInt> = cuMemAlloc_v2(loc(d), bytes)
+        if (rc != 0) { d = 0 }
+    }
+    return d
+}
+upload(d<Int>, h<Int>, bytes<Int>)<Int> -> {
+    var<Int> ok = 1
+    freedom {
+        rc<CInt> = cuMemcpyHtoD_v2(d, from<loc<CVoid>>(h), bytes)
+        if (rc != 0) { ok = 0 }
+    }
+    return ok
+}
+download(h<Int>, d<Int>, bytes<Int>)<Int> -> {
+    var<Int> ok = 1
+    freedom {
+        rc<CInt> = cuMemcpyDtoH_v2(from<loc<CVoid>>(h), d, bytes)
+        if (rc != 0) { ok = 0 }
+    }
+    return ok
+}
+zero32(d<Int>, words<Int>)<Int> -> {
+    var<Int> ok = 1
+    freedom {
+        rc<CInt> = cuMemsetD32_v2(d, 0, words)
+        if (rc != 0) { ok = 0 }
+    }
+    return ok
+}
+launch(hfa<Int>, gx<Int>, bx<Int>, params<Int>, nargs<Int>)<Int> -> {
+    var<Int> ok = 1
+    freedom {
+        rc<CInt> = cuda_launch_n(from<loc<CVoid>>(hfa), gx as UInt32, 1, 1, bx as UInt32, 1, 1, params, nargs)
+        if (rc != 0) { ok = 0 }
+    }
+    return ok
+}
+
+env_int(name<String>, d<Int>)<Int> -> {
+    match (env_get(name)) {
+        s -> { return s.to_int() }
+        ? -> { return d }
+    }
+}
+
+slurp(path<String>)<String> -> {
+    match (open_read(path)) {
+        f -> {
+            match (read_all(f)) {
+                s -> { return s }
+                ? -> { return "" }
+            }
+        }
+        ? -> { return "" }
+    }
+}
+
+main()<Int> -> {
+    dir<String> = env_get("VYBFLY_LADDER_DIR") else "results/energy/curves/s1"
+    stim_path<String> = env_get("VYBFLY_LADDER_STIM") else "stim_s1.bin"
+    ptx_path<String> = env_get("VYBFLY_GPU_PTX") else "src/vyb_kernels/ladder_gpu_kernel.ptx"
+    epochs<Int> = env_int("VYBFLY_EPOCHS", 8)
+    steps<Int> = env_int("VYBFLY_STEPS", 1000)
+    gain<Int> = env_int("VYBFLY_SYN_GAIN", 6)
+    refr_steps<Int> = env_int("VYBFLY_REFR_STEPS", 20)
+    blk<Int> = env_int("VYBFLY_GPU_BLOCK", 256)
+    pblocks<Int> = env_int("VYBFLY_GPU_PUSH_BLOCKS", 2048)
+    devno<Int> = env_int("VYBFLY_GPU_DEVICE", 0)
+    maxa<Int> = env_int("VYBFLY_MAX_ACTIVE", 300000)
+    t_load0<Int> = time_nanos() else 0
+
+    s_ip<String> = slurp(dir + "/bin/csr.out.indptr.i64")
+    s_dst<String> = slurp(dir + "/bin/csr.out.indices.i32")
+    s_syn<String> = slurp(dir + "/bin/csr.out.syn.i32")
+    s_stim<String> = slurp(stim_path)
+    ptx<String> = slurp(ptx_path)
+    if (s_ip.len() < 16 || s_dst.len() < 4 || s_syn.len() != s_dst.len() || s_stim.len() < 8) {
+        println("ladder_gpu: missing or inconsistent input files")
+        return 2
+    }
+    if (ptx.len() < 16) {
+        println("ladder_gpu: cannot read kernel PTX " + ptx_path)
+        return 2
+    }
+    n<Int> = s_ip.len() / 8 - 1
+    ne<Int> = s_dst.len() / 4
+    var<Int> ip = 0
+    var<Int> dst = 0
+    var<Int> syn = 0
+    var<Int> sb = 0
+    freedom {
+        ip = addr(s_ip)
+        dst = addr(s_dst)
+        syn = addr(s_syn)
+        sb = addr(s_stim)
+    }
+    fsteps<Int> = ld32(sb)
+    if (fsteps < steps) {
+        println("ladder_gpu: stimulus file covers fewer steps than requested")
+        return 2
+    }
+    // ---- weights and CSC view -------------------------------------------------------------
+    tin<Int> = alloc0(n, 8)
+    cptr<Int> = alloc0(n + 1, 8)
+    ccur<Int> = alloc0(n, 8)
+    cpos<Int> = alloc0(ne, 4)
+    wc<Int> = alloc0(ne, 4)
+    g<Float> = gain as Float
+    var<Int> bad = 0
+    freedom {
+        var<Int> e1 = 0
+        while (e1 < ne) {
+            d<Int> = at(from<loc<Int32>>(dst + 4 * e1)) as Int
+            p<Int> = tin + 8 * d
+            at(from<loc<Float>>(p)) = at(from<loc<Float>>(p)) + ((at(from<loc<Int32>>(syn + 4 * e1)) as Int) as Float)
+            q<Int> = cptr + 8 * (d + 1)
+            at(from<loc<Int>>(q)) = at(from<loc<Int>>(q)) + 1
+            e1 = e1 + 1
+        }
+        var<Int> j = 0
+        while (j < n) {
+            a<Int> = at(from<loc<Int>>(cptr + 8 * j))
+            at(from<loc<Int>>(cptr + 8 * (j + 1))) = at(from<loc<Int>>(cptr + 8 * (j + 1))) + a
+            at(from<loc<Int>>(ccur + 8 * j)) = a
+            j = j + 1
+        }
+        var<Int> s = 0
+        while (s < n) {
+            ra<Int> = at(from<loc<Int>>(ip + 8 * s))
+            rb<Int> = at(from<loc<Int>>(ip + 8 * (s + 1)))
+            var<Int> e2 = ra
+            var<Int> prev = -1
+            while (e2 < rb) {
+                d<Int> = at(from<loc<Int32>>(dst + 4 * e2)) as Int
+                if (d <= prev) { bad = bad + 1 }
+                prev = d
+                tt<Float> = at(from<loc<Float>>(tin + 8 * d))
+                var<Float32> wf = 0.0
+                if (tt > 0.0) {
+                    sv<Float> = (at(from<loc<Int32>>(syn + 4 * e2)) as Int) as Float
+                    wf = ((g * sv) / tt) as Float32
+                }
+                cp<Int> = at(from<loc<Int>>(ccur + 8 * d))
+                at(from<loc<Int>>(ccur + 8 * d)) = cp + 1
+                at(from<loc<Int32>>(cpos + 4 * e2)) = cp as Int32
+                at(from<loc<Float32>>(wc + 4 * cp)) = wf
+                e2 = e2 + 1
+            }
+            s = s + 1
+        }
+    }
+    if (ne > 2147483647) {
+        println("ladder_gpu: more than 2^31 edges; the kernels use 32-bit CSC offsets")
+        return 3
+    }
+    // the kernels read 32-bit CSC offsets (half the per-step cptr traffic)
+    cptr32<Int> = alloc0(n + 1, 4)
+    var<Int> j3 = 0
+    while (j3 <= n) {
+        st32(cptr32 + 4 * j3, ld64(cptr + 8 * j3))
+        j3 = j3 + 1
+    }
+    if (bad > 0) {
+        println("ladder_gpu: CSR rows not strictly ascending ({} edges); exact order not guaranteed".format(bad))
+        return 3
+    }
+    // ---- stimulus: valid ids only, per-step offsets ----------------------------------------
+    soff<Int> = sb + 4
+    sids<Int> = sb + 4 + 4 * (fsteps + 1)
+    voff<Int> = alloc0(steps + 1, 8)
+    vids<Int> = alloc0(ld32(soff + 4 * steps) - ld32(soff) + 1, 4)
+    var<Int> nv = 0
+    var<Int> ks = 1
+    var<Int> st = 0
+    while (st < steps) {
+        st64(voff + 8 * st, nv)
+        var<Int> q = ld32(soff + 4 * st)
+        q1<Int> = ld32(soff + 4 * (st + 1))
+        var<Int> c = 0
+        while (q < q1) {
+            id<Int> = ld32(sids + 4 * q)
+            if (id >= 0 && id < n) {
+                st32(vids + 4 * nv, id)
+                nv = nv + 1
+                c = c + 1
+            }
+            q = q + 1
+        }
+        if (c > ks) { ks = c }
+        st = st + 1
+    }
+    st64(voff + 8 * steps, nv)
+    // f32 bit patterns of the constants (the kernel takes them as Int bits)
+    vth1<Float> = 1.0
+    decay1<Float> = 0.9
+    fb<Int> = alloc0(2, 8)
+    freedom {
+        at(from<loc<Float32>>(fb)) = decay1 as Float32
+        at(from<loc<Float32>>(fb + 4)) = vth1 as Float32
+    }
+    decb<Int> = ld32(fb)
+    vthb<Int> = ld32(fb + 4)
+    nstat<Int> = 8 + epochs
+    nwords<Int> = (ne + 31) / 32 + 1
+
+    // ---- CUDA setup -------------------------------------------------------------------------
+    freedom {
+        if (cuInit(0) != 0) { println("ladder_gpu: cuInit failed (no CUDA driver?)"); return 4 }
+        var<CInt> dev = 0
+        if (cuDeviceGet(loc(dev), devno as Int32) != 0) { println("ladder_gpu: no CUDA device"); return 4 }
+        ctx<loc<CVoid>> = from<loc<CVoid>>(0)
+        if (cuCtxCreate_v2(loc(ctx), 0, dev) != 0) { println("ladder_gpu: cuCtxCreate failed"); return 4 }
+        hmod<loc<CVoid>> = from<loc<CVoid>>(0)
+        if (cuModuleLoadData(loc(hmod), ptx) != 0) { println("ladder_gpu: cuModuleLoadData failed"); return 5 }
+        hpush<loc<CVoid>> = from<loc<CVoid>>(0)
+        hupd<loc<CVoid>> = from<loc<CVoid>>(0)
+        if (cuModuleGetFunction(loc(hpush), hmod, "lgpu_push") != 0) { println("ladder_gpu: no lgpu_push"); return 5 }
+        if (cuModuleGetFunction(loc(hupd), hmod, "lgpu_update") != 0) { println("ladder_gpu: no lgpu_update"); return 5 }
+
+        d_ip<Int> = dalloc(8 * (n + 1))
+        d_dst<Int> = dalloc(4 * ne)
+        d_cpos<Int> = dalloc(4 * ne)
+        d_cptr<Int> = dalloc(4 * (n + 1))
+        d_wc<Int> = dalloc(4 * ne)
+        d_bm<Int> = dalloc(4 * nwords)
+        d_act<Int> = dalloc(8 * maxa)
+        d_ctl<Int> = dalloc(16)
+        d_sids<Int> = dalloc(4 * nv + 4)
+        d_scnt<Int> = dalloc(4 * n)
+        d_sslot<Int> = dalloc(8 * ks * n)
+        d_stats<Int> = dalloc(8 * nstat)
+        d_vm<Int> = dalloc(4 * n)
+        d_refr<Int> = dalloc(4 * n)
+        if (d_ip == 0 || d_dst == 0 || d_cpos == 0 || d_cptr == 0 || d_wc == 0 || d_bm == 0 ||
+            d_act == 0 || d_ctl == 0 || d_sids == 0 || d_scnt == 0 || d_sslot == 0 ||
+            d_stats == 0 || d_vm == 0 || d_refr == 0) {
+            println("ladder_gpu: device allocation failed")
+            return 6
+        }
+        var<Int> ok = 1
+        ok = ok * upload(d_ip, ip, 8 * (n + 1))
+        ok = ok * upload(d_dst, dst, 4 * ne)
+        ok = ok * upload(d_cpos, cpos, 4 * ne)
+        ok = ok * upload(d_cptr, cptr32, 4 * (n + 1))
+        ok = ok * upload(d_wc, wc, 4 * ne)
+        ok = ok * upload(d_sids, vids, 4 * nv + 4)
+        ok = ok * zero32(d_bm, nwords)
+        ok = ok * zero32(d_scnt, n)
+        ok = ok * zero32(d_stats, 2 * nstat)
+        if (ok == 0) { println("ladder_gpu: upload failed"); return 6 }
+        if (cuCtxSynchronize() != 0) { println("ladder_gpu: sync failed"); return 6 }
+
+        // kernel parameter cells; the per-step ones are updated in place before each launch
+        var<Int> k_act = d_act
+        var<Int> k_nxt = d_act
+        var<Int> k_cur = 0
+        var<Int> k_nc = 1
+        var<Int> k_s0 = 0
+        var<Int> k_ns = 0
+        var<Int> k_step = 0
+        var<Int> k_ep = 0
+        k_n<Int> = n
+        k_maxa<Int> = maxa
+        k_rs<Int> = refr_steps
+        k_decb<Int> = decb
+        k_vthb<Int> = vthb
+        k_lo<Int> = 0
+        k_gn<Int> = n
+        pp<[Int; 15]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        pp[0] = addr(d_ip)
+        pp[1] = addr(d_dst)
+        pp[2] = addr(d_cpos)
+        pp[3] = addr(d_bm)
+        pp[4] = addr(k_act)
+        pp[5] = addr(d_ctl)
+        pp[6] = addr(d_sids)
+        pp[7] = addr(d_scnt)
+        pp[8] = addr(d_sslot)
+        pp[9] = addr(d_stats)
+        pp[10] = addr(k_cur)
+        pp[11] = addr(k_s0)
+        pp[12] = addr(k_ns)
+        pp[13] = addr(k_n)
+        pp[14] = addr(k_maxa)
+        pu<[Int; 20]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        pu[0] = addr(d_cptr)
+        pu[1] = addr(d_wc)
+        pu[2] = addr(d_bm)
+        pu[3] = addr(d_vm)
+        pu[4] = addr(d_refr)
+        pu[5] = addr(d_ctl)
+        pu[6] = addr(d_scnt)
+        pu[7] = addr(d_sslot)
+        pu[8] = addr(d_stats)
+        pu[9] = addr(k_nxt)
+        pu[10] = addr(k_nc)
+        pu[11] = addr(k_step)
+        pu[12] = addr(k_n)
+        pu[13] = addr(k_maxa)
+        pu[14] = addr(k_ep)
+        pu[15] = addr(k_rs)
+        pu[16] = addr(k_decb)
+        pu[17] = addr(k_vthb)
+        pu[18] = addr(k_lo)
+        pu[19] = addr(k_gn)
+        ugrid<Int> = (n + blk - 1) / blk
+        hpa<Int> = addr(hpush)
+        hua<Int> = addr(hupd)
+        ppa<Int> = addr(pp)
+        pua<Int> = addr(pu)
+
+        t_sim0<Int> = time_nanos() else 0
+        var<Int> ep = 0
+        while (ep < epochs) {
+            ok = ok * zero32(d_vm, n)
+            ok = ok * zero32(d_refr, n)
+            ok = ok * zero32(d_ctl, 4)
+            k_ep = ep
+            var<Int> cur = 0
+            var<Int> step = 0
+            while (step < steps) {
+                k_cur = cur
+                k_nc = 1 - cur
+                k_act = d_act + 4 * maxa * cur
+                k_nxt = d_act + 4 * maxa * (1 - cur)
+                k_s0 = ld64(voff + 8 * step)
+                k_ns = ld64(voff + 8 * (step + 1)) - k_s0
+                k_step = step
+                ok = ok * launch(hpa, pblocks, blk, ppa, 15)
+                ok = ok * launch(hua, ugrid, blk, pua, 20)
+                cur = 1 - cur
+                step = step + 1
+            }
+            if (ok == 0) { println("ladder_gpu: launch failed at epoch {}".format(ep)); return 7 }
+            ep = ep + 1
+        }
+        if (cuCtxSynchronize() != 0) { println("ladder_gpu: kernel execution failed"); return 7 }
+        t_end<Int> = time_nanos() else 0
+
+        hst<Int> = alloc0(nstat, 8)
+        if (download(hst, d_stats, 8 * nstat) == 0) { println("ladder_gpu: readback failed"); return 7 }
+        synev<Int> = ld64(hst)
+        hsum<Int> = ld64(hst + 8)
+        hx<Int> = ld64(hst + 16)
+        over<Int> = ld64(hst + 24)
+        var<Int> spk = 0
+        var<Int> ident = 1
+        ep0<Int> = ld64(hst + 64)
+        var<Int> e3 = 0
+        while (e3 < epochs) {
+            c<Int> = ld64(hst + 8 * (8 + e3))
+            spk = spk + c
+            if (c != ep0) { ident = 0 }
+            e3 = e3 + 1
+        }
+        var<Int> exact = 1
+        if (over > 0) { exact = 0 }
+        stim<Int> = nv * epochs
+        load_ms<Int> = (t_sim0 - t_load0) / 1000000
+        sim_ms<Int> = (t_end - t_sim0) / 1000000
+        println("RESULT engine=vyb_gpu epochs={} steps={} n_neurons={} n_edges={} block={} push_blocks={} load_ms={} sim_ms={} spikes={} stimulus_spikes={} synaptic_events={} overflow={} exact_order={} epochs_identical={} epoch0_spikes={} digest_sum={} digest_xor={}".format(epochs, steps, n, ne, blk, pblocks, load_ms, sim_ms, spk, stim, synev, over, exact, ident, ep0, hsum, hx))
+    }
+    return 0
+}

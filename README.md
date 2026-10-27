@@ -100,6 +100,199 @@ project.
 The GPU kernels now agree with the CPU reference tick for tick. Honest scope: that equivalence is
 proven on a 512-neuron fixture, not yet on the whole 139k-neuron connectome.
 
+### The Vyb CPU ladder: whole connectome, 1x to 10x, bit-exact
+
+`src/vyb/` also contains three multithreaded CPU engines that run the full `sparse_prop` LIF
+workload on the 1x–10x ladder graphs. The workload is dt 0.5 ms, with 8 epochs × 1000 steps
+= 4 s of biological time.
+
+- `ladder_prop` uses per-(thread, block) edge bins. It is the fastest engine at 1x and 2x.
+- `ladder_seg` pulls along static per-row target segments.
+- `ladder_desc` streams 4-byte segment descriptors that are built once per step. It is the
+  fastest engine at 5x and 10x.
+
+Each engine reproduces the spike-set digest of the deterministic C++ reference
+(`scripts/cpu/sparse_prop_cpu.cpp`) **bit for bit**, at every scale and at every thread count
+tried (1, 4, 8, 10, 12, 16, 20). All three were re-verified on stock Vyb 0.7.7.
+
+The table below was measured on an i9-10850K (10C/20T) at 16 threads, using simulation time and
+the best engine per scale. The baseline is the first Vyb engine (`1928e58`). The full numbers
+are in `results/energy/vyb_ladder.json`.
+
+| scale | synaptic events | baseline | now | events/s | wall s per bio-s | RSS | C++ ref, 1 thread | GPU kernel (RTX 3090) |
+|---|---|---|---|---|---|---|---|---|
+| 1x  | 1.05 G  | 1.55 s  | **1.21 s** (prop)  | 870 M | 0.30 | 146 MB | 8.32 s  | 3.75 s  |
+| 2x  | 2.00 G  | 4.16 s  | **2.60 s** (prop)  | 767 M | 0.65 | 193 MB | 14.97 s | 3.15 s  |
+| 5x  | 5.22 G  | 13.11 s | **7.50 s** (desc) | 696 M | 1.88 | 363 MB | 43.45 s | 5.74 s  |
+| 10x | 10.69 G | 31.03 s | **16.59 s** (desc) | 644 M | 4.15 | 667 MB | 88.06 s | 10.68 s |
+
+The 1x and 2x "now" values were measured with a Vyb build that includes the JIT changes in the
+open Vyb PR (inlining at `-O2`, a host-CPU target machine). The 5x and 10x values were measured
+on stock Vyb 0.7.7, after `ladder_desc` moved to 4-byte descriptors. The JIT changes do not
+matter here.
+A clean back-to-back rerun on an idle machine (2 repetitions per engine and scale, both builds
+interleaved) gave identical digests on stock Vyb 0.7.7, and the best engine at each scale ran
+within about 2% of the PR build: 1.22 s at 1x, 2.60 s at 2x, 7.72 s at 5x and 17.97 s at 10x
+(those last two are with the old 8-byte descriptors).
+Only `ladder_seg` gained, by 2–3%. The compiler friction this work turned up is in
+`docs/DOGFOODING.md`.
+
+### The Vyb GPU engine: bit-exact, 2.4x to 4.8x the CUDA kernel on the same GPU
+
+`src/vyb/ladder_gpu.vyb` runs the same ladder workload on an NVIDIA GPU through the CUDA driver
+API, with device kernels written in Vyb (`src/vyb_kernels/ladder_gpu_kernel.vyb`). It matches
+the C++ reference **bit for bit** at every scale: the spike count, synaptic events, epoch-0
+spikes and both digests. The existing CUDA kernel (`sparse_prop.cu`) does not, because it
+accumulates with float `atomicAdd`.
+
+The engine is exact without float atomics:
+
+- The push kernel only sets bits. A warp per active source sets one bit per out-edge in a
+  bitmap over CSC positions, which are each target's in-edges sorted by source.
+- The update kernel uses one thread per neuron. It walks its CSC range in ascending order and
+  sums the weights in exactly the reference order, keeping 8 weight loads in flight per round.
+  It then integrates and fires, and appends spikes warp-aggregated.
+
+| scale | Vyb GPU engine (RTX 3090) | GPU kernel (RTX 3090) | Vyb GPU engine (GB10) | `sparse_prop.cu` (same GB10) | Vyb CPU, 20 Arm cores (GB10 host) | C++ ref, 1 thread |
+|---|---|---|---|---|---|---|
+| 1x  | **0.98 s** | 3.75 s  | **0.77 s** | 3.67 s (inexact)  | 0.96 s (prop, 16 threads) | 8.32 s |
+| 2x  | **0.90 s** | 3.15 s  | **0.93 s** | 3.04 s (inexact)  | 1.88 s (prop, 16 threads) | 14.97 s |
+| 5x  | **1.71 s** | 5.74 s  | **2.22 s** | 5.29 s (inexact)  | 4.25 s (prop) | 43.45 s |
+| 10x | **2.46 s** | 10.68 s | **4.17 s** | 10.29 s (inexact) | 7.52 s (prop) | 88.06 s |
+| 20x | **4.04 s** | | **7.45 s** | | | 174.4 s |
+| 40x | **8.72 s** | | **14.71 s** | | | 320.6 s |
+
+Every Vyb GPU number above matches the C++ reference digests exactly. The 3090 times are the
+best of 3 runs on an idle GPU (Godzilla). The GB10 is a DGX Spark with 273 GB/s of unified
+memory. Its 1x to 10x times are the best of 3 with the GPU otherwise idle, and 20x and 40x are
+the best of 2. Earlier runs beside a resident LLM server were no slower (10x best 3.94 s), so
+the GB10 engine is bandwidth-bound, not contention-bound. At 10x, nsys puts the step at about
+410 us of update plus 110 us of push, close to the memory-bandwidth floor of about 75 MB per
+step. On the 3090 (936 GB/s), 1x is slower than 2x because the 8,000 steps of two launches
+each are launch-latency-bound at that size.
+
+The 20x and 40x graphs come from `scripts/` the same way as the ladder (n = 2,785,100 and
+5,570,200; 56.0M and 112.3M edges). Their C++ reference runs `sparse_prop_cpu --max-active N`
+with N = n, because the default 300,000-entry active list overflows at 20x and the reference
+then keeps the lowest ids, which no parallel engine reproduces. Set `VYBFLY_MAX_ACTIVE` to n
+for the same uncapped run in Vyb.
+
+#### Two Sparks, one network: a bit-exact split
+
+`src/vyb/ladder_gpu_split.vyb` runs one connectome across both Sparks. Neurons are cut by
+target at half the in-edges. Each rank keeps every source row, but only the edges into its own
+neurons, so a step needs nothing from the peer except the list of neurons that fired. After
+each step the ranks swap fired-id lists on the direct 200 GbE link, over TCP or with RDMA
+writes (`VYBFLY_SPLIT_NET=rdma`), then push the peer's spikes into their own targets. It is bit-exact at 10x, 20x and 40x (digests equal to the C++
+reference), and with `VYBFLY_SPLIT_PARTS=1` it is the single-GPU engine.
+
+| 20x, 8 epochs | sim | GPU time per rank | network |
+|---|---|---|---|
+| one GB10 (`ladder_gpu`) | 7.45 s | 7.45 s | none |
+| two GB10s, serialized exchange | 8.85 s | ~3.7 to 4.1 s | ~3.4 s |
+| two GB10s, full-duplex exchange | 7.51 s (profiled), 6.79 s | ~3.7 to 4.1 s | ~3.1 to 3.5 s |
+| two GB10s, full-duplex, own push overlapped with the exchange | 6.64 s, 7.30 s, 7.59 s | ~3.7 to 4.1 s | ~2.7 to 3.2 s (sim minus GPU) |
+| two GB10s, RDMA exchange (`VYBFLY_SPLIT_NET=rdma`), overlap on | **4.54 s**, 4.57 s | ~3.3 to 3.7 s (GPU plus copy-back) | ~0.24 to 1.08 s |
+
+At 40x the split wins clearly. Two GB10s (duplex and overlap on) take **11.35 s** (best of 2;
+the other run took 12.29 s) against 14.71 s on one GB10. That is 1.30x faster, and again
+bit-exact. The GPU work per step doubles from 20x, but the exchange cost grows less.
+
+The split halves the GPU time, but the exchange costs about 0.35 ms per step. A ping-pong test
+over the same link shows why: 36 us for 8 bytes with busy-polling, but about 475 us for 240 KB
+each way, and about 800 us with blocking sockets. Socket buffers are capped at 212 KB
+(`net.core.wmem_max`) without root. So over TCP two Sparks only just beat one at 20x, beat it by 1.30x at 40x, and lose at
+10x (6.09 s against about 4.2 s, measured with the serialized exchange). The overlap's gain is within
+run-to-run noise, since the GPU push is short next to the exchange. The overlap and the duplex
+exchange are on by default (`VYBFLY_SPLIT_OVERLAP`, `VYBFLY_SPLIT_DUPLEX`). Both only reorder
+bit-ORs and integer sums, so they cannot change a result.
+
+RDMA removes most of the exchange cost, and it needs no root. The ConnectX ports expose RoCE v2
+devices that an ordinary user can open (`/dev/infiniband/uverbs*` is world-writable and the
+memlock limit is unlimited). With `VYBFLY_SPLIT_NET=rdma` each rank registers its send buffer and
+a two-slot receive buffer, swaps queue-pair details over the TCP connection, then posts one RDMA
+write-with-immediate per step into the peer's slot, with the id count in the immediate.
+libibverbs is opened with `dlopen` at run time, so a TCP run needs nothing new. At 20x this takes
+**4.54 s** (best of 2; the other run took 4.57 s), against 7.59 s over TCP in the same session and
+7.45 s on one GB10. That is 1.64x faster than one GB10, and bit-exact. A ping-pong written in Vyb
+over the same verbs takes 2.3 us for 16 bytes and 87.5 us for 1 MB each way (12 GB/s), against
+100 to 230 us and 355 to 454 us over TCP. Most of the remaining exchange time is the copy of the
+fired list back to the host.
+
+At 10x, 40x and 80x RDMA pays off as well. These are 8 epochs, two runs each, all bit-exact (10x
+42322697548985024/188222298830040, 40x 239142599791732164/1733953483748172, 80x
+508755035752662158/103693891554914; 80x is 11.1M neurons and 225M edges, every neuron allowed active):
+
+| 8 epochs | one GB10 | two GB10s, TCP | two GB10s, RDMA | RDMA vs one GB10 |
+|---|---|---|---|---|
+| 10x | 4.19 s | 6.09 s (serialized) | **2.61 s**, 2.63 s | 1.60x |
+| 20x | 7.45 s | 7.59 s | **4.54 s**, 4.57 s | 1.64x |
+| 40x | 14.71 s | 11.35 s | **8.05 s**, 8.18 s | 1.83x |
+| 80x | 34.05 s, 34.10 s | not run | **15.60 s**, 15.62 s | 2.18x |
+
+So with RDMA two Sparks now beat one at every scale tried, including 10x, where TCP lost, and the
+gain grows with scale. At 80x the wire itself is 0.9 to 1.7 s of the 15.6 s per rank. An earlier
+version of this note put most of the rest down to a 12.3 to 12.6 s fired-list copy back to the host.
+That was wrong: the copy ran on the legacy stream, so `dtoh_ms` also counted the wait for that
+step's GPU work. The copy itself is about 2 to 3% of the step.
+
+The zero-copy exchange (`VYBFLY_SPLIT_ZC`, default 1, used with two ranks and the overlapped push)
+removes even that. The GB10's GPU shares the host's memory, so the send and receive buffers are pinned in place
+with `cuMemHostRegister` and the kernels use them directly. The update kernel writes the fired list
+straight into the RDMA send buffer, and the push kernel reads the peer's list straight from the
+receive buffer. Only an 8-byte count comes back per step. GPUDirect RDMA from device memory is not
+available here: the driver reports no dma-buf and no GPUDirect RDMA support, and registering a device
+pointer with ibverbs fails without root. On GB10, though, pinned host memory is the same physical
+memory, so registering it has the same effect. If pinning fails the engine warns and falls back to
+copies (`VYBFLY_SPLIT_ZC=0` forces that). Both modes are bit-exact (8 epochs):
+
+| 8 epochs | ZC off | ZC on |
+|---|---|---|
+| 10x, RDMA | 2.61 s | **2.51 s** |
+| 10x, TCP | 4.75 s | **4.10 s** |
+| 40x, RDMA | 8.06 s | **7.81 s** |
+| 80x, RDMA | 15.66 s | **15.28 s**, 15.38 s |
+
+At 40x with ZC on, rank 1 spends 7.27 s waiting on the GPU, 0.04 s on copies and 0.48 s on the
+network. Against an ideal of 7.35 s, what is left is about 0.46 s of per-step exchange and barrier
+latency. Sending a bitmap instead of an id list would cut the bytes only about 1.4x at this firing
+rate. At 80x ZC on removes the copies (`dtoh_ms` falls from 12.3-12.5 s to 0.04 s per rank) but
+gains only about 2%: each rank then waits 13.3-14.4 s on the GPU, so the 80x step is bound by the
+kernels themselves, not by the transfer. The three 80x runs above were back to back and all
+bit-exact.
+
+Run it, rank 0 first, on two machines that share the graph files:
+
+```sh
+# on the rank-0 host (it listens on VYBFLY_SPLIT_PORT)
+VYBFLY_SPLIT_PARTS=2 VYBFLY_SPLIT_RANK=0 scripts/gpu/run_split_rank.sh <ladder>/s20 <ladder>/stim_s20.bin
+# on the rank-1 host
+VYBFLY_SPLIT_PARTS=2 VYBFLY_SPLIT_RANK=1 VYBFLY_SPLIT_PEER=<rank-0 ip> \
+  scripts/gpu/run_split_rank.sh <ladder>/s20 <ladder>/stim_s20.bin
+# for the RDMA exchange, set VYBFLY_SPLIT_NET=rdma on both hosts (VYBFLY_RDMA_DEV and
+# VYBFLY_RDMA_GID pick the RoCE device and GID index; defaults rocep1s0f0 and 3)
+```
+
+On the Arm host, `ladder_prop` also beats `ladder_desc` at 5x and 10x, the opposite of the i9. `scripts/cpu/run_ladder.sh` therefore picks `ladder_prop` on aarch64.
+
+Run it:
+
+```sh
+VYBFLY_ENGINE=gpu VYBFLY_LADDER_DIR=<ladder>/s10 VYBFLY_LADDER_STIM=<ladder>/stim_s10.bin \
+  VYBFLY_EPOCHS=8 VYB=vyb scripts/cpu/run_ladder.sh --module-path "$VYB_STDLIB"
+```
+
+This works on stock Vyb 0.7.7, because the kernel is committed as PTX (sm_86, which the driver
+JIT-compiles for newer GPUs). Regenerating the PTX needs the kernel intrinsics in Vyb PRs
+`perf/kernel-atomics-bits` and `perf/kernel-friction` (which adds `shfl_xor_i64`):
+
+```sh
+vyb --kernel src/vyb_kernels/ladder_gpu_kernel.vyb --gpu sm_86 --ptx src/vyb_kernels/ladder_gpu_kernel.ptx
+```
+
+Further knobs are `VYBFLY_GPU_BLOCK` (256), `VYBFLY_GPU_PUSH_BLOCKS` (2048),
+`VYBFLY_GPU_DEVICE` (0) and `VYBFLY_MAX_ACTIVE` (300000, the active-list capacity).
+
 ## Jargon decoder
 
 | term | what it means here |
@@ -142,6 +335,31 @@ The Vyb side needs the Vyb toolchain (`VYB` and `VYB_STDLIB` env vars; defaults 
 .venv/bin/python scripts/vyb_des_check.py       # Vyb discrete-event engine vs the Python reference
 .venv/bin/python scripts/phase3_gpu_check.py    # Vyb GPU kernels vs the CPU reference
 ```
+
+The CPU ladder engines read a ladder graph's CSR (`results/energy/curves/s<N>/`, which the
+energy phase produces) and a stimulus file that the C++ reference writes:
+
+```sh
+g++ -O3 -march=native -ffp-contract=off -o sparse_prop_cpu scripts/cpu/sparse_prop_cpu.cpp
+./sparse_prop_cpu --dir results/energy/curves/s10 --epochs 8 --steps 1000 --syn-gain 6 \
+    --refr-steps 20 --dump-stim stim_s10.bin                    # prints the reference digest
+VYBFLY_LADDER_DIR=results/energy/curves/s10 VYBFLY_LADDER_STIM=stim_s10.bin \
+VYBFLY_THREADS=16 VYBFLY_EPOCHS=8 \
+    $VYB --module-path $VYB_STDLIB src/vyb/ladder_desc.vyb      # or ladder_prop / ladder_seg
+```
+
+`scripts/cpu/run_ladder.sh` picks the engine for you with the same environment variables. It
+chooses `ladder_prop` below 10 M edges (1x and 2x) and `ladder_desc` at or above that (5x and
+10x), which matches the measured crossover. Set `VYBFLY_ENGINE` to force a particular engine:
+
+```sh
+VYBFLY_LADDER_DIR=results/energy/curves/s10 VYBFLY_LADDER_STIM=stim_s10.bin \
+VYBFLY_THREADS=16 VYBFLY_EPOCHS=8 VYB=$VYB \
+    scripts/cpu/run_ladder.sh --module-path $VYB_STDLIB
+```
+
+Compare the `digest_sum` and `digest_xor` values on the engine's `RESULT` line against the
+reference's output; they must be equal.
 
 The paper is built from the artifacts rather than typed by hand:
 
@@ -202,6 +420,7 @@ limitations section and its honesty-log appendix.
 | V1 Vyb-native loader | **done** — 26/26 invariants match the Python reference |
 | M1 whole-connectome LIF baseline | **done** — dense and sparse engines agree exactly; 1 s of brain in 120 s of CPU |
 | M2 Vyb discrete-event engine | **done** — 4/4 replications match the reference exactly |
+| M2b Vyb multithreaded CPU ladder (1x–10x) | **done** — bit-exact digests vs the C++ reference; 10x runs at 4.15 s wall per bio-s |
 | M3 Vyb GPU kernels | **done** — tick-for-tick agreement with the CPU reference (512-neuron fixture) |
 | M4 energy instrumentation | **done** — GPU device power measured; CPU power unavailable on this machine |
 | M5–M8 geometry, downscaling, upscaling, closure | **done** — see section 5 of the paper |
