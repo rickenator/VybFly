@@ -1,7 +1,7 @@
 #!/bin/bash
 # One rank of the two-machine Vyb GPU split (src/vyb/ladder_gpu_split.vyb).
 # usage: VYBFLY_SPLIT_RANK=0|1 [VYBFLY_SPLIT_PEER=<rank-0 ip>] [VYBFLY_SPLIT_PORT=47011] \
-#        [VYBFLY_SPLIT_NET=tcp|rdma] \
+#        [VYBFLY_SPLIT_NET=tcp|rdma|bytes] \
 #        scripts/gpu/run_split_rank.sh <ladder-dir> <stim.bin>
 # Start rank 0 first; rank 1 retries its connect for about a minute. Refuses to run beside
 # another GPU process, so it never shares a GPU with someone else's job.

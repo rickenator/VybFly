@@ -31,15 +31,19 @@
 // function pointers; ibv_post_send/ibv_post_recv/ibv_poll_cq are static inlines in verbs.h, so
 // they are called through the provider's ibv_context.ops function pointers.
 // VYBFLY_RDMA_DEV (rocep1s0f0) and VYBFLY_RDMA_GID (3, the RoCE v2 IPv4 GID) pick the port.
+// "bytes" runs the duplex exchange through the network stdlib's framed byte-buffer
+// socket_exchange_bytes_range (Vyb with binary sockets, sv passed as a view so the 11 MB
+// send buffer is not copied per call) instead of raw libc send/recv.
 // Both slots of the receive buffer alternate by exchange parity: the peer can only run one
 // exchange ahead, so it never writes into the slot this rank is still uploading from.
 import io::{open_read, read_all}
 import env::{env_get}
 import time::{time_nanos}
-import network::{socket_open, socket_bind, socket_listen, socket_accept, socket_connect, Socket}
+import network::{socket_open, socket_bind, socket_listen, socket_accept, socket_connect, Socket, socket_exchange_bytes_range}
 
 extern "C" {
     calloc(n<Int>, sz<Int>)<Int>
+    memmove(d<Int>, s<Int>, n<Int>)<Int>
     usleep(us<CUInt>)<CInt>
     close(fd<CInt>)<CInt>
     send(fd<CInt>, buf<loc<CVoid>>, len<Int>, flags<CInt>)<Int>
@@ -179,6 +183,27 @@ exchange(fd<Int>, sp<Int>, slen<Int>, rp<Int>)<Int> -> {
     }
     if (ok == 0) { return 0 - 1 }
     return ld64(rp)
+}
+// The same exchange through the network stdlib's byte buffers: sv holds [count i64][ids i32],
+// only the ids go on the wire (the stdlib frames the length), and the peer's ids land in
+// rp + 8. Returns the peer's count, or -1 if the connection failed.
+exchange_bytes(fd<Int>, sv<their<Vec<UInt8> const>>, cdl<Int>, max_in<Int>, rp<Int>)<Int> -> {
+    var<Int> cp = 0 - 1
+    match (socket_exchange_bytes_range(fd, sv, 8, 4 * cdl, max_in)) {
+        got -> {
+            gv<Vec<UInt8>> = got
+            cp = gv.len() / 4
+            if (cp > 0) {
+                freedom {
+                    gp<Int> = addr(gv[0])
+                    memmove(rp + 8, gp, 4 * cp)
+                }
+            }
+            st64(rp, cp)
+        }
+        ? -> { cp = 0 - 1 }
+    }
+    return cp
 }
 // ---- RDMA transport (libibverbs, RoCE v2) ---------------------------------------------------
 // Layouts are rdma-core 50 on aarch64 / x86-64 (LP64): ibv_context.ops.poll_cq @96,
@@ -484,10 +509,12 @@ main()<Int> -> {
     net<String> = env_get("VYBFLY_SPLIT_NET") else "tcp"
     rdma_dev<String> = env_get("VYBFLY_RDMA_DEV") else "rocep1s0f0"
     rdma_gid<Int> = env_int("VYBFLY_RDMA_GID", 3)
-    if (net != "tcp" && net != "rdma") {
-        println("ladder_gpu_split: VYBFLY_SPLIT_NET must be tcp or rdma")
+    if (net != "tcp" && net != "rdma" && net != "bytes") {
+        println("ladder_gpu_split: VYBFLY_SPLIT_NET must be tcp, rdma or bytes")
         return 2
     }
+    var<Int> nb = 0
+    if (net == "bytes") { nb = 1 }
     if (parts < 1 || parts > 2 || rank < 0 || rank >= parts) {
         println("ladder_gpu_split: VYBFLY_SPLIT_PARTS must be 1 or 2 and 0 <= VYBFLY_SPLIT_RANK < parts")
         return 2
@@ -672,7 +699,17 @@ main()<Int> -> {
     nstat<Int> = 8 + epochs
     nwords<Int> = (nel + 31) / 32 + 1
     // host exchange buffers: [count i64][ids i32 ...]
-    hsend<Int> = alloc0(maxa + 2, 4)
+    var<Int> hsend = alloc0(maxa + 2, 4)
+    var<Vec<UInt8>> sv = Vec()
+    if (nb == 1) {
+        // the send list lives in a Vec<UInt8> so the stdlib can send it without a copy
+        var<Int> zi = 0
+        while (zi < 4 * (maxa + 2)) {
+            sv.push(0 as UInt8)
+            zi = zi + 1
+        }
+        freedom { hsend = addr(sv[0]) }
+    }
     hrecv<Int> = alloc0(maxa + 2, 4)
     hctl<Int> = alloc0(4, 4)
 
@@ -893,7 +930,9 @@ main()<Int> -> {
                 if (rs != 0) {
                     cp = rdma_exchange(rs, hsend, 8 + 4 * cdl)
                     rb = ld64(rs + 128)
-                } else { cp = exchange(fd, hsend, 8 + 4 * cdl, hrecv) }
+                } else {
+                    if (nb == 1) { cp = exchange_bytes(fd, view(sv), cdl, 4 * maxa, hrecv) } else { cp = exchange(fd, hsend, 8 + 4 * cdl, hrecv) }
+                }
                 if (cp < 0) {
                     ok = 0
                     cp = 0
@@ -953,7 +992,7 @@ main()<Int> -> {
                         }
                     } else {
                     if (duplex == 1) {
-                        cp = exchange(fd, hsend, 8 + 4 * cdl, hrecv)
+                        if (nb == 1) { cp = exchange_bytes(fd, view(sv), cdl, 4 * maxa, hrecv) } else { cp = exchange(fd, hsend, 8 + 4 * cdl, hrecv) }
                         if (cp < 0) {
                             ok = 0
                             cp = 0

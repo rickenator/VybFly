@@ -219,6 +219,12 @@ over the same verbs takes 2.3 us for 16 bytes and 87.5 us for 1 MB each way (12 
 100 to 230 us and 355 to 454 us over TCP. Most of the remaining exchange time is the copy of the
 fired list back to the host. 40x and 10x have not been rerun over RDMA yet.
 
+`VYBFLY_SPLIT_NET=bytes` runs the same TCP exchange through the `network` stdlib's
+`socket_exchange_bytes_range` (byte buffers, Vyb branch `perf/net-bytes`) instead of libc
+externs. With both ranks on one GB10 over loopback at 20x it is bit-exact and takes 11.92 s,
+against 12.02 s for the extern TCP path in the same setup. That setup shares one GPU, so the
+times only compare the two transports with each other.
+
 Run it, rank 0 first, on two machines that share the graph files:
 
 ```sh
@@ -229,6 +235,8 @@ VYBFLY_SPLIT_PARTS=2 VYBFLY_SPLIT_RANK=1 VYBFLY_SPLIT_PEER=<rank-0 ip> \
   scripts/gpu/run_split_rank.sh <ladder>/s20 <ladder>/stim_s20.bin
 # for the RDMA exchange, set VYBFLY_SPLIT_NET=rdma on both hosts (VYBFLY_RDMA_DEV and
 # VYBFLY_RDMA_GID pick the RoCE device and GID index; defaults rocep1s0f0 and 3)
+# VYBFLY_SPLIT_NET=bytes uses the network stdlib's byte-buffer exchange instead of libc
+# externs; it needs a Vyb with binary sockets (Vyb branch perf/net-bytes)
 ```
 
 On the Arm host, `ladder_prop` also beats `ladder_desc` at 5x and 10x, the opposite of the i9. `scripts/cpu/run_ladder.sh` therefore picks `ladder_prop` on aarch64.

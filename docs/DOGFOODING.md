@@ -160,7 +160,21 @@ GPU) and in 2.46 s on an RTX 3090 (4.3x). Writing them turned up the following.
   as externs and hard-codes `MSG_DONTWAIT`, `MSG_NOSIGNAL`, `TCP_NODELAY` and `SO_REUSEADDR`.
   **Being fixed** on Vyb branch `perf/net-bytes` (PR pending): `socket_send_bytes`,
   `socket_recv_bytes`/`_exact` and a framed full-duplex `socket_exchange_bytes`/`_range` over
-  `Vec<UInt8>`, with two tests. The split keeps its externs until that merges.
+  `Vec<UInt8>`, with two tests. The split keeps its externs on `main` until that merges.
+  `VYBFLY_SPLIT_NET=bytes` on branch `perf/split-net-bytes` uses it and is bit-exact.
+- **A by-value `Vec` parameter is deep-copied on every call.** The first byte API took
+  `data<Vec<UInt8>>`, so the split's 11 MB reused send buffer was copied on each exchange. Passed
+  through one helper function, that was 9.2 ms per exchange: 91.9 s for a 20x run, against
+  12.0 s over the extern path. The send side now takes `their<Vec<UInt8> const>`, passed as
+  `view(buf)`, and an exchange costs 3 us. The guide documents the copy, but nothing warns when a
+  large `Vec` goes by value.
+- Smaller items from the same work: a `match` binding of an optional `Vec` has no known type for
+  `addr()` ("Cannot take address of expression with unknown type", reported without a file or
+  line), so it has to be rebound to a typed local first. A user `extern` `memcpy` with `Int`
+  arguments clashes with the stdlib's `ptr` declaration ("Redefinition of function 'memcpy'"),
+  so the engine uses `memmove`. And on aarch64 (GB10),
+  `test/agents/test_agent_payloads.vyb` hangs at 0% CPU after its Int-payload cases, with every
+  build tried, so the full suite there reports 1322 passed, 1 failed.
 
 ### RDMA from plain externs (no root)
 
