@@ -100,6 +100,36 @@ project.
 The GPU kernels now agree with the CPU reference tick for tick. Honest scope: that equivalence is
 proven on a 512-neuron fixture, not yet on the whole 139k-neuron connectome.
 
+### The Vyb CPU ladder: whole connectome, 1x to 10x, bit-exact
+
+`src/vyb/` also contains three multithreaded CPU engines that run the full `sparse_prop` LIF
+workload on the 1x–10x ladder graphs. The workload is dt 0.5 ms, with 8 epochs × 1000 steps
+= 4 s of biological time.
+
+- `ladder_prop` uses per-(thread, block) edge bins. It is the fastest engine at 1x and 2x.
+- `ladder_seg` pulls along static per-row target segments.
+- `ladder_desc` streams segment descriptors that are built once per step. It is the fastest
+  engine at 5x and 10x.
+
+Each engine reproduces the spike-set digest of the deterministic C++ reference
+(`scripts/cpu/sparse_prop_cpu.cpp`) **bit for bit**, at every scale and at every thread count
+tried (1, 4, 8, 10, 12, 16, 20). All three were re-verified on stock Vyb 0.7.7.
+
+The table below was measured on an i9-10850K (10C/20T) at 16 threads, using simulation time and
+the best engine per scale. The baseline is the first Vyb engine (`1928e58`). The full numbers
+are in `results/energy/vyb_ladder.json`.
+
+| scale | synaptic events | baseline | now | events/s | wall s per bio-s | RSS | C++ ref, 1 thread | GPU kernel (RTX 3090) |
+|---|---|---|---|---|---|---|---|---|
+| 1x  | 1.05 G  | 1.55 s  | **1.21 s** (prop)  | 870 M | 0.30 | 146 MB | 8.32 s  | 3.75 s  |
+| 2x  | 2.00 G  | 4.16 s  | **2.60 s** (prop)  | 767 M | 0.65 | 193 MB | 14.97 s | 3.15 s  |
+| 5x  | 5.22 G  | 13.11 s | **7.81 s** (desc)  | 669 M | 1.95 | 371 MB | 43.45 s | 5.74 s  |
+| 10x | 10.69 G | 31.03 s | **17.82 s** (desc) | 600 M | 4.46 | 673 MB | 88.06 s | 10.68 s |
+
+The "now" column was measured with a Vyb build that includes the JIT changes in the open Vyb
+PR (inlining at `-O2`, a host-CPU target machine). Stock Vyb gives identical digests, but it
+can be slower. The compiler friction this work turned up is in `docs/DOGFOODING.md`.
+
 ## Jargon decoder
 
 | term | what it means here |
@@ -142,6 +172,21 @@ The Vyb side needs the Vyb toolchain (`VYB` and `VYB_STDLIB` env vars; defaults 
 .venv/bin/python scripts/vyb_des_check.py       # Vyb discrete-event engine vs the Python reference
 .venv/bin/python scripts/phase3_gpu_check.py    # Vyb GPU kernels vs the CPU reference
 ```
+
+The CPU ladder engines read a ladder graph's CSR (`results/energy/curves/s<N>/`, which the
+energy phase produces) and a stimulus file that the C++ reference writes:
+
+```sh
+g++ -O3 -march=native -ffp-contract=off -o sparse_prop_cpu scripts/cpu/sparse_prop_cpu.cpp
+./sparse_prop_cpu --dir results/energy/curves/s10 --epochs 8 --steps 1000 --syn-gain 6 \
+    --refr-steps 20 --dump-stim stim_s10.bin                    # prints the reference digest
+VYBFLY_LADDER_DIR=results/energy/curves/s10 VYBFLY_LADDER_STIM=stim_s10.bin \
+VYBFLY_THREADS=16 VYBFLY_EPOCHS=8 \
+    $VYB --module-path $VYB_STDLIB src/vyb/ladder_desc.vyb      # or ladder_prop / ladder_seg
+```
+
+Compare the `digest_sum` and `digest_xor` values on the engine's `RESULT` line against the
+reference's output; they must be equal.
 
 The paper is built from the artifacts rather than typed by hand:
 
@@ -202,6 +247,7 @@ limitations section and its honesty-log appendix.
 | V1 Vyb-native loader | **done** — 26/26 invariants match the Python reference |
 | M1 whole-connectome LIF baseline | **done** — dense and sparse engines agree exactly; 1 s of brain in 120 s of CPU |
 | M2 Vyb discrete-event engine | **done** — 4/4 replications match the reference exactly |
+| M2b Vyb multithreaded CPU ladder (1x–10x) | **done** — bit-exact digests vs the C++ reference; 10x runs at 4.46 s wall per bio-s |
 | M3 Vyb GPU kernels | **done** — tick-for-tick agreement with the CPU reference (512-neuron fixture) |
 | M4 energy instrumentation | **done** — GPU device power measured; CPU power unavailable on this machine |
 | M5–M8 geometry, downscaling, upscaling, closure | **done** — see section 5 of the paper |

@@ -51,7 +51,12 @@ gave three engines in `src/vyb/` - `ladder_prop` (per-thread/per-block edge bins
 three reproduce the deterministic C++ reference's epoch-0 spike digest bit for bit at every scale and
 thread count tried (1, 4, 8, 10, 12, 16, 20). Everything below came up while writing them.
 
-### Compiler / runtime (fixed or patched on perf/ursela-fly-vyb, local only)
+### Compiler / runtime (status as of 2026-10-26)
+
+The first two items below are in the Vyb PR for JIT inlining and host-CPU tuning. The
+narrow-store fix, the `prefetch` intrinsic and the `-O2` call-frame change are committed and
+tested on the `perf/ursela-fly-vyb` branch, and are proposed separately. The engines in this
+repo do not depend on any of them: they produce the same digests on stock Vyb 0.7.7.
 
 - **Every function is NoInline, even at -O2/-O3.** Small helpers (`ld64`, `st64`, `stat_add`) stayed
   real calls in hot loops. Patch: strip NoInline from defined functions before the -O2+ pipeline
@@ -61,13 +66,19 @@ thread count tried (1, 4, 8, 10, 12, 16, 20). Everything below came up while wri
   hot loops were already hand-inlined `freedom` blocks and are memory bound. They are kept because
   they are correct defaults for any compute-bound Vyb code.
 - **`__vyb_runtime_push/pop_call_frame` surrounds every call**, including `time_nanos()` and trivial
-  helpers (65 pairs in one scatter function). That is acceptable for debugging, but it should be
-  elided at -O2 or for leaf calls.
+  helpers (65 pairs in one scatter function, 169 sites in `ladder_desc`). On the branch, these calls
+  are now skipped at -O2 and above (`VYB_CALL_FRAMES=1` keeps them). With frames on, `fib(35)` takes
+  0.32 s; with them off it takes 0.10 s. `ladder_desc` did not change measurably. The same work fixed
+  a bug in the runtime call stack: recursion deeper than 256 frames printed two warnings per frame,
+  and pushes and pops went out of balance.
 
 ### Language / stdlib friction
 
 - Storing a literal through a narrower `loc<T>` (for example an Int literal into `loc<Int32>`) only
-  warns, and it corrupted memory. It should be an error, or the literal should be narrowed.
+  warned, and it did an 8-byte store that corrupted the neighbouring memory. **Fixed on the branch:**
+  an integer store now converts to the location's width. It truncates (with a warning for an
+  out-of-range constant), or it sign- or zero-extends. There is a regression test that clobbers the
+  neighbour on the old compiler.
 - Some reported errors do not stop execution, so later output can look valid after an earlier failure.
 - Generic inference fails on Float32 struct-literal fields.
 - `for x in vec` over a `Vec` fails, so the code falls back to index loops.
@@ -78,6 +89,9 @@ thread count tried (1, 4, 8, 10, 12, 16, 20). Everything below came up while wri
   arithmetic plus a hand-rolled atomic spin barrier.
 - There is no prefetch intrinsic (`llvm.prefetch`). The descriptor engine emulates one with a
   "touch the first record of the next 64 segments" pass. That pass bought about 30% on the pull phase.
+  **Added on the branch:** `prefetch(addr[, rw[, locality]])` lowers to `llvm.prefetch` and checks
+  its arguments at compile time. The engine here still uses the touch pass until the intrinsic
+  lands upstream.
 - It was unclear whether `&&` short-circuits in `freedom` code, so bounds-guarded scans use explicit
   `go` flags rather than risk an out-of-bounds read.
 - There is no Bool-to-Int conversion for branch-free counting; it is written as `((a - b) >> 63) & 1`.
@@ -86,5 +100,7 @@ thread count tried (1, 4, 8, 10, 12, 16, 20). Everything below came up while wri
 
 - `perf` is unavailable (kernel.perf_event_paranoid=4), so profiling meant in-engine phase timers
   plus reading the `-c x.o -O2` object with `objdump`.
-- The repo has no Python test runner (pytest is missing), so the equivalence checks are digest
-  comparisons in the RESULT lines.
+- pytest is not in the system Python or the project `.venv`. It is only an optional `dev`
+  dependency. With it installed (`pip install pytest` plus the project dependencies), `tests/`
+  passes 20/20. The ladder equivalence checks are digest comparisons of the `RESULT` line against
+  `sparse_prop_cpu`.
