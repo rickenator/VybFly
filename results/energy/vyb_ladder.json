@@ -580,6 +580,181 @@
      "note": "[rank 0, rank 1]; with copies the legacy-stream GPU wait is booked as dtoh"
     }
    }
+  },
+  "u8_weight_codes": {
+   "method": "per CSC edge a u8 code c (= syn, 1..255) and per target an f32 pair (hi, lo), hi + lo ~ gain / t; the kernel computes fma_f32(c, hi, c * lo). The host keeps a code only if it proves the result equals the reference f32 weight (exact double products, TwoSum-exact sum, equal after rounding); otherwise code 0 = read the f32 weight. A stimulus-flag bitmap (one bit per target, set by push) replaces update's per-neuron stimulus-count read.",
+   "env": "VYBFLY_GPU_W8 (default 1; 0 = every edge escapes, exact but slower than the old kernel)",
+   "host": "DGX Spark lefty (GB10), GPU otherwise idle, old and new kernels interleaved in one session",
+   "epochs": 8,
+   "reps": 2,
+   "digests_match_cpp_reference": true,
+   "escapes": {
+    "1x": {
+     "escaped": 38314,
+     "edges": 2700513
+    },
+    "2x": {
+     "escaped": 79273,
+     "edges": 5186025
+    },
+    "5x": {
+     "escaped": 196993,
+     "edges": 13500829
+    },
+    "10x": {
+     "escaped": 397849,
+     "edges": 27842102
+    },
+    "20x": {
+     "escaped": 811636,
+     "edges": 56025628
+    },
+    "40x": {
+     "escaped": 1622353,
+     "edges": 112293649
+    }
+   },
+   "sim_s_before": {
+    "1x": [
+     0.821,
+     0.81
+    ],
+    "2x": [
+     0.927,
+     0.958
+    ],
+    "5x": [
+     2.213,
+     2.228
+    ],
+    "10x": [
+     4.263,
+     4.283
+    ],
+    "20x": [
+     7.486,
+     7.612
+    ],
+    "40x": [
+     14.591,
+     14.917
+    ]
+   },
+   "sim_s_after": {
+    "1x": [
+     0.852,
+     0.856
+    ],
+    "2x": [
+     0.921,
+     0.898
+    ],
+    "5x": [
+     1.837,
+     1.92
+    ],
+    "10x": [
+     3.502,
+     3.343
+    ],
+    "20x": [
+     6.524,
+     6.449
+    ],
+    "40x": [
+     13.003,
+     12.768
+    ]
+   },
+   "load_s_before": {
+    "1x": [
+     0.342,
+     0.283
+    ],
+    "2x": [
+     0.302,
+     0.318
+    ],
+    "5x": [
+     0.416,
+     0.414
+    ],
+    "10x": [
+     0.601,
+     0.596
+    ],
+    "20x": [
+     0.98,
+     0.946
+    ],
+    "40x": [
+     1.758,
+     1.783
+    ]
+   },
+   "load_s_after": {
+    "1x": [
+     0.302,
+     0.297
+    ],
+    "2x": [
+     0.356,
+     0.367
+    ],
+    "5x": [
+     0.635,
+     0.58
+    ],
+    "10x": [
+     0.914,
+     0.895
+    ],
+    "20x": [
+     1.625,
+     1.736
+    ],
+    "40x": [
+     3.2,
+     2.909
+    ]
+   },
+   "best_change": {
+    "1x": 0.052,
+    "2x": -0.031,
+    "5x": -0.17,
+    "10x": -0.216,
+    "20x": -0.139,
+    "40x": -0.125
+   },
+   "split_40x_rdma_zc_sim_s": {
+    "before": [
+     7.966,
+     7.867
+    ],
+    "after": [
+     6.587,
+     6.681
+    ],
+    "bit_exact": true
+   },
+   "w8_off_check_sim_s": {
+    "1x": 1.081,
+    "20x": 9.231,
+    "bit_exact": true
+   },
+   "profile_40x_ms_per_step": {
+    "update_before": 1.307,
+    "update_after": 1.009,
+    "push_before": 0.59,
+    "push_after": 0.581,
+    "note": "nsys, 2 epochs"
+   },
+   "tried_and_dropped": [
+    "f64 weight math (exact by construction): update 2.5x slower, GB10 FP64 rate",
+    "16 or 8 lanes per source in push: slower than a warp",
+    "block 128-512 x push blocks 1024-4096 (40x, 2 epochs): 3.113-3.290 s vs 3.162 s default, best -1.5%; defaults kept",
+    "fusing push and update: needs a grid-wide sync"
+   ]
   }
  },
  "arm_cpu": {
