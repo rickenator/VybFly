@@ -60,7 +60,7 @@
         "stream": 0,
         "synaptic_events": 22702285,
         "ticks_processed": 19841,
-        "wall_ms": 23058
+        "wall_ms": 13749
       },
       "replication": "main",
       "sorted_tick_entity_lists_identical": true,
@@ -85,14 +85,14 @@
         "horizon_ticks": 20000,
         "max_batch": 1875,
         "name": "main",
-        "sim_ms": 5697,
+        "sim_ms": 519,
         "spike_hash": 8255019552550552538,
         "spikes": 771379,
         "stimulus_events": 64000,
         "stream": 0,
         "synaptic_events": 22702285,
         "ticks_processed": 19841,
-        "wall_ms": 5702
+        "wall_ms": 520
       },
       "vyb_spikes": 771379
     },
@@ -156,7 +156,7 @@
         "stream": 0,
         "synaptic_events": 86500,
         "ticks_processed": 382,
-        "wall_ms": 221
+        "wall_ms": 102
       },
       "replication": "det_a",
       "sorted_tick_entity_lists_identical": true,
@@ -181,14 +181,14 @@
         "horizon_ticks": 500,
         "max_batch": 644,
         "name": "det_a",
-        "sim_ms": 28,
+        "sim_ms": 5,
         "spike_hash": -943723657370235180,
         "spikes": 3064,
         "stimulus_events": 1676,
         "stream": 0,
         "synaptic_events": 86500,
         "ticks_processed": 382,
-        "wall_ms": 29
+        "wall_ms": 5
       },
       "vyb_spikes": 3064
     },
@@ -252,7 +252,7 @@
         "stream": 0,
         "synaptic_events": 86500,
         "ticks_processed": 382,
-        "wall_ms": 122
+        "wall_ms": 103
       },
       "replication": "det_b",
       "sorted_tick_entity_lists_identical": true,
@@ -277,14 +277,14 @@
         "horizon_ticks": 500,
         "max_batch": 644,
         "name": "det_b",
-        "sim_ms": 75,
+        "sim_ms": 4,
         "spike_hash": -943723657370235180,
         "spikes": 3064,
         "stimulus_events": 1676,
         "stream": 0,
         "synaptic_events": 86500,
         "ticks_processed": 382,
-        "wall_ms": 76
+        "wall_ms": 4
       },
       "vyb_spikes": 3064
     },
@@ -348,7 +348,7 @@
         "stream": 1,
         "synaptic_events": 23860,
         "ticks_processed": 185,
-        "wall_ms": 65
+        "wall_ms": 63
       },
       "replication": "alt",
       "sorted_tick_entity_lists_identical": true,
@@ -373,14 +373,14 @@
         "horizon_ticks": 500,
         "max_batch": 333,
         "name": "alt",
-        "sim_ms": 17,
+        "sim_ms": 3,
         "spike_hash": -8830484365616964128,
         "spikes": 841,
         "stimulus_events": 835,
         "stream": 1,
         "synaptic_events": 23860,
         "ticks_processed": 185,
-        "wall_ms": 17
+        "wall_ms": 3
       },
       "vyb_spikes": 841
     }
@@ -517,11 +517,11 @@
     "root": "~/Projects/VybFly/data/processed/tiny_net"
   },
   "gate": "PROJECT-VYBFLY.md 8 / milestone M2 - Vyb discrete-event runtime vs independent reference",
-  "generated_utc": "2026-09-17T22:40:18Z",
+  "generated_utc": "2026-10-27T01:09:09Z",
   "host": {
     "cpu_count": 20,
     "hostname": "ASUS-Z590-E",
-    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
     "python": "3.12.3"
   },
   "reference": [
@@ -540,7 +540,7 @@
       "stream": 0,
       "synaptic_events": 22702285,
       "ticks_processed": 19841,
-      "wall_ms": 23058
+      "wall_ms": 13749
     },
     {
       "bio_ms": 50.0,
@@ -557,7 +557,7 @@
       "stream": 0,
       "synaptic_events": 86500,
       "ticks_processed": 382,
-      "wall_ms": 221
+      "wall_ms": 102
     },
     {
       "bio_ms": 50.0,
@@ -574,7 +574,7 @@
       "stream": 0,
       "synaptic_events": 86500,
       "ticks_processed": 382,
-      "wall_ms": 122
+      "wall_ms": 103
     },
     {
       "bio_ms": 50.0,
@@ -591,7 +591,7 @@
       "stream": 1,
       "synaptic_events": 23860,
       "ticks_processed": 185,
-      "wall_ms": 65
+      "wall_ms": 63
     }
   ],
   "reference_cross_replication_determinism": {
@@ -623,18 +623,19 @@
     "binary": {
       "binary": "~/Projects/Vyb/build/vyb",
       "exists": true,
-      "mtime_iso": "2026-09-12T00:21:32-0700",
-      "size_bytes": 172058648,
-      "version": "Vyb 0.7.5 (build=Debug, sanitize=none)"
+      "mtime_iso": "2026-10-10T19:22:10-0700",
+      "size_bytes": 179584624,
+      "version": "Vyb 0.7.7 (build=Debug, sanitize=none)"
     },
     "invocation": "VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb src/vyb/phase2_des.vyb --module-path src/vyb",
-    "module_path": "~/Projects/VybFly/src/vyb",
+    "module_path": "~/ursela-fly/VybFly/src/vyb",
     "runtime_module": "src/vyb/des.vyb (main-less share(all) DES runtime)",
     "stdlib": "~/Projects/Vyb/stdlib"
   },
   "vyb_summary": {
     "bio_ms": 2000,
-    "bio_ms_per_wall_second": 350,
+    "bio_ms_per_wall_second": 3846,
+    "des_engine": "ring",
     "det_a_spike_hash": -943723657370235180,
     "det_a_spikes": 3064,
     "det_b_spike_hash": -943723657370235180,
@@ -643,7 +644,7 @@
     "experiment": "m2-tiny-lif-des",
     "fixture": "data/processed/tiny_net/",
     "host": "ASUS-Z590-E",
-    "load_ms": 443,
+    "load_ms": 117,
     "max_bucket_len": 1875,
     "max_delay_ticks": 8,
     "milestone": "M2 - Vyb discrete-event runtime (PROJECT-VYBFLY.md 8)",
@@ -651,13 +652,13 @@
     "n_neurons": 640,
     "n_replications": 4,
     "primary_events_per_bio_second": 11383142,
-    "primary_events_per_wall_second": 3996188,
+    "primary_events_per_wall_second": 43865674,
     "primary_events_scheduled": 22766285,
     "primary_horizon_ticks": 20000,
-    "primary_sim_ms": 5697,
+    "primary_sim_ms": 519,
     "primary_spikes": 771379,
-    "primary_spikes_per_wall_second": 135400,
-    "primary_wall_ms": 5702,
+    "primary_spikes_per_wall_second": 1486279,
+    "primary_wall_ms": 520,
     "replications": [
       {
         "determinism_ok": 1,
@@ -666,14 +667,14 @@
         "horizon_ticks": 20000,
         "max_batch": 1875,
         "name": "main",
-        "sim_ms": 5697,
+        "sim_ms": 519,
         "spike_hash": 8255019552550552538,
         "spikes": 771379,
         "stimulus_events": 64000,
         "stream": 0,
         "synaptic_events": 22702285,
         "ticks_processed": 19841,
-        "wall_ms": 5702
+        "wall_ms": 520
       },
       {
         "determinism_ok": 1,
@@ -682,14 +683,14 @@
         "horizon_ticks": 500,
         "max_batch": 644,
         "name": "det_a",
-        "sim_ms": 28,
+        "sim_ms": 5,
         "spike_hash": -943723657370235180,
         "spikes": 3064,
         "stimulus_events": 1676,
         "stream": 0,
         "synaptic_events": 86500,
         "ticks_processed": 382,
-        "wall_ms": 29
+        "wall_ms": 5
       },
       {
         "determinism_ok": 1,
@@ -698,14 +699,14 @@
         "horizon_ticks": 500,
         "max_batch": 644,
         "name": "det_b",
-        "sim_ms": 75,
+        "sim_ms": 4,
         "spike_hash": -943723657370235180,
         "spikes": 3064,
         "stimulus_events": 1676,
         "stream": 0,
         "synaptic_events": 86500,
         "ticks_processed": 382,
-        "wall_ms": 76
+        "wall_ms": 4
       },
       {
         "determinism_ok": 1,
@@ -714,14 +715,14 @@
         "horizon_ticks": 500,
         "max_batch": 333,
         "name": "alt",
-        "sim_ms": 17,
+        "sim_ms": 3,
         "spike_hash": -8830484365616964128,
         "spikes": 841,
         "stimulus_events": 835,
         "stream": 1,
         "synaptic_events": 23860,
         "ticks_processed": 185,
-        "wall_ms": 17
+        "wall_ms": 3
       }
     ],
     "scheduler_bucket_width_ticks": 1,
@@ -729,17 +730,17 @@
     "schema": "flyscale.phase2.des_summary/1",
     "short_horizon_ticks": 500,
     "tick_micros": 100,
-    "total_bucket_turns_advanced": 21496,
+    "total_bucket_turns_advanced": 21500,
     "total_events_all_replications": 22967332,
     "total_far_events": 0,
     "total_late_events": 0,
-    "total_recycles": 22887353,
+    "total_recycles": 0,
     "total_ring_grows": 0,
     "total_spikes_all_replications": 778348,
     "vyb_invocation": "VYB_STDLIB=~/Projects/Vyb/stdlib ~/Projects/Vyb/build/vyb src/vyb/phase2_des.vyb --module-path src/vyb",
     "vyb_module_path": "src/vyb",
     "vyb_stdlib": "VYB_STDLIB=~/Projects/Vyb/stdlib",
-    "wall_ms_total": 8494
+    "wall_ms_total": 1254
   },
   "vyb_summary_consistency": {
     "determinism_ok": true,
