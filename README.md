@@ -217,7 +217,18 @@ libibverbs is opened with `dlopen` at run time, so a TCP run needs nothing new. 
 7.45 s on one GB10. That is 1.64x faster than one GB10, and bit-exact. A ping-pong written in Vyb
 over the same verbs takes 2.3 us for 16 bytes and 87.5 us for 1 MB each way (12 GB/s), against
 100 to 230 us and 355 to 454 us over TCP. Most of the remaining exchange time is the copy of the
-fired list back to the host. 40x and 10x have not been rerun over RDMA yet.
+fired list back to the host.
+
+At 10x and 40x RDMA pays off as well. These are 8 epochs, two runs each, both bit-exact (10x
+42322697548985024/188222298830040, 40x 239142599791732164/1733953483748172):
+
+| 8 epochs | one GB10 | two GB10s, TCP | two GB10s, RDMA | RDMA vs one GB10 |
+|---|---|---|---|---|
+| 10x | 4.19 s | 6.09 s (serialized) | **2.61 s**, 2.63 s | 1.60x |
+| 20x | 7.45 s | 7.59 s | **4.54 s**, 4.57 s | 1.64x |
+| 40x | 14.71 s | 11.35 s | **8.05 s**, 8.18 s | 1.83x |
+
+So with RDMA two Sparks now beat one at every scale tried, including 10x, where TCP lost.
 
 Run it, rank 0 first, on two machines that share the graph files:
 
