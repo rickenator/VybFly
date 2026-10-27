@@ -475,7 +475,7 @@
     "pingpong_8B_blocking_us": 798,
     "wmem_max_bytes": 212992
    },
-   "finding": "over TCP the per-step exchange (~0.35 ms at 20x) eats most of the halved GPU time (10x loses, 40x wins 1.30x); over RDMA the split beats one GB10 at 10x (1.60x), 20x (1.64x) and 40x (1.83x)",
+   "finding": "over TCP the per-step exchange (~0.35 ms at 20x) eats most of the halved GPU time (10x loses, 40x wins 1.30x); over RDMA the split beats one GB10 at 10x (1.60x), 20x (1.64x), 40x (1.83x) and 80x (2.18x)",
    "40x_sim_s": {
     "one_gb10": 14.707,
     "two_duplex_overlapped_push": [
@@ -502,7 +502,22 @@
     "speedup_best_vs_one_gb10": {
      "10x": 1.6,
      "20x": 1.64,
-     "40x": 1.83
+     "40x": 1.83,
+     "80x": 2.18
+    },
+    "80x": [
+     15.602,
+     15.621
+    ],
+    "one_gb10_80x": [
+     34.05,
+     34.102
+    ],
+    "digest_80x": {
+     "digest_sum": 508755035752662158,
+     "digest_xor": 103693891554914,
+     "n_neurons": 11140400,
+     "n_edges": 224835333
     }
    }
   }
