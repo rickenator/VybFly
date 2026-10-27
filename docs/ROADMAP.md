@@ -31,7 +31,7 @@ listed; anything unverified is stated as such.
 | M12 | Scaling benchmarks (capability vs size) | **done** - 4 scales, identical protocol fingerprint; PR ~ N^0.318, MI@delta=0.1 alpha=1.014, capacity 8->96 (censored); temporal/sequence depth 0 at every scale |
 | M13 | Energy curves (power vs size) | **done** - ~438/500/946/2022 J for 1x/2x/5x/10x (~5% run-to-run; see `results/energy/CURVES-NOTE.md`); J per spike falls 8.9->4.2 uJ |
 | M14 | Capability/watt | **done (lower bound)** - 0.070/0.615/0.612/0.526 capacity-units per GPU watt; numerator censored at the 96-class grid from 2x up |
-| M15 | 100x attempt (~14M neurons) | not attempted; the doc makes it conditional on prior results |
+| M15 | 100x attempt (~14M neurons) | **graph done, propagation not attempted** - `results/upscale100/` holds the verified 100x graph (13,925,500 child records, placement re-run after #301 with the pin removed, `docs/VYB-PORT.md` §100x); the largest SIMULATED scale is 80x on two Sparks |
 
 ## Phases
 

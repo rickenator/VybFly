@@ -421,12 +421,13 @@ limitations section and its honesty-log appendix.
 | M1 whole-connectome LIF baseline | **done** — dense and sparse engines agree exactly; 1 s of brain in 120 s of CPU |
 | M2 Vyb discrete-event engine | **done** — 4/4 replications match the reference exactly |
 | M2b Vyb multithreaded CPU ladder (1x–10x) | **done** — bit-exact digests vs the C++ reference; 10x runs at 4.15 s wall per bio-s |
-| M3 Vyb GPU kernels | **done** — tick-for-tick agreement with the CPU reference (512-neuron fixture) |
+| M3 Vyb GPU engine (ladder workload) | **done** — bit-exact digests, spike counts and synaptic events against the C++ reference at 1x–40x on an RTX 3090 and 1x–10x on a GB10; 2.4x–4.8x the CUDA `sparse_prop.cu` kernel on the same GPU, without float atomics. (The older 512-neuron fixture agreement is the M3 harness, not the ceiling.) |
+| M3b two-Spark split | **done** — one connectome across both Sparks, bit-exact at 10x, 20x, 40x and 80x; 2.18x over one GB10 at 80x with RDMA (15.60 s vs 34.05 s), 15.28 s with the zero-copy exchange, which is then bound by the kernels rather than the wire |
 | M4 energy instrumentation | **done** — GPU device power measured; CPU power unavailable on this machine |
 | M5–M8 geometry, downscaling, upscaling, closure | **done** — see section 5 of the paper |
 | M9 dynamic validation of the replicas | **done** — 85–95% active-set overlap |
 | M11–M14 learning, capability, energy scaling, capability per watt | **done** — including the negative control result |
-| M15 100× graph (~14M neurons) | **gated, not attempted** — needs the sibling-edge placement vectorized first |
+| M15 100× ~14M neurons | **graph done, propagation not attempted** — the 100× graph itself exists and is verified (`results/upscale100/`: 13,925,500 child records, 0.000000% on their parent, placement re-run after #301 with the workaround pin removed — `docs/VYB-PORT.md` §100x). No ladder run at 100× yet: 80× (11.1M neurons, 225M edges) on two Sparks is the largest simulated scale |
 
 ## Credits and data
 
