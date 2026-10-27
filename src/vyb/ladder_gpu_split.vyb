@@ -14,6 +14,8 @@
 // concatenation is fine. At the end rank 1 sends its stats to rank 0, which adds the counts,
 // sums digest_sum, xors digest_xor and prints the combined RESULT line.
 //
+// The u8 weight codes (wq, hh; see ladder_gpu.vyb) are built over the global CSC and each rank
+// uploads its slice, so VYBFLY_GPU_W8 works the same here.
 // Config: everything ladder_gpu.vyb reads, plus VYBFLY_SPLIT_PARTS (2; 1 runs the partitioned
 // code path on one GPU, a self-check), VYBFLY_SPLIT_RANK (0 or 1), VYBFLY_SPLIT_PEER (rank 0's
 // IP, used by rank 1), VYBFLY_SPLIT_PORT (47011). Start both ranks; rank 1 retries its connect
@@ -469,6 +471,22 @@ set_opt(fd<Int>, level<Int>, opt<Int>, scratch<Int>) -> {
 nap(us<Int>) -> { freedom { usleep(us as UInt32) } }
 close_fd(fd<Int>) -> { freedom { close(fd as Int32) } }
 
+// u8 weight code of an edge (see the header): the kernel computes fma(c, hi, c * lo) in f32. In
+// double, P = c * hi and c * lo are exact (8 + 24 bits), so Q = (f32)(c * lo) is the kernel's
+// product and the fma is (f32)(P + Q) rounded once. When the double sum S = P + Q is exact
+// (TwoSum error 0), (f32)S is that value; otherwise the edge escapes (returns 0). The code is kept
+// only when it reproduces the reference weight wf.
+wq_code(c<Int>, hi<Float32>, lo<Float32>, wf<Float32>)<Int> -> {
+    cf<Float> = c as Float
+    p<Float> = cf * (hi as Float)
+    q<Float> = ((cf * (lo as Float)) as Float32) as Float
+    s<Float> = p + q
+    bb<Float> = s - p
+    err<Float> = (p - (s - bb)) + (q - bb)
+    if (err == 0.0 && (s as Float32) == wf) { return c }
+    return 0
+}
+
 env_int(name<String>, d<Int>)<Int> -> {
     match (env_get(name)) {
         s -> { return s.to_int() }
@@ -501,6 +519,7 @@ main()<Int> -> {
     pblocks<Int> = env_int("VYBFLY_GPU_PUSH_BLOCKS", 2048)
     devno<Int> = env_int("VYBFLY_GPU_DEVICE", 0)
     maxa<Int> = env_int("VYBFLY_MAX_ACTIVE", 300000)
+    w8<Int> = env_int("VYBFLY_GPU_W8", 1)
     parts<Int> = env_int("VYBFLY_SPLIT_PARTS", 2)
     rank<Int> = env_int("VYBFLY_SPLIT_RANK", 0)
     port<Int> = env_int("VYBFLY_SPLIT_PORT", 47011)
@@ -567,6 +586,9 @@ main()<Int> -> {
     ccur<Int> = alloc0(n, 8)
     cpos<Int> = alloc0(ne, 4)
     wc<Int> = alloc0(ne, 4)
+    wq<Int> = alloc0(ne + 32, 1)
+    hh<Int> = alloc0(n, 8)
+    var<Int> nesc = 0
     g<Float> = gain as Float
     var<Int> bad = 0
     freedom {
@@ -584,6 +606,13 @@ main()<Int> -> {
             a<Int> = at(from<loc<Int>>(cptr + 8 * j))
             at(from<loc<Int>>(cptr + 8 * (j + 1))) = at(from<loc<Int>>(cptr + 8 * (j + 1))) + a
             at(from<loc<Int>>(ccur + 8 * j)) = a
+            t0<Float> = at(from<loc<Float>>(tin + 8 * j))
+            if (t0 > 0.0) {
+                hd<Float> = g / t0
+                hi<Float32> = hd as Float32
+                at(from<loc<Float32>>(hh + 8 * j)) = hi
+                at(from<loc<Float32>>(hh + 8 * j + 4)) = (hd - (hi as Float)) as Float32
+            }
             j = j + 1
         }
         var<Int> s = 0
@@ -598,19 +627,27 @@ main()<Int> -> {
                 prev = d
                 tt<Float> = at(from<loc<Float>>(tin + 8 * d))
                 var<Float32> wf = 0.0
+                var<Int> code = 0
                 if (tt > 0.0) {
-                    sv<Float> = (at(from<loc<Int32>>(syn + 4 * e2)) as Int) as Float
+                    svi<Int> = at(from<loc<Int32>>(syn + 4 * e2)) as Int
+                    sv<Float> = svi as Float
                     wf = ((g * sv) / tt) as Float32
+                    if (w8 == 1 && svi >= 1 && svi <= 255) {
+                        code = wq_code(svi, at(from<loc<Float32>>(hh + 8 * d)), at(from<loc<Float32>>(hh + 8 * d + 4)), wf)
+                    }
                 }
                 cp<Int> = at(from<loc<Int>>(ccur + 8 * d))
                 at(from<loc<Int>>(ccur + 8 * d)) = cp + 1
                 at(from<loc<Int32>>(cpos + 4 * e2)) = cp as Int32
                 at(from<loc<Float32>>(wc + 4 * cp)) = wf
+                at(from<loc<UInt8>>(wq + cp)) = code as UInt8
+                if (code == 0) { nesc = nesc + 1 }
                 e2 = e2 + 1
             }
             s = s + 1
         }
     }
+    println("ladder_gpu_split: u8 weight codes, {} of {} edges escape to f32".format(nesc, ne))
     if (bad > 0) {
         println("ladder_gpu_split: CSR rows not strictly ascending ({} edges); exact order not guaranteed".format(bad))
         return 3
@@ -694,6 +731,7 @@ main()<Int> -> {
     vthb<Int> = ld32(fb + 4)
     nstat<Int> = 8 + epochs
     nwords<Int> = (nel + 31) / 32 + 1
+    nsfl<Int> = ((nl + blk - 1) / blk + 1) * blk / 32 + 1
     // host exchange buffers: [count i64][ids i32 ...]; zero-copy keeps two send halves
     var<Int> zc = env_int("VYBFLY_SPLIT_ZC", 1)
     if (parts != 2 || env_int("VYBFLY_SPLIT_OVERLAP", 1) != 1) { zc = 0 }
@@ -765,7 +803,10 @@ main()<Int> -> {
         d_refr<Int> = dalloc(4 * nl + 4)
         d_peer<Int> = dalloc(4 * maxa + 4)
         d_ctl2<Int> = dalloc(16)
-        if (d_ip == 0 || d_dst == 0 || d_cpos == 0 || d_cptr == 0 || d_wc == 0 || d_bm == 0 ||
+        d_wq<Int> = dalloc(32 * nwords)
+        d_hh<Int> = dalloc(8 * nl + 8)
+        d_sfl<Int> = dalloc(4 * nsfl)
+        if (d_wq == 0 || d_hh == 0 || d_sfl == 0 || d_ip == 0 || d_dst == 0 || d_cpos == 0 || d_cptr == 0 || d_wc == 0 || d_bm == 0 ||
             d_act == 0 || d_ctl == 0 || d_sids == 0 || d_scnt == 0 || d_sslot == 0 ||
             d_stats == 0 || d_vm == 0 || d_refr == 0 || d_peer == 0 || d_ctl2 == 0) {
             println("ladder_gpu_split: device allocation failed")
@@ -777,6 +818,9 @@ main()<Int> -> {
         ok = ok * upload(d_cpos, lcpos, 4 * nel)
         ok = ok * upload(d_cptr, lcptr, 4 * (nl + 1))
         ok = ok * upload(d_wc, lwc, 4 * nel)
+        ok = ok * upload(d_wq, wq + clo, nel)
+        ok = ok * upload(d_hh, hh + 8 * lo, 8 * nl)
+        ok = ok * zero32(d_sfl, nsfl)
         ok = ok * upload(d_sids, vids, 4 * nv + 4)
         ok = ok * zero32(d_bm, nwords)
         ok = ok * zero32(d_scnt, nl + 1)
@@ -826,7 +870,7 @@ main()<Int> -> {
         k_vthb<Int> = vthb
         k_lo<Int> = lo
         k_gn<Int> = n
-        pp<[Int; 15]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        pp<[Int; 16]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         pp[0] = addr(d_ip)
         pp[1] = addr(d_dst)
         pp[2] = addr(d_cpos)
@@ -842,12 +886,13 @@ main()<Int> -> {
         pp[12] = addr(k_ns)
         pp[13] = addr(k_n)
         pp[14] = addr(k_maxa)
+        pp[15] = addr(d_sfl)
         // pushB: the peer's fired ids (global), its own count buffer, no stimulus
         var<Int> q_cur = 0
         k_zero<Int> = 0
-        pq<[Int; 15]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        pq<[Int; 16]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         var<Int> qi = 0
-        while (qi < 15) {
+        while (qi < 16) {
             pq[qi] = pp[qi]
             qi = qi + 1
         }
@@ -859,7 +904,7 @@ main()<Int> -> {
         pq[10] = addr(q_cur)
         pq[11] = addr(k_zero)
         pq[12] = addr(k_zero)
-        pu<[Int; 20]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        pu<[Int; 23]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         pu[0] = addr(d_cptr)
         pu[1] = addr(d_wc)
         pu[2] = addr(d_bm)
@@ -880,6 +925,9 @@ main()<Int> -> {
         pu[17] = addr(k_vthb)
         pu[18] = addr(k_lo)
         pu[19] = addr(k_gn)
+        pu[20] = addr(d_wq)
+        pu[21] = addr(d_hh)
+        pu[22] = addr(d_sfl)
         var<Int> ugrid = (nl + blk - 1) / blk
         if (ugrid < 1) { ugrid = 1 }
         hpa<Int> = addr(hpush)
@@ -920,15 +968,15 @@ main()<Int> -> {
             k_act = d_act
             k_s0 = ld64(voff)
             k_ns = ld64(voff + 8) - k_s0
-            ok = ok * launch(hpa, pblocks, blk, ppa, 15)
+            ok = ok * launch(hpa, pblocks, blk, ppa, 16)
             while (step < steps) {
                 q_cur = 0
-                ok = ok * launch(hpa, pblocks, blk, pqa, 15)
+                ok = ok * launch(hpa, pblocks, blk, pqa, 16)
                 hb<Int> = hsend + zstride * (1 - cur)
                 k_nc = 1 - cur
                 k_nxt = hb + 8 + zd_send
                 k_step = step
-                ok = ok * launch(hua, ugrid, blk, pua, 20)
+                ok = ok * launch(hua, ugrid, blk, pua, 23)
                 tc0<Int> = time_nanos() else 0
                 if (cuCtxSynchronize() != 0) { ok = 0 }
                 tcg<Int> = time_nanos() else 0
@@ -943,7 +991,7 @@ main()<Int> -> {
                     k_act = k_nxt
                     k_s0 = ld64(voff + 8 * (step + 1))
                     k_ns = ld64(voff + 8 * (step + 2)) - k_s0
-                    ok = ok * launch(hpa, pblocks, blk, ppa, 15)
+                    ok = ok * launch(hpa, pblocks, blk, ppa, 16)
                 }
                 var<Int> rb = hrecv
                 var<Int> cp = 0
@@ -983,14 +1031,14 @@ main()<Int> -> {
             k_act = d_act
             k_s0 = ld64(voff)
             k_ns = ld64(voff + 8) - k_s0
-            ok = ok * launch(hpa, pblocks, blk, ppa, 15)
+            ok = ok * launch(hpa, pblocks, blk, ppa, 16)
             while (step < steps) {
                 q_cur = cur
-                ok = ok * launch(hpa, pblocks, blk, pqa, 15)
+                ok = ok * launch(hpa, pblocks, blk, pqa, 16)
                 k_nc = 1 - cur
                 k_nxt = d_act + 4 * maxa * (1 - cur)
                 k_step = step
-                ok = ok * launch(hua, ugrid, blk, pua, 20)
+                ok = ok * launch(hua, ugrid, blk, pua, 23)
                 tc0<Int> = time_nanos() else 0
                 if (prof == 1) {
                     if (cuCtxSynchronize() != 0) { ok = 0 }
@@ -1008,7 +1056,7 @@ main()<Int> -> {
                     k_act = k_nxt
                     k_s0 = ld64(voff + 8 * (step + 1))
                     k_ns = ld64(voff + 8 * (step + 2)) - k_s0
-                    ok = ok * launch(hpa, pblocks, blk, ppa, 15)
+                    ok = ok * launch(hpa, pblocks, blk, ppa, 16)
                 }
                 var<Int> rb = hrecv
                 var<Int> cp = 0
@@ -1048,8 +1096,8 @@ main()<Int> -> {
                 k_s0 = ld64(voff + 8 * step)
                 k_ns = ld64(voff + 8 * (step + 1)) - k_s0
                 k_step = step
-                ok = ok * launch(hpa, pblocks, blk, ppa, 15)
-                ok = ok * launch(hua, ugrid, blk, pua, 20)
+                ok = ok * launch(hpa, pblocks, blk, ppa, 16)
+                ok = ok * launch(hua, ugrid, blk, pua, 23)
                 if (parts == 2) {
                     // the legacy-stream copy waits for update to finish
                     tc0<Int> = time_nanos() else 0

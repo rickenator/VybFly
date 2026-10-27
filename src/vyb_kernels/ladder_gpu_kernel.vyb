@@ -10,10 +10,13 @@
 //           cpos[e] of a bitmap over CSC positions (in-edges of each target, sorted by source),
 //           a fire-and-forget red.global.or -- no value is accumulated, so arrival order is
 //           irrelevant. A STIMULUS edge (rare: <= 6 sources per step) appends (q << 32 | cpos)
-//           to the target's stimulus slots, q being its position in the step's stimulus list.
+//           to the target's stimulus slots, q being its position in the step's stimulus list,
+//           and sets the target's bit in the stimulus-flag bitmap sfl.
 //   update  one thread per neuron: walk the neuron's CSC bit range in ascending position
 //           (ctz), summing weights in exactly the reference order, clear the bits, then add the
-//           stimulus slots in ascending q; leak, integrate, threshold, refractory. Spikes are
+//           stimulus slots in ascending q (only when the neuron's sfl bit is set; lane 0 clears
+//           the warp's sfl word); leak, integrate, threshold, refractory. Each weight comes from
+//           a u8 code (see the update kernel's comment) or, for code 0, the f32 wc. Spikes are
 //           appended warp-aggregated (ballot + popc), the epoch-0 spike digest is reduced over
 //           the warp (it is order-independent) and added with one i64 add + xor per warp.
 //
@@ -30,7 +33,7 @@
 // stats (i64): [0] synaptic events  [1] digest sum  [2] digest xor  [3] overflow  [8+ep] spikes
 
 lgpu_push(ip<Int>, dst<Int>, cpos<Int>, bm<Int>, act<Int>, ctl<Int>, sids<Int>, scnt<Int>,
-          sslot<Int>, stats<Int>, cur<Int>, s0<Int>, ns<Int>, n<Int>, maxa<Int>) -> {
+          sslot<Int>, stats<Int>, cur<Int>, s0<Int>, ns<Int>, n<Int>, maxa<Int>, sfl<Int>) -> {
     g<Int> = blk_x() * dim_x() + tid_x()
     lane<Int> = g & 31
     nw<Int> = (grid_x() * dim_x()) >> 5
@@ -59,6 +62,7 @@ lgpu_push(ip<Int>, dst<Int>, cpos<Int>, bm<Int>, act<Int>, ctl<Int>, sids<Int>, 
                 p<Int> = ldg_u32(cpos + e * 4) as Int
                 j<Int> = ld_i32(dst + e * 4) as Int
                 r<Int> = atomic_add_i32(scnt + j * 4, 1) as Int
+                atomic_or_u32(sfl + (j >> 5) * 4, 1 << (j & 31))
                 st_i64(sslot + (r * n + j) * 8, (q << 32) | p)
                 e = e + 32
             }
@@ -88,14 +92,23 @@ wxor64(x<Int>)<Int> -> {
     return s
 }
 
+// Weights come from u8 codes: c = wq[p] != 0 means wc[p] == fma(c, hi, c * lo) exactly, (hi, lo)
+// being the target's f32 pair hh (hi + lo ~ gain / t); the host checked it edge by edge.
+// c == 0 (an escape: syn > 255, or the host could not prove the value) means read the f32 wc[p].
+// All f32: GB10's FP64 rate makes a double multiply per edge cost 2x the kernel. The arithmetic is
+// written inline: the compiler emits kernel helper functions as real .func calls.
+
 // Launch with ceil(n / block) * block threads, block a multiple of 32: the tail lanes of the
 // last warp do no neuron work but take part in the warp collectives.
 lgpu_update(cptr<Int>, wc<Int>, bm<Int>, vm<Int>, refr<Int>, ctl<Int>, scnt<Int>, sslot<Int>,
             stats<Int>, nxt<Int>, nc<Int>, step<Int>, n<Int>, maxa<Int>, ep<Int>, rs<Int>,
-            decb<Int>, vthb<Int>, lo<Int>, gn<Int>) -> {
+            decb<Int>, vthb<Int>, lo<Int>, gn<Int>, wq<Int>, hh<Int>, sfl<Int>) -> {
     i<Int> = blk_x() * dim_x() + tid_x()
     lane<Int> = i & 31
     var<Int> fire = 0
+    // the warp's stimulus-flag word (32 consecutive neurons): one broadcast load replaces a
+    // per-neuron scnt read; lane 0 clears it after the ballot below (a warp sync point)
+    sw<Int> = ld_u32(sfl + (i >> 5) * 4) as Int
     if (i < n) {
         decay<Float32> = f32_from_bits(decb)
         vth<Float32> = f32_from_bits(vthb)
@@ -105,6 +118,8 @@ lgpu_update(cptr<Int>, wc<Int>, bm<Int>, vm<Int>, refr<Int>, ctl<Int>, scnt<Int>
         var<Float32> sum = 0.0 as Float32
         var<Int> touched = 0
         if (b > a) {
+            hhi<Float32> = ld_f32n(hh + i * 8)
+            hlo<Float32> = ld_f32n(hh + i * 8 + 4)
             wa<Int> = a >> 5
             wb<Int> = (b - 1) >> 5
             var<Int> w = wa
@@ -123,10 +138,11 @@ lgpu_update(cptr<Int>, wc<Int>, bm<Int>, vm<Int>, refr<Int>, ctl<Int>, scnt<Int>
                         // boundary word shared with a neighbor's set bits needs the atomic
                         if ((word & (4294967295 ^ m)) == 0) { st_u32(bm + w * 4, 0) }
                         else { atomic_and_u32(bm + w * 4, 4294967295 ^ x) }
-                        // up to 8 set bits per round: issue the 8 independent weight loads
-                        // first, then add them in ascending position (the reference order),
-                        // so 8 memory latencies overlap instead of serialising on the sum
-                        wb32<Int> = wc + w * 128
+                        // up to 8 set bits per round: issue the 8 independent code loads
+                        // first (one 32-byte sector per bitmap word), then add the weights in
+                        // ascending position (the reference order)
+                        pw<Int> = w * 32
+                        wq8<Int> = wq + pw
                         while (x != 0) {
                             t0<Int> = ctz_u32(x)
                             x = x & (x - 1)
@@ -159,14 +175,30 @@ lgpu_update(cptr<Int>, wc<Int>, bm<Int>, vm<Int>, refr<Int>, ctl<Int>, scnt<Int>
                             if (x != 0) { t7 = ctz_u32(x)
                                 x = x & (x - 1)
                                 k = 8 }
-                            f0<Float32> = ld_f32n(wb32 + t0 * 4)
-                            f1<Float32> = ld_f32n(wb32 + t1 * 4)
-                            f2<Float32> = ld_f32n(wb32 + t2 * 4)
-                            f3<Float32> = ld_f32n(wb32 + t3 * 4)
-                            f4<Float32> = ld_f32n(wb32 + t4 * 4)
-                            f5<Float32> = ld_f32n(wb32 + t5 * 4)
-                            f6<Float32> = ld_f32n(wb32 + t6 * 4)
-                            f7<Float32> = ld_f32n(wb32 + t7 * 4)
+                            c0<Int> = ld_u8(wq8 + t0) as Int
+                            c1<Int> = ld_u8(wq8 + t1) as Int
+                            c2<Int> = ld_u8(wq8 + t2) as Int
+                            c3<Int> = ld_u8(wq8 + t3) as Int
+                            c4<Int> = ld_u8(wq8 + t4) as Int
+                            c5<Int> = ld_u8(wq8 + t5) as Int
+                            c6<Int> = ld_u8(wq8 + t6) as Int
+                            c7<Int> = ld_u8(wq8 + t7) as Int
+                            var<Float32> f0 = 0.0 as Float32
+                            var<Float32> f1 = 0.0 as Float32
+                            var<Float32> f2 = 0.0 as Float32
+                            var<Float32> f3 = 0.0 as Float32
+                            var<Float32> f4 = 0.0 as Float32
+                            var<Float32> f5 = 0.0 as Float32
+                            var<Float32> f6 = 0.0 as Float32
+                            var<Float32> f7 = 0.0 as Float32
+                            if (c0 != 0) { f0 = fma_f32(c0 as Float32, hhi, (c0 as Float32) * hlo) } else { f0 = ld_f32n(wc + (pw + t0) * 4) }
+                            if (c1 != 0) { f1 = fma_f32(c1 as Float32, hhi, (c1 as Float32) * hlo) } else { f1 = ld_f32n(wc + (pw + t1) * 4) }
+                            if (c2 != 0) { f2 = fma_f32(c2 as Float32, hhi, (c2 as Float32) * hlo) } else { f2 = ld_f32n(wc + (pw + t2) * 4) }
+                            if (c3 != 0) { f3 = fma_f32(c3 as Float32, hhi, (c3 as Float32) * hlo) } else { f3 = ld_f32n(wc + (pw + t3) * 4) }
+                            if (c4 != 0) { f4 = fma_f32(c4 as Float32, hhi, (c4 as Float32) * hlo) } else { f4 = ld_f32n(wc + (pw + t4) * 4) }
+                            if (c5 != 0) { f5 = fma_f32(c5 as Float32, hhi, (c5 as Float32) * hlo) } else { f5 = ld_f32n(wc + (pw + t5) * 4) }
+                            if (c6 != 0) { f6 = fma_f32(c6 as Float32, hhi, (c6 as Float32) * hlo) } else { f6 = ld_f32n(wc + (pw + t6) * 4) }
+                            if (c7 != 0) { f7 = fma_f32(c7 as Float32, hhi, (c7 as Float32) * hlo) } else { f7 = ld_f32n(wc + (pw + t7) * 4) }
                             sum = sum + f0
                             if (k > 1) { sum = sum + f1 }
                             if (k > 2) { sum = sum + f2 }
@@ -181,7 +213,8 @@ lgpu_update(cptr<Int>, wc<Int>, bm<Int>, vm<Int>, refr<Int>, ctl<Int>, scnt<Int>
                 w = w + 1
             }
         }
-        sc<Int> = ld_i32(scnt + i * 4) as Int
+        var<Int> sc = 0
+        if (((sw >> lane) & 1) != 0) { sc = ld_i32(scnt + i * 4) as Int }
         if (sc > 0) {
             touched = 1
             st_i32(scnt + i * 4, 0)
@@ -214,6 +247,7 @@ lgpu_update(cptr<Int>, wc<Int>, bm<Int>, vm<Int>, refr<Int>, ctl<Int>, scnt<Int>
         }
     }
     bal<Int> = ballot_u32(fire) as Int
+    if (lane == 0 && sw != 0) { st_u32(sfl + (i >> 5) * 4, 0) }
     if (bal != 0) {
         cnt<Int> = popc_u32(bal)
         var<Int> base = 0

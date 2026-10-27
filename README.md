@@ -151,7 +151,8 @@ The engine is exact without float atomics:
   bitmap over CSC positions, which are each target's in-edges sorted by source.
 - The update kernel uses one thread per neuron. It walks its CSC range in ascending order and
   sums the weights in exactly the reference order, keeping 8 weight loads in flight per round.
-  It then integrates and fires, and appends spikes warp-aggregated.
+  Most weights come from a 1-byte code instead of a 4-byte float (see below). It then
+  integrates and fires, and appends spikes warp-aggregated.
 
 | scale | Vyb GPU engine (RTX 3090) | GPU kernel (RTX 3090) | Vyb GPU engine (GB10) | `sparse_prop.cu` (same GB10) | Vyb CPU, 20 Arm cores (GB10 host) | C++ ref, 1 thread |
 |---|---|---|---|---|---|---|
@@ -169,13 +170,61 @@ the best of 2. Earlier runs beside a resident LLM server were no slower (10x bes
 the GB10 engine is bandwidth-bound, not contention-bound. At 10x, nsys puts the step at about
 410 us of update plus 110 us of push, close to the memory-bandwidth floor of about 75 MB per
 step. On the 3090 (936 GB/s), 1x is slower than 2x because the 8,000 steps of two launches
-each are launch-latency-bound at that size.
+each are launch-latency-bound at that size. These GB10 times are from before the u8 weight codes
+described below; with them the GB10 takes 0.85, 0.90, 1.84, 3.34, 6.45 and 12.77 s at 1x to 40x.
 
 The 20x and 40x graphs come from `scripts/` the same way as the ladder (n = 2,785,100 and
 5,570,200; 56.0M and 112.3M edges). Their C++ reference runs `sparse_prop_cpu --max-active N`
 with N = n, because the default 300,000-entry active list overflows at 20x and the reference
 then keeps the lowest ids, which no parallel engine reproduces. Set `VYBFLY_MAX_ACTIVE` to n
 for the same uncapped run in Vyb.
+
+#### Faster GB10 kernels: u8 weight codes
+
+nsys on a GB10 at 40x put a step at 1.31 ms of update and 0.59 ms of push. Update is the hot
+kernel. For every touched in-edge it reads a 4-byte f32 weight from a scattered place in the
+CSC. The weight is f32(gain * syn / t), where syn is the edge's synapse count and t is the
+target's total input. Now each edge also has a 1-byte code c, which is its syn (1 to 255),
+and each target has an f32 pair (hi, lo) with hi + lo close to gain / t. The kernel computes
+`fma(c, hi, c * lo)` in f32. The host keeps a code only when it has proved, edge by edge,
+that this gives exactly the reference f32 weight:
+
+- in double, c * hi is exact, and so is c * lo before it is rounded to f32;
+- a TwoSum check shows the double sum is exact;
+- the result equals the stored weight.
+
+Otherwise the code is 0, and the kernel reads the f32 weight as before. 1.4% of the edges
+escape. The weights, the summation order and every digest are unchanged.
+
+Push now also sets one bit per stimulated target in a small flag bitmap. Update then reads
+one 32-bit word per warp instead of each neuron's stimulus count. Times are 8 epochs, best of
+2, old and new kernels interleaved in one session, and every run matches the C++ reference
+digests:
+
+| 8 epochs, GB10 | before | u8 codes | change |
+|---|---|---|---|
+| 1x | 0.81 s | 0.85 s | +5% |
+| 2x | 0.93 s | **0.90 s** | -3% |
+| 5x | 2.21 s | **1.84 s** | -17% |
+| 10x | 4.26 s | **3.34 s** | -22% |
+| 20x | 7.49 s | **6.45 s** | -14% |
+| 40x | 14.59 s | **12.77 s** (12.51 s in an earlier run) | -12% |
+| 40x, two GB10s, RDMA + zero-copy | 7.87 s | **6.59 s** | -16% |
+
+At 40x, nsys shows update falling from 1.31 to 1.01 ms per step, while push stays at
+0.58 ms. At 1x the working set fits in L2, so the extra arithmetic costs more than the bytes
+it saves. A few other changes did not help:
+
+- Push is bound by about 10.8M random bit-ORs per step. Giving each source 16 or 8 lanes
+  instead of a warp was slower.
+- Sweeping the block size (128 to 512) and push blocks (1024 to 4096) gained 1.5% at best,
+  so the defaults stay.
+- Fusing push into update would need a grid-wide sync between them.
+- Computing the weights in f64, which is exact by construction, made update 2.5x slower,
+  because the GB10's FP64 rate is low. So everything stays f32.
+
+Proving the codes adds host load time (40x: 1.8 s to 2.9 s). `VYBFLY_GPU_W8=0` turns the
+codes off: every edge escapes, which is exact but slower than the old kernel.
 
 #### Two Sparks, one network: a bit-exact split
 
@@ -291,7 +340,7 @@ vyb --kernel src/vyb_kernels/ladder_gpu_kernel.vyb --gpu sm_86 --ptx src/vyb_ker
 ```
 
 Further knobs are `VYBFLY_GPU_BLOCK` (256), `VYBFLY_GPU_PUSH_BLOCKS` (2048),
-`VYBFLY_GPU_DEVICE` (0) and `VYBFLY_MAX_ACTIVE` (300000, the active-list capacity).
+`VYBFLY_GPU_W8` (1, the u8 weight codes), `VYBFLY_GPU_DEVICE` (0) and `VYBFLY_MAX_ACTIVE` (300000, the active-list capacity).
 
 ## Jargon decoder
 

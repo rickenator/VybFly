@@ -7,6 +7,11 @@
 //   * builds the CSC view the kernels need: cptr (in-edge offsets per target), cpos[e] (the CSC
 //     position of CSR edge e; in-edges are laid out by ascending source, i.e. the reference's
 //     accumulation order) and wc (weights in CSC order),
+//   * encodes the weights as u8 codes wq (CSC order) with a per-target f32 pair hh = (hi, lo),
+//     hi + lo ~ gain / t: code c = syn when syn <= 255 and the kernel's fma(c, hi, c * lo)
+//     provably equals wc (wq_code below), else 0 = read wc. The kernel reads one byte per touched
+//     edge instead of four, and the sum is unchanged bit for bit. VYBFLY_GPU_W8=0 sets every
+//     code to 0 (all-f32 reads),
 //   * checks the precondition for bit-exactness: CSR rows strictly ascending (so no duplicate
 //     (source, target) pair),
 //   * compacts the stimulus to its valid ids per step (the reference skips invalid ids),
@@ -16,7 +21,7 @@
 // VYBFLY_STEPS (1000), VYBFLY_SYN_GAIN (6), VYBFLY_REFR_STEPS (20), VYBFLY_GPU_PTX (path of the
 // kernel PTX, default src/vyb_kernels/ladder_gpu_kernel.ptx), VYBFLY_GPU_BLOCK (256),
 // VYBFLY_GPU_PUSH_BLOCKS (2048), VYBFLY_GPU_DEVICE (0), VYBFLY_MAX_ACTIVE (300000: the
-// reference's --max-active; the 20x/40x runs lift it to n, see README).
+// reference's --max-active; the 20x/40x runs lift it to n, see README), VYBFLY_GPU_W8 (1).
 import io::{open_read, read_all}
 import env::{env_get}
 import time::{time_nanos}
@@ -93,6 +98,22 @@ launch(hfa<Int>, gx<Int>, bx<Int>, params<Int>, nargs<Int>)<Int> -> {
     return ok
 }
 
+// u8 weight code of an edge (see the header): the kernel computes fma(c, hi, c * lo) in f32. In
+// double, P = c * hi and c * lo are exact (8 + 24 bits), so Q = (f32)(c * lo) is the kernel's
+// product and the fma is (f32)(P + Q) rounded once. When the double sum S = P + Q is exact
+// (TwoSum error 0), (f32)S is that value; otherwise the edge escapes (returns 0). The code is kept
+// only when it reproduces the reference weight wf.
+wq_code(c<Int>, hi<Float32>, lo<Float32>, wf<Float32>)<Int> -> {
+    cf<Float> = c as Float
+    p<Float> = cf * (hi as Float)
+    q<Float> = ((cf * (lo as Float)) as Float32) as Float
+    s<Float> = p + q
+    bb<Float> = s - p
+    err<Float> = (p - (s - bb)) + (q - bb)
+    if (err == 0.0 && (s as Float32) == wf) { return c }
+    return 0
+}
+
 env_int(name<String>, d<Int>)<Int> -> {
     match (env_get(name)) {
         s -> { return s.to_int() }
@@ -124,6 +145,7 @@ main()<Int> -> {
     pblocks<Int> = env_int("VYBFLY_GPU_PUSH_BLOCKS", 2048)
     devno<Int> = env_int("VYBFLY_GPU_DEVICE", 0)
     maxa<Int> = env_int("VYBFLY_MAX_ACTIVE", 300000)
+    w8<Int> = env_int("VYBFLY_GPU_W8", 1)
     t_load0<Int> = time_nanos() else 0
 
     s_ip<String> = slurp(dir + "/bin/csr.out.indptr.i64")
@@ -162,6 +184,10 @@ main()<Int> -> {
     ccur<Int> = alloc0(n, 8)
     cpos<Int> = alloc0(ne, 4)
     wc<Int> = alloc0(ne, 4)
+    nwords<Int> = (ne + 31) / 32 + 1
+    wq<Int> = alloc0(nwords * 32, 1)
+    hh<Int> = alloc0(n, 8)
+    var<Int> nesc = 0
     g<Float> = gain as Float
     var<Int> bad = 0
     freedom {
@@ -179,6 +205,13 @@ main()<Int> -> {
             a<Int> = at(from<loc<Int>>(cptr + 8 * j))
             at(from<loc<Int>>(cptr + 8 * (j + 1))) = at(from<loc<Int>>(cptr + 8 * (j + 1))) + a
             at(from<loc<Int>>(ccur + 8 * j)) = a
+            t0<Float> = at(from<loc<Float>>(tin + 8 * j))
+            if (t0 > 0.0) {
+                hd<Float> = g / t0
+                hi<Float32> = hd as Float32
+                at(from<loc<Float32>>(hh + 8 * j)) = hi
+                at(from<loc<Float32>>(hh + 8 * j + 4)) = (hd - (hi as Float)) as Float32
+            }
             j = j + 1
         }
         var<Int> s = 0
@@ -193,14 +226,21 @@ main()<Int> -> {
                 prev = d
                 tt<Float> = at(from<loc<Float>>(tin + 8 * d))
                 var<Float32> wf = 0.0
+                var<Int> code = 0
                 if (tt > 0.0) {
-                    sv<Float> = (at(from<loc<Int32>>(syn + 4 * e2)) as Int) as Float
+                    svi<Int> = at(from<loc<Int32>>(syn + 4 * e2)) as Int
+                    sv<Float> = svi as Float
                     wf = ((g * sv) / tt) as Float32
+                    if (w8 == 1 && svi >= 1 && svi <= 255) {
+                        code = wq_code(svi, at(from<loc<Float32>>(hh + 8 * d)), at(from<loc<Float32>>(hh + 8 * d + 4)), wf)
+                    }
                 }
                 cp<Int> = at(from<loc<Int>>(ccur + 8 * d))
                 at(from<loc<Int>>(ccur + 8 * d)) = cp + 1
                 at(from<loc<Int32>>(cpos + 4 * e2)) = cp as Int32
                 at(from<loc<Float32>>(wc + 4 * cp)) = wf
+                at(from<loc<UInt8>>(wq + cp)) = code as UInt8
+                if (code == 0) { nesc = nesc + 1 }
                 e2 = e2 + 1
             }
             s = s + 1
@@ -217,6 +257,7 @@ main()<Int> -> {
         st32(cptr32 + 4 * j3, ld64(cptr + 8 * j3))
         j3 = j3 + 1
     }
+    println("ladder_gpu: u8 weight codes, {} of {} edges escape to f32".format(nesc, ne))
     if (bad > 0) {
         println("ladder_gpu: CSR rows not strictly ascending ({} edges); exact order not guaranteed".format(bad))
         return 3
@@ -258,7 +299,8 @@ main()<Int> -> {
     decb<Int> = ld32(fb)
     vthb<Int> = ld32(fb + 4)
     nstat<Int> = 8 + epochs
-    nwords<Int> = (ne + 31) / 32 + 1
+    ugrid<Int> = (n + blk - 1) / blk
+    nsfl<Int> = (ugrid * blk) / 32 + 1
 
     // ---- CUDA setup -------------------------------------------------------------------------
     freedom {
@@ -288,7 +330,10 @@ main()<Int> -> {
         d_stats<Int> = dalloc(8 * nstat)
         d_vm<Int> = dalloc(4 * n)
         d_refr<Int> = dalloc(4 * n)
-        if (d_ip == 0 || d_dst == 0 || d_cpos == 0 || d_cptr == 0 || d_wc == 0 || d_bm == 0 ||
+        d_wq<Int> = dalloc(32 * nwords)
+        d_hh<Int> = dalloc(8 * n)
+        d_sfl<Int> = dalloc(4 * nsfl)
+        if (d_wq == 0 || d_hh == 0 || d_sfl == 0 || d_ip == 0 || d_dst == 0 || d_cpos == 0 || d_cptr == 0 || d_wc == 0 || d_bm == 0 ||
             d_act == 0 || d_ctl == 0 || d_sids == 0 || d_scnt == 0 || d_sslot == 0 ||
             d_stats == 0 || d_vm == 0 || d_refr == 0) {
             println("ladder_gpu: device allocation failed")
@@ -300,6 +345,9 @@ main()<Int> -> {
         ok = ok * upload(d_cpos, cpos, 4 * ne)
         ok = ok * upload(d_cptr, cptr32, 4 * (n + 1))
         ok = ok * upload(d_wc, wc, 4 * ne)
+        ok = ok * upload(d_wq, wq, 32 * nwords)
+        ok = ok * upload(d_hh, hh, 8 * n)
+        ok = ok * zero32(d_sfl, nsfl)
         ok = ok * upload(d_sids, vids, 4 * nv + 4)
         ok = ok * zero32(d_bm, nwords)
         ok = ok * zero32(d_scnt, n)
@@ -323,7 +371,7 @@ main()<Int> -> {
         k_vthb<Int> = vthb
         k_lo<Int> = 0
         k_gn<Int> = n
-        pp<[Int; 15]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        pp<[Int; 16]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         pp[0] = addr(d_ip)
         pp[1] = addr(d_dst)
         pp[2] = addr(d_cpos)
@@ -339,7 +387,8 @@ main()<Int> -> {
         pp[12] = addr(k_ns)
         pp[13] = addr(k_n)
         pp[14] = addr(k_maxa)
-        pu<[Int; 20]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        pp[15] = addr(d_sfl)
+        pu<[Int; 23]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         pu[0] = addr(d_cptr)
         pu[1] = addr(d_wc)
         pu[2] = addr(d_bm)
@@ -360,7 +409,9 @@ main()<Int> -> {
         pu[17] = addr(k_vthb)
         pu[18] = addr(k_lo)
         pu[19] = addr(k_gn)
-        ugrid<Int> = (n + blk - 1) / blk
+        pu[20] = addr(d_wq)
+        pu[21] = addr(d_hh)
+        pu[22] = addr(d_sfl)
         hpa<Int> = addr(hpush)
         hua<Int> = addr(hupd)
         ppa<Int> = addr(pp)
@@ -383,8 +434,8 @@ main()<Int> -> {
                 k_s0 = ld64(voff + 8 * step)
                 k_ns = ld64(voff + 8 * (step + 1)) - k_s0
                 k_step = step
-                ok = ok * launch(hpa, pblocks, blk, ppa, 15)
-                ok = ok * launch(hua, ugrid, blk, pua, 20)
+                ok = ok * launch(hpa, pblocks, blk, ppa, 16)
+                ok = ok * launch(hua, ugrid, blk, pua, 23)
                 cur = 1 - cur
                 step = step + 1
             }
