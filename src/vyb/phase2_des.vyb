@@ -31,6 +31,12 @@ import des::{
     json_int, json_str, json_int_last, json_str_last, des_status_message
 }
 
+import des_ring::{
+    Ring, StimIndex, ring_new, stim_index, ring_pump_tick, ring_events_at, ring_kernel_tick,
+    ring_scatter, des_ring_status_message
+}
+
+import env::{env_get}
 import io::{open_write, close, write_str, open_read, read_all}
 import time::{time_mono_millis, time_epoch_secs}
 
@@ -497,6 +503,86 @@ run_replication(nps<NetParams>, gph<Graph>, src<EventSource>, rname<String>, str
     return r
 }
 
+// The same replication on the delay-ring accumulator scheduler (des_ring.vyb): identical
+// semantics, no per-event arena record. Selected by default; VYBFLY_DES_ENGINE=calendar runs the
+// calendar-queue reference above instead. The M2 gate checks both spike for spike.
+run_replication_ring(nps<NetParams>, gph<Graph>, src<EventSource>, rname<String>, stream<Int>,
+                     horizon<Int>)<Replication> -> {
+    t_start<Int> = time_mono_millis()
+    r<Replication> = replication_new(rname, stream, horizon)
+
+    st<EntityState> = ent_new(nps.n)
+    i<Int> = 0
+    while (i < nps.n) {
+        ent_init(borrow(st), i, nps.etype.get(i), nps.tau_ticks.get(i), nps.decay_k.get(i),
+                 nps.refr_ticks.get(i), nps.threshold.get(i), nps.vrest.get(i), nps.vreset.get(i))
+        i = i + 1
+    }
+    rec<Recorder> = rec_new(nps.n)
+    rg<Ring> = ring_new(nps.n, gph.max_delay)
+    sx<StimIndex> = stim_index(borrow(src), horizon)
+
+    indptr<Vec<Int>> = gph.indptr
+    post<Vec<Int>> = gph.post
+    delay<Vec<Int>> = gph.delay
+    weight<Vec<Int>> = gph.weight
+
+    t_sim<Int> = time_mono_millis()
+    ticks<Int> = 0
+    t<Int> = 0
+    while (t < horizon) {
+        ring_pump_tick(borrow(rg), borrow(sx), borrow(src), t)
+        if (ring_events_at(borrow(rg), t) > 0) {
+            nf<Int> = ring_kernel_tick(borrow(rg), borrow(st), borrow(rec), t)
+            if (nf > 0) {
+                ring_scatter(borrow(rg), borrow(indptr), borrow(post), borrow(delay), borrow(weight),
+                             t, horizon)
+            }
+            ticks = ticks + 1
+        }
+        t = t + 1
+    }
+    r.sim_ms = time_mono_millis() - t_sim
+    r.wall_ms = time_mono_millis() - t_start
+
+    rec_finalize(borrow(rec))
+    write_spikes(out_dir() + "vyb_spikes_" + rname + ".csv", borrow(rec), nps.n)
+    write_counts(out_dir() + "vyb_counts_" + rname + ".csv", borrow(rec), nps)
+
+    r.spikes = rec_total(borrow(rec))
+    r.events_scheduled = rg.total_pushed
+    r.events_processed = rg.total_pushed
+    r.stimulus_events = rg.stim_pushed
+    r.synaptic_events = rg.syn_pushed
+    r.ticks_processed = ticks
+    r.max_batch = rg.max_batch
+    r.spike_hash = rec_hash_canonical(borrow(rec), nps.n)
+    r.sched_buckets = rg.nb
+    r.sched_turns = horizon
+    r.sched_grows = 0
+    r.sched_recycles = 0
+    r.sched_late = 0
+    r.sched_far = rg.far_events
+    r.sched_max_bucket = rg.max_batch
+    r.sched_arena_high = 0
+    r.beyond_horizon = 0
+    r.determinism_ok = 1
+    if (rg.far_events != 0) { r.determinism_ok = 0 }
+
+    println("replication " + rname + ": engine=ring stream=" + stream.to_string()
+            + " horizon_ticks=" + horizon.to_string() + " spikes=" + r.spikes.to_string()
+            + " events_scheduled=" + r.events_scheduled.to_string()
+            + " ticks_processed=" + ticks.to_string()
+            + " max_batch=" + rg.max_batch.to_string()
+            + " max_touched=" + rg.max_touched.to_string()
+            + " buckets=" + rg.nb.to_string()
+            + " far=" + rg.far_events.to_string()
+            + " sim_ms=" + r.sim_ms.to_string()
+            + " wall_ms=" + r.wall_ms.to_string()
+            + " spike_hash=" + r.spike_hash.to_string())
+    return r
+}
+
 replication_json(r<Replication>, last<Int>)<String> -> {
     tail<String> = "},\n"
     if (last == 1) { tail = "}\n" }
@@ -524,7 +610,11 @@ replication_json(r<Replication>, last<Int>)<String> -> {
 
 main()<Int> -> {
     t_boot<Int> = time_mono_millis()
+    engine<String> = env_get("VYBFLY_DES_ENGINE") else "ring"
+    if (engine != "calendar") { engine = "ring" }
     println(des_status_message())
+    if (engine == "ring") { println(des_ring_status_message()) }
+    println("des_engine=" + engine)
 
     nps<NetParams> = load_net_params(fixture_dir() + "neurons.csv")
     gph<Graph> = load_graph(fixture_dir() + "edges.csv")
@@ -573,7 +663,12 @@ main()<Int> -> {
         stream<Int> = rt.stream.get(k)
         horizon<Int> = rt.ticks.get(k)
         src<EventSource> = pick_source(src0, src1, stream)
-        r<Replication> = run_replication(nps, gph, src, rname, stream, horizon)
+        r<Replication> = replication_new(rname, stream, horizon)
+        if (engine == "calendar") {
+            r = run_replication(nps, gph, src, rname, stream, horizon)
+        } else {
+            r = run_replication_ring(nps, gph, src, rname, stream, horizon)
+        }
 
         last<Int> = 0
         if (k == rt.n - 1) { last = 1 }
@@ -637,6 +732,7 @@ main()<Int> -> {
     body = body + json_str("vyb_invocation", invocation())
     body = body + json_str("vyb_stdlib", "VYB_STDLIB=~/Projects/Vyb/stdlib")
     body = body + json_str("vyb_module_path", "src/vyb")
+    body = body + json_str("des_engine", engine)
     body = body + json_str("fixture", fixture_dir())
     body = body + json_str("host", host_name())
     body = body + json_int("load_ms", load_ms)
