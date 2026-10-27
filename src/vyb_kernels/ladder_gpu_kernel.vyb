@@ -22,6 +22,11 @@
 // so it counts the overflow and the host reports the run as inexact (the ladder never overflows).
 //
 // cptr holds 32-bit CSC offsets (the host refuses graphs with >= 2^31 edges).
+// Partitioned runs (src/vyb/ladder_gpu_split.vyb): a GPU owns targets [lo, lo + n). Its CSR
+// keeps every source row but only the edges into owned targets, with local target ids, so
+// push is unchanged (pass the local n); update runs one thread per owned neuron, records fired
+// neurons by global id (i + lo) and keys the digest by the global neuron count gn. The
+// single-GPU engine passes lo = 0, gn = n.
 // stats (i64): [0] synaptic events  [1] digest sum  [2] digest xor  [3] overflow  [8+ep] spikes
 
 lgpu_push(ip<Int>, dst<Int>, cpos<Int>, bm<Int>, act<Int>, ctl<Int>, sids<Int>, scnt<Int>,
@@ -63,23 +68,23 @@ lgpu_push(ip<Int>, dst<Int>, cpos<Int>, bm<Int>, act<Int>, ctl<Int>, sids<Int>, 
     if (lane == 0 && ev > 0) { atomic_add_i64(stats, ev) }
 }
 
-// 64-bit butterfly steps over the warp (an f64 shuffle moves the bits untouched).
+// 64-bit butterfly steps over the warp (shfl_xor_i64: two 32-bit shfl.sync halves).
 wsum64(x<Int>)<Int> -> {
     var<Int> s = x
-    s = s + f64_bits(shfl_xor_f64(f64_from_bits(s), 16))
-    s = s + f64_bits(shfl_xor_f64(f64_from_bits(s), 8))
-    s = s + f64_bits(shfl_xor_f64(f64_from_bits(s), 4))
-    s = s + f64_bits(shfl_xor_f64(f64_from_bits(s), 2))
-    s = s + f64_bits(shfl_xor_f64(f64_from_bits(s), 1))
+    s = s + shfl_xor_i64(s, 16)
+    s = s + shfl_xor_i64(s, 8)
+    s = s + shfl_xor_i64(s, 4)
+    s = s + shfl_xor_i64(s, 2)
+    s = s + shfl_xor_i64(s, 1)
     return s
 }
 wxor64(x<Int>)<Int> -> {
     var<Int> s = x
-    s = s ^ f64_bits(shfl_xor_f64(f64_from_bits(s), 16))
-    s = s ^ f64_bits(shfl_xor_f64(f64_from_bits(s), 8))
-    s = s ^ f64_bits(shfl_xor_f64(f64_from_bits(s), 4))
-    s = s ^ f64_bits(shfl_xor_f64(f64_from_bits(s), 2))
-    s = s ^ f64_bits(shfl_xor_f64(f64_from_bits(s), 1))
+    s = s ^ shfl_xor_i64(s, 16)
+    s = s ^ shfl_xor_i64(s, 8)
+    s = s ^ shfl_xor_i64(s, 4)
+    s = s ^ shfl_xor_i64(s, 2)
+    s = s ^ shfl_xor_i64(s, 1)
     return s
 }
 
@@ -87,7 +92,7 @@ wxor64(x<Int>)<Int> -> {
 // last warp do no neuron work but take part in the warp collectives.
 lgpu_update(cptr<Int>, wc<Int>, bm<Int>, vm<Int>, refr<Int>, ctl<Int>, scnt<Int>, sslot<Int>,
             stats<Int>, nxt<Int>, nc<Int>, step<Int>, n<Int>, maxa<Int>, ep<Int>, rs<Int>,
-            decb<Int>, vthb<Int>) -> {
+            decb<Int>, vthb<Int>, lo<Int>, gn<Int>) -> {
     i<Int> = blk_x() * dim_x() + tid_x()
     lane<Int> = i & 31
     var<Int> fire = 0
@@ -115,7 +120,7 @@ lgpu_update(cptr<Int>, wc<Int>, bm<Int>, vm<Int>, refr<Int>, ctl<Int>, scnt<Int>
                     if (x != 0) {
                         touched = 1
                         // a word holding only our bits is cleared with a plain store; a
-                        // boundary word shared with a neighbour's set bits needs the atomic
+                        // boundary word shared with a neighbor's set bits needs the atomic
                         if ((word & (4294967295 ^ m)) == 0) { st_u32(bm + w * 4, 0) }
                         else { atomic_and_u32(bm + w * 4, 4294967295 ^ x) }
                         // up to 8 set bits per round: issue the 8 independent weight loads
@@ -219,13 +224,13 @@ lgpu_update(cptr<Int>, wc<Int>, bm<Int>, vm<Int>, refr<Int>, ctl<Int>, scnt<Int>
         base = shfl_idx_u32(base, 0) as Int
         if (fire == 1) {
             slot<Int> = base + popc_u32(bal & ((1 << lane) - 1))
-            if (slot < maxa) { st_i32(nxt + slot * 4, i) } else { atomic_add_i64(stats + 24, 1) }
+            if (slot < maxa) { st_i32(nxt + slot * 4, i + lo) } else { atomic_add_i64(stats + 24, 1) }
         }
         if (ep == 0) {
             var<Int> ds = 0
             var<Int> dx = 0
             if (fire == 1) {
-                key<Int> = step * n + i
+                key<Int> = step * gn + i + lo
                 ds = key & 2147483647
                 dx = (((key ^ (key >> 17)) & 2147483647) * 1000003 + (key >> 31)) & 4611686018427387903
             }

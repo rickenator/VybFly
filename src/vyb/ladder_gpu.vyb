@@ -15,7 +15,8 @@
 // Config via environment: VYBFLY_LADDER_DIR, VYBFLY_LADDER_STIM, VYBFLY_EPOCHS (8),
 // VYBFLY_STEPS (1000), VYBFLY_SYN_GAIN (6), VYBFLY_REFR_STEPS (20), VYBFLY_GPU_PTX (path of the
 // kernel PTX, default src/vyb_kernels/ladder_gpu_kernel.ptx), VYBFLY_GPU_BLOCK (256),
-// VYBFLY_GPU_PUSH_BLOCKS (2048), VYBFLY_GPU_DEVICE (0).
+// VYBFLY_GPU_PUSH_BLOCKS (2048), VYBFLY_GPU_DEVICE (0), VYBFLY_MAX_ACTIVE (300000: the
+// reference's --max-active; the 20x/40x runs lift it to n, see README).
 import io::{open_read, read_all}
 import env::{env_get}
 import time::{time_nanos}
@@ -122,7 +123,7 @@ main()<Int> -> {
     blk<Int> = env_int("VYBFLY_GPU_BLOCK", 256)
     pblocks<Int> = env_int("VYBFLY_GPU_PUSH_BLOCKS", 2048)
     devno<Int> = env_int("VYBFLY_GPU_DEVICE", 0)
-    maxa<Int> = 300000
+    maxa<Int> = env_int("VYBFLY_MAX_ACTIVE", 300000)
     t_load0<Int> = time_nanos() else 0
 
     s_ip<String> = slurp(dir + "/bin/csr.out.indptr.i64")
@@ -320,6 +321,8 @@ main()<Int> -> {
         k_rs<Int> = refr_steps
         k_decb<Int> = decb
         k_vthb<Int> = vthb
+        k_lo<Int> = 0
+        k_gn<Int> = n
         pp<[Int; 15]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         pp[0] = addr(d_ip)
         pp[1] = addr(d_dst)
@@ -336,7 +339,7 @@ main()<Int> -> {
         pp[12] = addr(k_ns)
         pp[13] = addr(k_n)
         pp[14] = addr(k_maxa)
-        pu<[Int; 18]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        pu<[Int; 20]> = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         pu[0] = addr(d_cptr)
         pu[1] = addr(d_wc)
         pu[2] = addr(d_bm)
@@ -355,6 +358,8 @@ main()<Int> -> {
         pu[15] = addr(k_rs)
         pu[16] = addr(k_decb)
         pu[17] = addr(k_vthb)
+        pu[18] = addr(k_lo)
+        pu[19] = addr(k_gn)
         ugrid<Int> = (n + blk - 1) / blk
         hpa<Int> = addr(hpush)
         hua<Int> = addr(hupd)
@@ -379,7 +384,7 @@ main()<Int> -> {
                 k_ns = ld64(voff + 8 * (step + 1)) - k_s0
                 k_step = step
                 ok = ok * launch(hpa, pblocks, blk, ppa, 15)
-                ok = ok * launch(hua, ugrid, blk, pua, 18)
+                ok = ok * launch(hua, ugrid, blk, pua, 20)
                 cur = 1 - cur
                 step = step + 1
             }

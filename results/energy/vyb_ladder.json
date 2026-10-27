@@ -71,6 +71,13 @@
     "ladder_prop_16t": 0.964,
     "digest_matches_cpp_reference": true,
     "stat": "single run"
+   },
+   "vyb_gpu_3090": {
+    "sim_s": 0.983,
+    "load_s": 0.19,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
    }
   },
   "2x": {
@@ -143,6 +150,13 @@
     "ladder_prop_20t": 1.91,
     "digest_matches_cpp_reference": true,
     "stat": "single run"
+   },
+   "vyb_gpu_3090": {
+    "sim_s": 0.896,
+    "load_s": 0.244,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
    }
   },
   "5x": {
@@ -216,6 +230,13 @@
     "ladder_prop_20t": 4.245,
     "digest_matches_cpp_reference": true,
     "stat": "single run"
+   },
+   "vyb_gpu_3090": {
+    "sim_s": 1.705,
+    "load_s": 0.473,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
    }
   },
   "10x": {
@@ -290,6 +311,65 @@
     "ladder_prop_20t": 7.524,
     "digest_matches_cpp_reference": true,
     "stat": "single run"
+   },
+   "vyb_gpu_3090": {
+    "sim_s": 2.456,
+    "load_s": 0.855,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   }
+  },
+  "20x": {
+   "n_neurons": 2785100,
+   "n_edges": 56025628,
+   "synaptic_events": 21518820680,
+   "spikes": 964396384,
+   "epoch0_spikes": 120549548,
+   "digest_sum": 110300691024608500,
+   "digest_xor": 1818773348471592,
+   "cpp_sparse_prop_cpu_uncapped_s": 174.37,
+   "vyb_gpu_3090": {
+    "sim_s": 4.04,
+    "load_s": 1.534,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 7.445,
+    "load_s": 0.966,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   },
+   "vyb_gpu_split_two_gb10": {
+    "sim_s": 6.638,
+    "digest_matches_cpp_reference": true
+   }
+  },
+  "40x": {
+   "n_neurons": 5570200,
+   "n_edges": 112293649,
+   "synaptic_events": 43044008456,
+   "spikes": 1921498960,
+   "epoch0_spikes": 240187370,
+   "digest_sum": 239142599791732164,
+   "digest_xor": 1733953483748172,
+   "cpp_sparse_prop_cpu_uncapped_s": 320.58,
+   "vyb_gpu_3090": {
+    "sim_s": 8.716,
+    "load_s": 2.933,
+    "reps": 3,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 14.707,
+    "load_s": 1.898,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true
    }
   }
  },
@@ -297,9 +377,36 @@
  "gpu_engine": {
   "engine": "src/vyb/ladder_gpu.vyb + src/vyb_kernels/ladder_gpu_kernel.vyb (PTX committed)",
   "host": "DGX Spark (GB10, sm_121, 273 GB/s unified LPDDR5X), shared with a resident LLM server; PTX emitted for sm_86 and JIT-compiled by the driver",
-  "vyb": "host runner on stock Vyb 0.7.7 (c14d4768); kernel PTX from Vyb branch perf/kernel-atomics-bits (needs the new atomics/ballot/popc/ctz intrinsics)",
+  "vyb": "host runner on stock Vyb 0.7.7 (c14d4768) on the Sparks, Vyb perf/kernel-friction (bbe08ae5) on the 3090; kernel PTX from Vyb perf/kernel-friction (atomics/ballot/popc/ctz from perf/kernel-atomics-bits, plus shfl_xor_i64)",
   "method": "exact without float atomics: push sets bits of a CSC-position bitmap (red.global.or), update walks each target's bitmap range in ascending source order (ctz) with 8 weight loads in flight per round, summing in the reference order",
-  "rtx3090": "not measured: the 3090 was busy with another job during this work",
+  "rtx3090": {
+   "host": "Godzilla, RTX 3090 (sm_86, 936 GB/s), GPU idle",
+   "reps": 3,
+   "stat": "min",
+   "sim_s": {
+    "1x": 0.983,
+    "2x": 0.896,
+    "5x": 1.705,
+    "10x": 2.456,
+    "20x": 4.04,
+    "40x": 8.716
+   },
+   "load_s": {
+    "1x": 0.19,
+    "2x": 0.244,
+    "5x": 0.473,
+    "10x": 0.855,
+    "20x": 1.534,
+    "40x": 2.933
+   },
+   "digests_match_cpp_reference": true,
+   "vs_gpu_kernel_3090": {
+    "1x": 3.81,
+    "2x": 3.52,
+    "5x": 3.37,
+    "10x": 4.35
+   }
+  },
   "profile_10x_us_per_step": {
    "update": 408,
    "push": 112,
@@ -310,6 +417,64 @@
    "4 loads in flight": 4.525,
    "8 loads in flight": 4.194,
    "+ 32-bit cptr": 3.94
+  },
+  "gb10_uncontended": {
+   "host": "DGX Spark, GPU otherwise idle (LLM server down)",
+   "reps": "3 (1x-10x), 2 (20x, 40x)",
+   "stat": "min",
+   "sim_s": {
+    "1x": 0.77,
+    "2x": 0.93,
+    "5x": 2.22,
+    "10x": 4.17,
+    "20x": 7.445,
+    "40x": 14.707
+   },
+   "note": "no faster than the earlier runs beside the resident LLM server (10x 3.94 s): bandwidth-bound"
+  },
+  "max_active": "VYBFLY_MAX_ACTIVE (default 300000); 20x/40x run with it = n, matching sparse_prop_cpu --max-active n",
+  "split_two_gb10": {
+   "engine": "src/vyb/ladder_gpu_split.vyb",
+   "method": "cut by target at half the in-edges; each rank keeps all source rows with its own edges; fired-id lists swapped over TCP on the direct 200 GbE link each step",
+   "bit_exact": {
+    "10x": true,
+    "20x": true
+   },
+   "20x_sim_s": {
+    "one_gb10": 7.445,
+    "two_serialized_exchange": 8.851,
+    "two_duplex_exchange": 7.505,
+    "two_duplex_overlapped_push": [
+     6.638,
+     7.3
+    ],
+    "two_duplex_no_overlap": 6.788
+   },
+   "20x_profile_ms_per_rank": {
+    "gpu": [
+     3699,
+     4103
+    ],
+    "network": [
+     3132,
+     3528
+    ],
+    "dtoh": [
+     144,
+     151
+    ]
+   },
+   "10x_sim_s": {
+    "one_gb10": 4.19,
+    "two_serialized_exchange": 6.09
+   },
+   "link": {
+    "pingpong_8B_busy_poll_us": 36,
+    "pingpong_240KB_each_way_busy_poll_us": 475,
+    "pingpong_8B_blocking_us": 798,
+    "wmem_max_bytes": 212992
+   },
+   "finding": "the split halves GPU time but the per-step TCP exchange (~0.35 ms) eats most of it; RDMA (RoCE present) is the next step"
   }
  },
  "arm_cpu": {

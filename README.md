@@ -137,7 +137,7 @@ within about 2% of the PR build: 1.22 s at 1x, 2.60 s at 2x, 7.72 s at 5x and 17
 Only `ladder_seg` gained, by 2–3%. The compiler friction this work turned up is in
 `docs/DOGFOODING.md`.
 
-### The Vyb GPU engine: bit-exact, 2.6x the CUDA kernel on the same GPU
+### The Vyb GPU engine: bit-exact, 2.4x to 4.8x the CUDA kernel on the same GPU
 
 `src/vyb/ladder_gpu.vyb` runs the same ladder workload on an NVIDIA GPU through the CUDA driver
 API, with device kernels written in Vyb (`src/vyb_kernels/ladder_gpu_kernel.vyb`). It matches
@@ -153,17 +153,65 @@ The engine is exact without float atomics:
   sums the weights in exactly the reference order, keeping 8 weight loads in flight per round.
   It then integrates and fires, and appends spikes warp-aggregated.
 
-| scale | Vyb GPU engine (GB10) | `sparse_prop.cu` (same GB10) | GPU kernel (RTX 3090) | Vyb CPU, 20 Arm cores (GB10 host) |
-|---|---|---|---|---|
-| 1x  | **0.80 s** | 3.67 s (inexact) | 3.75 s  | 0.96 s (prop, 16 threads) |
-| 2x  | **0.89 s** | 3.04 s (inexact) | 3.15 s  | 1.88 s (prop, 16 threads) |
-| 5x  | **2.15 s** | 5.29 s (inexact) | 5.74 s  | 4.25 s (prop) |
-| 10x | **3.94 s** | 10.29 s (inexact) | 10.68 s | 7.52 s (prop) |
+| scale | Vyb GPU engine (RTX 3090) | GPU kernel (RTX 3090) | Vyb GPU engine (GB10) | `sparse_prop.cu` (same GB10) | Vyb CPU, 20 Arm cores (GB10 host) | C++ ref, 1 thread |
+|---|---|---|---|---|---|---|
+| 1x  | **0.98 s** | 3.75 s  | **0.77 s** | 3.67 s (inexact)  | 0.96 s (prop, 16 threads) | 8.32 s |
+| 2x  | **0.90 s** | 3.15 s  | **0.93 s** | 3.04 s (inexact)  | 1.88 s (prop, 16 threads) | 14.97 s |
+| 5x  | **1.71 s** | 5.74 s  | **2.22 s** | 5.29 s (inexact)  | 4.25 s (prop) | 43.45 s |
+| 10x | **2.46 s** | 10.68 s | **4.17 s** | 10.29 s (inexact) | 7.52 s (prop) | 88.06 s |
+| 20x | **4.04 s** | | **7.45 s** | | | 174.4 s |
+| 40x | **8.72 s** | | **14.71 s** | | | 320.6 s |
 
-The GB10 is a DGX Spark with 273 GB/s of unified memory. Its GPU was shared with a resident LLM
-server, so the times are the best of 2 runs. The 3090 number for the Vyb engine is still to be
-measured, because that GPU was busy throughout. At 10x, nsys puts the step at about 410 us of
-update plus 110 us of push, close to the memory-bandwidth floor of about 75 MB per step.
+Every Vyb GPU number above matches the C++ reference digests exactly. The 3090 times are the
+best of 3 runs on an idle GPU (Godzilla). The GB10 is a DGX Spark with 273 GB/s of unified
+memory. Its 1x to 10x times are the best of 3 with the GPU otherwise idle, and 20x and 40x are
+the best of 2. Earlier runs beside a resident LLM server were no slower (10x best 3.94 s), so
+the GB10 engine is bandwidth-bound, not contention-bound. At 10x, nsys puts the step at about
+410 us of update plus 110 us of push, close to the memory-bandwidth floor of about 75 MB per
+step. On the 3090 (936 GB/s), 1x is slower than 2x because the 8,000 steps of two launches
+each are launch-latency-bound at that size.
+
+The 20x and 40x graphs come from `scripts/` the same way as the ladder (n = 2,785,100 and
+5,570,200; 56.0M and 112.3M edges). Their C++ reference runs `sparse_prop_cpu --max-active N`
+with N = n, because the default 300,000-entry active list overflows at 20x and the reference
+then keeps the lowest ids, which no parallel engine reproduces. Set `VYBFLY_MAX_ACTIVE` to n
+for the same uncapped run in Vyb.
+
+#### Two Sparks, one network: a bit-exact split
+
+`src/vyb/ladder_gpu_split.vyb` runs one connectome across both Sparks. Neurons are cut by
+target at half the in-edges. Each rank keeps every source row, but only the edges into its own
+neurons, so a step needs nothing from the peer except the list of neurons that fired. After
+each step the ranks swap fired-id lists over TCP on the direct 200 GbE link, then push the
+peer's spikes into their own targets. It is bit-exact at 10x and 20x (digests equal to the C++
+reference), and with `VYBFLY_SPLIT_PARTS=1` it is the single-GPU engine.
+
+| 20x, 8 epochs | sim | GPU time per rank | network |
+|---|---|---|---|
+| one GB10 (`ladder_gpu`) | 7.45 s | 7.45 s | none |
+| two GB10s, serialized exchange | 8.85 s | ~3.7 to 4.1 s | ~3.4 s |
+| two GB10s, full-duplex exchange | 7.51 s (profiled), 6.79 s | ~3.7 to 4.1 s | ~3.1 to 3.5 s |
+| two GB10s, full-duplex, own push overlapped with the exchange | **6.64 s**, 7.30 s | ~3.7 to 4.1 s | ~2.7 to 3.2 s (sim minus GPU) |
+
+The split halves the GPU time, but the exchange costs about 0.35 ms per step. A ping-pong test
+over the same link shows why: 36 us for 8 bytes with busy-polling, but about 475 us for 240 KB
+each way, and about 800 us with blocking sockets. Socket buffers are capped at 212 KB
+(`net.core.wmem_max`) without root. So two Sparks only just beat one at 20x, and they lose at
+10x (6.09 s against about 4.2 s, measured with the serialized exchange). The ConnectX ports
+expose RoCE devices, so RDMA for the id lists is the next step. The overlap's gain is within
+run-to-run noise, since the GPU push is short next to the exchange. The overlap and the duplex
+exchange are on by default (`VYBFLY_SPLIT_OVERLAP`, `VYBFLY_SPLIT_DUPLEX`). Both only reorder
+bit-ORs and integer sums, so they cannot change a result.
+
+Run it, rank 0 first, on two machines that share the graph files:
+
+```sh
+# on the rank-0 host (it listens on VYBFLY_SPLIT_PORT)
+VYBFLY_SPLIT_PARTS=2 VYBFLY_SPLIT_RANK=0 scripts/gpu/run_split_rank.sh <ladder>/s20 <ladder>/stim_s20.bin
+# on the rank-1 host
+VYBFLY_SPLIT_PARTS=2 VYBFLY_SPLIT_RANK=1 VYBFLY_SPLIT_PEER=<rank-0 ip> \
+  scripts/gpu/run_split_rank.sh <ladder>/s20 <ladder>/stim_s20.bin
+```
 
 On the Arm host, `ladder_prop` also beats `ladder_desc` at 5x and 10x, the opposite of the i9. `scripts/cpu/run_ladder.sh` therefore picks `ladder_prop` on aarch64.
 
@@ -175,15 +223,15 @@ VYBFLY_ENGINE=gpu VYBFLY_LADDER_DIR=<ladder>/s10 VYBFLY_LADDER_STIM=<ladder>/sti
 ```
 
 This works on stock Vyb 0.7.7, because the kernel is committed as PTX (sm_86, which the driver
-JIT-compiles for newer GPUs). Regenerating the PTX needs the kernel intrinsics in Vyb PR
-`perf/kernel-atomics-bits`:
+JIT-compiles for newer GPUs). Regenerating the PTX needs the kernel intrinsics in Vyb PRs
+`perf/kernel-atomics-bits` and `perf/kernel-friction` (which adds `shfl_xor_i64`):
 
 ```sh
 vyb --kernel src/vyb_kernels/ladder_gpu_kernel.vyb --gpu sm_86 --ptx src/vyb_kernels/ladder_gpu_kernel.ptx
 ```
 
-Further knobs are `VYBFLY_GPU_BLOCK` (256), `VYBFLY_GPU_PUSH_BLOCKS` (2048) and
-`VYBFLY_GPU_DEVICE` (0).
+Further knobs are `VYBFLY_GPU_BLOCK` (256), `VYBFLY_GPU_PUSH_BLOCKS` (2048),
+`VYBFLY_GPU_DEVICE` (0) and `VYBFLY_MAX_ACTIVE` (300000, the active-list capacity).
 
 ## Jargon decoder
 

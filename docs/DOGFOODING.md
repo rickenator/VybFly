@@ -60,7 +60,7 @@ repo do not depend on any of them: they produce the same digests on stock Vyb 0.
 
 - **Every function is NoInline, even at -O2/-O3.** Small helpers (`ld64`, `st64`, `stat_add`) stayed
   real calls in hot loops. Patch: strip NoInline from defined functions before the -O2+ pipeline
-  (`VYB_KEEP_NOINLINE=1` restores the old behaviour).
+  (`VYB_KEEP_NOINLINE=1` restores the old behavior).
 - **The JIT optimizes for the generic x86-64 CPU.** Patch: use the host CPU name and features
   (`VYB_JIT_GENERIC=1` restores generic). Neither patch moved the ladder's numbers measurably: its
   hot loops were already hand-inlined `freedom` blocks and are memory bound. A clean A/B
@@ -77,10 +77,10 @@ repo do not depend on any of them: they produce the same digests on stock Vyb 0.
 ### Language / stdlib friction
 
 - Storing a literal through a narrower `loc<T>` (for example an Int literal into `loc<Int32>`) only
-  warned, and it did an 8-byte store that corrupted the neighbouring memory. **Fixed on the branch:**
+  warned, and it did an 8-byte store that corrupted the neighboring memory. **Fixed on the branch:**
   an integer store now converts to the location's width. It truncates (with a warning for an
   out-of-range constant), or it sign- or zero-extends. There is a regression test that clobbers the
-  neighbour on the old compiler.
+  neighbor on the old compiler.
 - Some reported errors do not stop execution, so later output can look valid after an earlier failure.
 - Generic inference fails on Float32 struct-literal fields.
 - `for x in vec` over a `Vec` fails, so the code falls back to index loops.
@@ -110,8 +110,8 @@ repo do not depend on any of them: they produce the same digests on stock Vyb 0.
 ## GPU ladder engine (perf/ursela-fly, Oct 2026)
 
 The ladder engine `src/vyb/ladder_gpu.vyb` and its kernels `src/vyb_kernels/ladder_gpu_kernel.vyb`
-are bit-exact at 1x to 10x, and run 10x in 3.94 s on a GB10. That is 2.6x the CUDA kernel on
-the same GPU. Writing them turned up the following.
+are bit-exact at 1x to 40x, and run 10x in 3.94 s on a GB10 (2.6x the CUDA kernel on the same
+GPU) and in 2.46 s on an RTX 3090 (4.3x). Writing them turned up the following.
 
 ### Compiler (fixed on Vyb branch `perf/kernel-atomics-bits`, PR open)
 
@@ -132,17 +132,33 @@ the same GPU. Writing them turned up the following.
 - Stock Vyb cannot compile the kernel until that PR lands, so the PTX is committed next to the
   source. The host runner itself runs on stock 0.7.7.
 
+### Fixed on Vyb branch `perf/kernel-friction` (stacked on `perf/kernel-atomics-bits`, PR open)
+
+- **No 64-bit warp shuffle.** The digest butterfly moved i64 bits through
+  `shfl_xor_f64(f64_from_bits(x))`. **Added:** `shfl_{xor,down,up,idx}_i64`, lowered to a pair
+  of 32-bit `shfl.sync`. The kernel now uses `shfl_xor_i64`. Covered by
+  `test/kernel/test_shfl_i64.vyb` plus an on-GPU check (`check_shfl_i64.py`, PASS on GB10).
+- **`var<Int> fail = 0` gave a parse error that did not name the keyword.** It now says the name
+  is a reserved word, for variables and parameters alike
+  (`test/parser/test_reserved_word_{variable,param}_name.vyb`).
+- **Kernel launch parameters were built by hand** as an `[Int; N]` of `addr()` cells, where an
+  argument-order slip is silent. **Added:** `cuda_launch_args(f, grid, block, a, b, ...)`, which
+  has the compiler pack `kernelParams` from typed arguments. It must be called in `freedom`, and
+  it rejects `String` arguments and a bad arity at compile time (4 tests under `test/ffi/`;
+  `test_cuda_launch_args.vyb` prints `LAUNCH_ARGS OK` on a GB10).
+
 ### Still open
 
-- There is no 64-bit warp shuffle. The digest butterfly moves i64 bits through
-  `shfl_xor_f64(f64_from_bits(x))`.
 - The NVPTX path neither unrolls nor software-pipelines a data-dependent `ctz` loop, so each
   set bit paid a full memory latency. Hand-grouping 8 weight loads per round, summed in order,
   took 10x from 5.98 s to 4.19 s. A `#pragma unroll`-style hint, or an independent-load
   scheduling pass, would make this automatic.
-- `fail` is a keyword, so `var<Int> fail = 0` is a parse error whose message does not name the
-  keyword.
-- `cuLaunchKernel` parameters are built by hand, as an `[Int; N]` of `addr()` cells. A typed
-  launch helper in the stdlib would remove a whole class of argument-order bugs.
 - There are no GPU timing hooks (events) in the stdlib; times are host wall clock around one
   final `cuCtxSynchronize`.
+- The `network` stdlib only sends and receives `String`s. The two-Spark split moves raw
+  `[i64 count][i32 ids]` buffers, so it declares libc `send`/`recv`/`setsockopt`/`close`/`usleep`
+  as externs and hard-codes `MSG_DONTWAIT`, `MSG_NOSIGNAL`, `TCP_NODELAY` and `SO_REUSEADDR`.
+  A byte-buffer `socket_send_raw`/`socket_recv_into`, a non-blocking flag and the socket-option
+  constants would remove that.
+- There is no RDMA (ibverbs) binding. Over TCP the per-step id exchange, not the GPU, bounds the
+  two-Spark run.
