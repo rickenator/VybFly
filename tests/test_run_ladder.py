@@ -16,8 +16,9 @@ def _run(tmp_path: Path, n_edges: int, **env: str) -> subprocess.CompletedProces
     bin_dir.mkdir(exist_ok=True)
     with open(bin_dir / "csr.out.indices.i32", "wb") as f:
         f.truncate(4 * n_edges)  # sparse file; only the size matters
-    e = dict(os.environ, VYB="echo", VYBFLY_LADDER_DIR=str(tmp_path))
+    e = dict(os.environ, VYB="echo", VYBFLY_LADDER_DIR=str(tmp_path), VYBFLY_ARCH="x86_64")
     e.pop("VYBFLY_ENGINE", None)
+    e.pop("VYBFLY_DESC_MIN_EDGES", None)
     e.update(env)
     return subprocess.run(["bash", str(SCRIPT), "--module-path", "std"], env=e,
                           capture_output=True, text=True)
@@ -52,3 +53,26 @@ def test_missing_csr(tmp_path):
     e.pop("VYBFLY_ENGINE", None)
     r = subprocess.run(["bash", str(SCRIPT)], env=e, capture_output=True, text=True)
     assert r.returncode == 2
+
+
+@pytest.mark.parametrize("name", ["gpu", "ladder_gpu"])
+def test_gpu_engine(tmp_path, name):
+    env_script = (tmp_path / "envecho.sh")
+    env_script.write_text('#!/usr/bin/env bash\necho "PTX=$VYBFLY_GPU_PTX" "$@"\n')
+    env_script.chmod(0o755)
+    r = _run(tmp_path, 10, VYBFLY_ENGINE=name, VYB=str(env_script))
+    assert r.returncode == 0, r.stderr
+    out = r.stdout.split()
+    assert out[-1].endswith("src/vyb/ladder_gpu.vyb") and Path(out[-1]).exists()
+    ptx = Path(out[0].removeprefix("PTX="))
+    assert ptx.is_absolute() and ptx.name == "ladder_gpu_kernel.ptx" and ptx.exists()
+    r = _run(tmp_path, 10, VYBFLY_ENGINE=name, VYB=str(env_script), VYBFLY_GPU_PTX="/x/k.ptx")
+    assert r.stdout.split()[0] == "PTX=/x/k.ptx"
+
+
+@pytest.mark.parametrize("arch", ["aarch64", "arm64"])
+def test_arm_always_prop(tmp_path, arch):
+    r = _run(tmp_path, 27_842_102, VYBFLY_ARCH=arch)
+    assert r.returncode == 0 and r.stdout.split()[-1].endswith("ladder_prop.vyb")
+    r = _run(tmp_path, 27_842_102, VYBFLY_ARCH=arch, VYBFLY_DESC_MIN_EDGES="1000")
+    assert r.stdout.split()[-1].endswith("ladder_desc.vyb")
