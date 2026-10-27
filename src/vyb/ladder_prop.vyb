@@ -43,8 +43,8 @@ struct Eng {
     n<Int>, ne<Int>, nt<Int>, shift<Int>, blk<Int>, nblk<Int>,
     steps<Int>, epochs<Int>, max_active<Int>, refr_steps<Int>,
     vth<Float>, decay<Float>,                   // used as Float32 in the kernel
-    ip<Int>, dst<Int>, w<Int>,                  // CSR: i64 indptr, i32 targets, f32 weights
-    cur<Int>, vm<Int>, refr<Int>, flag<Int>,    // f32 I, f32 V, i32 refractory-until, i32 touched
+    ip<Int>, rec<Int>,                          // CSR: i64 indptr, 8-byte edge records {i32 target, f32 weight}
+    cur<Int>, vm<Int>, refr<Int>, flag<Int>,    // f32 I, f32 V, i32 refractory-until, u8 touched
     soff<Int>, sids<Int>,                       // stimulus: i32 offsets[steps+1], i32 ids
     fired<Int>, fcnt<Int>,                      // i32 [2][nblk*blk], i64 [2][nblk]
     poff<Int>, pbuf<Int>, pcap<Int>, srcb<Int>, bcnt<Int>,
@@ -123,72 +123,79 @@ scatter_phase(e<Eng>, t<Int>, step<Int>) -> {
         }
         q = q + 1
     }
-    // pass 1: count per destination block
+    q0<Int> = time_nanos() else 0
+    // Single pass into per-(thread, block) bins. Row targets are (usually)
+    // sorted, so edges come in runs that share a destination block: keep the
+    // bin cursor in a register for the run and touch memory only at run ends.
     cnt<Int> = e.bcnt + 8 * t * (e.nblk + 1)
+    bp<Int> = e.pbuf + 8 * t * e.nblk
+    bc<Int> = e.pcap + 8 * t * e.nblk
     b = 0
     while (b <= e.nblk) { st64(cnt + 8 * b, 0)
         b = b + 1 }
     var<Int> syn = 0
     var<Int> k = 0
     sh<Int> = e.shift
-    dst<Int> = e.dst
+    rec<Int> = e.rec
+    rng<Int> = ld64(e.srcb + 8 * (e.nt + t))
     freedom {
+        // gather row ranges first (independent loads -> memory-level parallelism)
+        ipb<Int> = e.ip
         while (k < ns) {
             i<Int> = at(from<loc<Int32>>(src + 4 * k)) as Int
-            var<Int> ed = at(from<loc<Int>>(e.ip + 8 * i))
-            ee<Int> = at(from<loc<Int>>(e.ip + 8 * (i + 1)))
-            if (ee > ed) { syn = syn + (ee - ed) }
-            while (ed < ee) {
-                d<Int> = at(from<loc<Int32>>(dst + 4 * ed)) as Int
-                cp<Int> = cnt + 8 * (d >> sh)
-                at(from<loc<Int>>(cp)) = at(from<loc<Int>>(cp)) + 1
-                ed = ed + 1
-            }
+            at(from<loc<Int>>(rng + 16 * k)) = at(from<loc<Int>>(ipb + 8 * i))
+            at(from<loc<Int>>(rng + 16 * k + 8)) = at(from<loc<Int>>(ipb + 8 * (i + 1)))
             k = k + 1
         }
     }
-    // offsets (exclusive prefix) into poff[t]; cnt becomes the write cursor
-    po<Int> = e.poff + 8 * t * (e.nblk + 1)
-    var<Int> run = 0
-    b = 0
-    while (b < e.nblk) {
-        c<Int> = ld64(cnt + 8 * b)
-        st64(po + 8 * b, run)
-        st64(cnt + 8 * b, run)
-        run = run + c
-        b = b + 1
-    }
-    st64(po + 8 * e.nblk, run)
-    if (run * 8 > ld64(e.pcap + 8 * t)) {
-        var<Int> np = 0
-        nbytes<Int> = run * 8 + run * 4 + 4096
-        old<Int> = ld64(e.pbuf + 8 * t)
-        freedom { np = realloc(old, nbytes) }
-        st64(e.pbuf + 8 * t, np)
-        st64(e.pcap + 8 * t, nbytes)
-    }
-    buf<Int> = ld64(e.pbuf + 8 * t)
-    wv<Int> = e.w
+    q1<Int> = time_nanos() else 0
     k = 0
     freedom {
         while (k < ns) {
-            i<Int> = at(from<loc<Int32>>(src + 4 * k)) as Int
-            var<Int> ed = at(from<loc<Int>>(e.ip + 8 * i))
-            ee<Int> = at(from<loc<Int>>(e.ip + 8 * (i + 1)))
+            var<Int> ed = at(from<loc<Int>>(rng + 16 * k))
+            ee<Int> = at(from<loc<Int>>(rng + 16 * k + 8))
+            if (ee > ed) { syn = syn + (ee - ed) }
             while (ed < ee) {
-                d<Int> = at(from<loc<Int32>>(dst + 4 * ed)) as Int
-                cp<Int> = cnt + 8 * (d >> sh)
-                slot<Int> = at(from<loc<Int>>(cp))
-                at(from<loc<Int>>(cp)) = slot + 1
-                at(from<loc<Int32>>(buf + 8 * slot)) = d as Int32
-                at(from<loc<Float32>>(buf + 8 * slot + 4)) = at(from<loc<Float32>>(wv + 4 * ed))
+                r0<Int> = at(from<loc<Int>>(rec + 8 * ed))
+                rb<Int> = (r0 & 4294967295) >> sh
+                var<Int> c = at(from<loc<Int>>(cnt + 8 * rb))
+                var<Int> p = at(from<loc<Int>>(bp + 8 * rb))
+                need<Int> = c + (ee - ed)
+                if (need > at(from<loc<Int>>(bc + 8 * rb))) {
+                    var<Int> nc = 2 * at(from<loc<Int>>(bc + 8 * rb))
+                    if (nc < need + 1024) { nc = need + 1024 }
+                    p = realloc(p, nc * 8)
+                    at(from<loc<Int>>(bp + 8 * rb)) = p
+                    at(from<loc<Int>>(bc + 8 * rb)) = nc
+                }
+                at(from<loc<Int>>(p + 8 * c)) = r0
+                c = c + 1
                 ed = ed + 1
+                var<Int> go = 1
+                while (go == 1 && ed < ee) {
+                    r<Int> = at(from<loc<Int>>(rec + 8 * ed))
+                    if (((r & 4294967295) >> sh) == rb) {
+                        at(from<loc<Int>>(p + 8 * c)) = r
+                        c = c + 1
+                        ed = ed + 1
+                    } else { go = 0 }
+                }
+                at(from<loc<Int>>(cnt + 8 * rb)) = c
             }
             k = k + 1
         }
     }
+    q2<Int> = time_nanos() else 0
+    q3<Int> = q2
+    q4<Int> = q2
     stat_add(e, t, 0, syn)
     stat_add(e, t, 1, nstim)
+    q5<Int> = q2
+    stat_add(e, t, 10, q1 - q0)
+    stat_add(e, t, 11, q2 - q1)
+    stat_add(e, t, 12, q3 - q2)
+    stat_add(e, t, 13, q4 - q3)
+    stat_add(e, t, 14, q5 - q4)
 }
 
 // Phase B for thread t: replay bins into owned blocks, then leak / integrate / fire.
@@ -204,8 +211,8 @@ integrate_phase(e<Eng>, t<Int>, step<Int>, ep<Int>) -> {
     flag<Int> = e.flag
     rs<Int> = e.refr_steps
     zf<Float32> = 0.0
-    one32<Int32> = 1
-    zero32<Int32> = 0
+    one8<UInt8> = 1
+    zero8<UInt8> = 0
     var<Int> spk = 0
     var<Int> hsum = 0
     var<Int> hx = 0
@@ -213,16 +220,15 @@ integrate_phase(e<Eng>, t<Int>, step<Int>, ep<Int>) -> {
     while (b < e.nblk) {
         var<Int> s = 0
         while (s < e.nt) {
-            po<Int> = e.poff + 8 * s * (e.nblk + 1)
-            buf<Int> = ld64(e.pbuf + 8 * s)
-            var<Int> k = ld64(po + 8 * b)
-            kend<Int> = ld64(po + 8 * (b + 1))
+            buf<Int> = ld64(e.pbuf + 8 * (s * e.nblk + b))
+            var<Int> k = 0
+            kend<Int> = ld64(e.bcnt + 8 * (s * (e.nblk + 1) + b))
             freedom {
                 while (k < kend) {
                     d<Int> = at(from<loc<Int32>>(buf + 8 * k)) as Int
                     x<Float32> = at(from<loc<Float32>>(buf + 8 * k + 4))
                     at(from<loc<Float32>>(cur + 4 * d)) = at(from<loc<Float32>>(cur + 4 * d)) + x
-                    at(from<loc<Int32>>(flag + 4 * d)) = one32
+                    at(from<loc<UInt8>>(flag + d)) = one8
                     k = k + 1
                 }
             }
@@ -237,10 +243,10 @@ integrate_phase(e<Eng>, t<Int>, step<Int>, ep<Int>) -> {
         freedom {
             while (i < hi) {
                 vd<Float32> = at(from<loc<Float32>>(vm + 4 * i)) * decay
-                if (at(from<loc<Int32>>(flag + 4 * i)) != 0) {
+                if (at(from<loc<UInt8>>(flag + i)) != zero8) {
                     v<Float32> = vd + at(from<loc<Float32>>(cur + 4 * i))
                     at(from<loc<Float32>>(cur + 4 * i)) = zf
-                    at(from<loc<Int32>>(flag + 4 * i)) = zero32
+                    at(from<loc<UInt8>>(flag + i)) = zero8
                     if (v >= vth && step >= (at(from<loc<Int32>>(refr + 4 * i)) as Int)) {
                         at(from<loc<Float32>>(vm + 4 * i)) = zf
                         at(from<loc<Int32>>(refr + 4 * i)) = (step + rs) as Int32
@@ -274,6 +280,7 @@ integrate_phase(e<Eng>, t<Int>, step<Int>, ep<Int>) -> {
 
 reset_phase(e<Eng>, t<Int>) -> {
     zf<Float32> = 0.0
+    z8<UInt8> = 0
     var<Int> b = t
     while (b < e.nblk) {
         lo<Int> = b * e.blk
@@ -284,7 +291,7 @@ reset_phase(e<Eng>, t<Int>) -> {
             stf(e.cur + 4 * i, zf)
             stf(e.vm + 4 * i, zf)
             st32(e.refr + 4 * i, 0)
-            st32(e.flag + 4 * i, 0)
+            freedom { at(from<loc<UInt8>>(e.flag + i)) = z8 }
             i = i + 1
         }
         st64(e.fcnt + 8 * b, 0)
@@ -302,12 +309,20 @@ worker(e<Eng>, t<Int>)<Int> -> {
         barrier(e, k)
         var<Int> step = 0
         while (step < e.steps) {
+            ta<Int> = time_nanos() else 0
             scatter_phase(e, t, step)
+            tb<Int> = time_nanos() else 0
             k = k + 1
             barrier(e, k)
+            tc<Int> = time_nanos() else 0
             integrate_phase(e, t, step, ep)
+            td<Int> = time_nanos() else 0
             k = k + 1
             barrier(e, k)
+            te<Int> = time_nanos() else 0
+            stat_add(e, t, 6, tb - ta)
+            stat_add(e, t, 7, td - tc)
+            stat_add(e, t, 8, (tc - tb) + (te - td))
             step = step + 1
         }
         ep = ep + 1
@@ -370,7 +385,7 @@ main()<Int> -> {
     }
     // weights: synapse-count normalised, double accumulation in edge order (as sparse_prop.cu)
     tin<Int> = alloc0(n, 8)
-    w<Int> = alloc0(ne, 4)
+    rec<Int> = alloc0(ne, 8)
     g<Float> = gain as Float
     freedom {
         var<Int> e1 = 0
@@ -384,10 +399,13 @@ main()<Int> -> {
         while (e1 < ne) {
             d<Int> = at(from<loc<Int32>>(dst + 4 * e1)) as Int
             tt<Float> = at(from<loc<Float>>(tin + 8 * d))
+            var<Float32> wf = 0.0
             if (tt > 0.0) {
                 sv<Float> = (at(from<loc<Int32>>(syn + 4 * e1)) as Int) as Float
-                at(from<loc<Float32>>(w + 4 * e1)) = ((g * sv) / tt) as Float32
+                wf = ((g * sv) / tt) as Float32
             }
+            at(from<loc<Int32>>(rec + 8 * e1)) = d as Int32
+            at(from<loc<Float32>>(rec + 8 * e1 + 4)) = wf
             e1 = e1 + 1
         }
     }
@@ -402,18 +420,19 @@ main()<Int> -> {
         n = n, ne = ne, nt = nt, shift = shift, blk = blk, nblk = nblk,
         steps = steps, epochs = epochs, max_active = 300000, refr_steps = refr_steps,
         vth = vth1, decay = decay1,
-        ip = ip, dst = dst, w = w,
-        cur = alloc0(n, 4), vm = alloc0(n, 4), refr = alloc0(n, 4), flag = alloc0(n, 4),
+        ip = ip, rec = rec,
+        cur = alloc0(n, 4), vm = alloc0(n, 4), refr = alloc0(n, 4), flag = alloc0(n, 1),
         soff = sb + 4, sids = sb + 4 + 4 * (ld32(sb) + 1),
         fired = alloc0(2 * nblk * blk, 4), fcnt = alloc0(2 * nblk, 8),
-        poff = alloc0(nt * (nblk + 1), 8), pbuf = alloc0(nt, 8), pcap = alloc0(nt, 8),
-        srcb = alloc0(nt, 8), bcnt = alloc0(nt * (nblk + 1), 8),
+        poff = alloc0(nt * (nblk + 1), 8), pbuf = alloc0(nt * nblk, 8), pcap = alloc0(nt * nblk, 8),
+        srcb = alloc0(2 * nt, 8), bcnt = alloc0(nt * (nblk + 1), 8),
         stats = alloc0(nt * 16, 8), epk = alloc0(nt * epochs, 8),
         bar = atomic_new(0) else 0
     }
     var<Int> t = 0
     while (t < nt) {
         st64(e.srcb + 8 * t, alloc0(n + 4096, 4))
+        st64(e.srcb + 8 * (nt + t), alloc0((n + 4096) / nt + 64, 16))
         t = t + 1
     }
     t_sim0<Int> = time_nanos() else 0
@@ -447,6 +466,34 @@ main()<Int> -> {
         t = t + 1
     }
     over<Int> = ld64(stat_slot(e, 0, 5))
+    var<Int> amax = 0
+    var<Int> bmax = 0
+    var<Int> asum = 0
+    var<Int> bsum = 0
+    var<Int> wsum = 0
+    t = 0
+    while (t < nt) {
+        a1<Int> = ld64(stat_slot(e, t, 6))
+        b1<Int> = ld64(stat_slot(e, t, 7))
+        if (a1 > amax) { amax = a1 }
+        if (b1 > bmax) { bmax = b1 }
+        asum = asum + a1
+        bsum = bsum + b1
+        wsum = wsum + ld64(stat_slot(e, t, 8))
+        t = t + 1
+    }
+    println("PHASES scatter_max_ms={} scatter_mean_ms={} integrate_max_ms={} integrate_mean_ms={} barrier_mean_ms={}".format(amax / 1000000, asum / nt / 1000000, bmax / 1000000, bsum / nt / 1000000, wsum / nt / 1000000))
+    var<Int> fi = 10
+    var<String> sub = "SUBPHASES(mean_ms gather,copy,-,-,-)"
+    while (fi < 15) {
+        var<Int> fs = 0
+        t = 0
+        while (t < nt) { fs = fs + ld64(stat_slot(e, t, fi))
+            t = t + 1 }
+        sub = sub + " " + (fs / nt / 1000000).to_string()
+        fi = fi + 1
+    }
+    println(sub)
     var<Int> ident = 1
     var<Int> ep0 = 0
     var<Int> ep = 0
