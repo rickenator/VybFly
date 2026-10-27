@@ -438,7 +438,8 @@
    "method": "cut by target at half the in-edges; each rank keeps all source rows with its own edges; fired-id lists swapped over TCP on the direct 200 GbE link each step",
    "bit_exact": {
     "10x": true,
-    "20x": true
+    "20x": true,
+    "40x": true
    },
    "20x_sim_s": {
     "one_gb10": 7.445,
@@ -474,7 +475,16 @@
     "pingpong_8B_blocking_us": 798,
     "wmem_max_bytes": 212992
    },
-   "finding": "the split halves GPU time but the per-step TCP exchange (~0.35 ms) eats most of it; RDMA (RoCE present) is the next step"
+   "finding": "the split halves GPU time but the per-step TCP exchange (~0.35 ms at 20x) eats most of it at 10x-20x; at 40x it wins 1.30x; RDMA (RoCE present) is the next step",
+   "40x_sim_s": {
+    "one_gb10": 14.707,
+    "two_duplex_overlapped_push": [
+     11.352,
+     12.29
+    ],
+    "speedup_best": 1.3,
+    "env": "VYBFLY_MAX_ACTIVE=5570200 (uncapped, as the 40x reference)"
+   }
   }
  },
  "arm_cpu": {

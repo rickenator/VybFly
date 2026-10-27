@@ -183,7 +183,7 @@ for the same uncapped run in Vyb.
 target at half the in-edges. Each rank keeps every source row, but only the edges into its own
 neurons, so a step needs nothing from the peer except the list of neurons that fired. After
 each step the ranks swap fired-id lists over TCP on the direct 200 GbE link, then push the
-peer's spikes into their own targets. It is bit-exact at 10x and 20x (digests equal to the C++
+peer's spikes into their own targets. It is bit-exact at 10x, 20x and 40x (digests equal to the C++
 reference), and with `VYBFLY_SPLIT_PARTS=1` it is the single-GPU engine.
 
 | 20x, 8 epochs | sim | GPU time per rank | network |
@@ -193,10 +193,14 @@ reference), and with `VYBFLY_SPLIT_PARTS=1` it is the single-GPU engine.
 | two GB10s, full-duplex exchange | 7.51 s (profiled), 6.79 s | ~3.7 to 4.1 s | ~3.1 to 3.5 s |
 | two GB10s, full-duplex, own push overlapped with the exchange | **6.64 s**, 7.30 s | ~3.7 to 4.1 s | ~2.7 to 3.2 s (sim minus GPU) |
 
+At 40x the split wins clearly. Two GB10s (duplex and overlap on) take **11.35 s** (best of 2;
+the other run took 12.29 s) against 14.71 s on one GB10. That is 1.30x faster, and again
+bit-exact. The GPU work per step doubles from 20x, but the exchange cost grows less.
+
 The split halves the GPU time, but the exchange costs about 0.35 ms per step. A ping-pong test
 over the same link shows why: 36 us for 8 bytes with busy-polling, but about 475 us for 240 KB
 each way, and about 800 us with blocking sockets. Socket buffers are capped at 212 KB
-(`net.core.wmem_max`) without root. So two Sparks only just beat one at 20x, and they lose at
+(`net.core.wmem_max`) without root. So two Sparks only just beat one at 20x, beat it by 1.30x at 40x, and lose at
 10x (6.09 s against about 4.2 s, measured with the serialized exchange). The ConnectX ports
 expose RoCE devices, so RDMA for the id lists is the next step. The overlap's gain is within
 run-to-run noise, since the GPU push is short next to the exchange. The overlap and the duplex
