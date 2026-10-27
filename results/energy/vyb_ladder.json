@@ -537,6 +537,11 @@
      "40x_rdma": {
       "zc0": 8.06,
       "zc1": 7.814
+     },
+     "80x_rdma": {
+      "zc0": 15.662,
+      "zc1": 15.284,
+      "zc1_repeat": 15.376
      }
     },
     "40x_rank1_profile_s_zc1": {
@@ -546,9 +551,34 @@
     },
     "bit_exact": {
      "10x": true,
-     "40x": true
+     "40x": true,
+     "80x": true
     },
-    "80x": "not yet measured with ZC"
+    "80x": "measured: copies gone, ~2% faster; the step is GPU-bound (digest 508755035752662158/103693891554914, 3841086096 spikes)",
+    "80x_profile_s_zc1": {
+     "gpu_wait": [
+      14.384,
+      13.338
+     ],
+     "dtoh": 0.041,
+     "network": [
+      0.828,
+      1.896
+     ],
+     "note": "[rank 0, rank 1], first ZC=1 run"
+    },
+    "80x_profile_s_zc0": {
+     "gpu_wait": 0.0,
+     "dtoh": [
+      12.506,
+      12.322
+     ],
+     "network": [
+      1.01,
+      1.385
+     ],
+     "note": "[rank 0, rank 1]; with copies the legacy-stream GPU wait is booked as dtoh"
+    }
    }
   }
  },

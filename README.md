@@ -251,11 +251,15 @@ copies (`VYBFLY_SPLIT_ZC=0` forces that). Both modes are bit-exact (8 epochs):
 | 10x, RDMA | 2.61 s | **2.51 s** |
 | 10x, TCP | 4.75 s | **4.10 s** |
 | 40x, RDMA | 8.06 s | **7.81 s** |
+| 80x, RDMA | 15.66 s | **15.28 s**, 15.38 s |
 
 At 40x with ZC on, rank 1 spends 7.27 s waiting on the GPU, 0.04 s on copies and 0.48 s on the
 network. Against an ideal of 7.35 s, what is left is about 0.46 s of per-step exchange and barrier
 latency. Sending a bitmap instead of an id list would cut the bytes only about 1.4x at this firing
-rate. 80x with ZC on has not been measured yet.
+rate. At 80x ZC on removes the copies (`dtoh_ms` falls from 12.3-12.5 s to 0.04 s per rank) but
+gains only about 2%: each rank then waits 13.3-14.4 s on the GPU, so the 80x step is bound by the
+kernels themselves, not by the transfer. The three 80x runs above were back to back and all
+bit-exact.
 
 Run it, rank 0 first, on two machines that share the graph files:
 
