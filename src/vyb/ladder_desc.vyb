@@ -1,0 +1,591 @@
+// ladder_seg.vyb - "segmented pull" CPU engine for the FlyScale 1x-10x ladder workload, in Vyb.
+//
+// Same model, inputs, canonical order and RESULT line as ladder_prop.vyb (see there), but one
+// phase and ONE barrier per step instead of scatter/bin/replay:
+//
+//   Thread p owns a contiguous destination range [rb[p], rb[p+1]) (ranges balanced by in-degree).
+//   CSR rows are sorted by target, so each row splits into nt contiguous segments, one per range;
+//   a static table seg[i] = {i64 row start, i32 off[0..nt]} gives every thread its segment of
+//   every row in O(1). Each step every thread walks the whole source list (previous step's fired
+//   lists, range by range = ascending id, capped at max_active, then the stimulus) and accumulates
+//   only its own segment of each row straight into I[] -- no bins, no second pass. Every target's
+//   input is still summed source by source in list order and edge order, so the result is bit-for-
+//   bit the sequential reference at any thread count. Then the thread leaks / integrates / fires
+//   its range and writes its fired list; one spin barrier ends the step.
+//
+// Requires every CSR row to be sorted by target (checked at load; within a row the order of
+// distinct targets does not affect any sum, so a stable per-row sort would preserve exactness).
+//
+// Config via environment: as ladder_prop.vyb.
+import io::{open_read, read_all}
+import env::{env_get}
+import time::{time_nanos}
+import threads::{thread_spawn, thread_join, atomic_new, atomic_add, atomic_load}
+
+extern "C" {
+    calloc(n<Int>, sz<Int>)<Int>
+    sched_yield()<CInt>
+}
+
+struct Eng {
+    n<Int>, ne<Int>, nt<Int>, ss<Int>,          // ss: seg row stride in bytes
+    steps<Int>, epochs<Int>, max_active<Int>, refr_steps<Int>,
+    vth<Float>, decay<Float>,
+    seg<Int>, rec<Int>, rb<Int>, rng<Int>,     // rng: per-thread 256 x {i64,i64} gather scratch (4 KB stride)                // seg table, 8-byte edge records, i64 range bounds [nt+1]
+    cur<Int>, vm<Int>, refr<Int>, flag<Int>,
+    soff<Int>, sids<Int>,
+    fired<Int>, fcnt<Int>,                      // i32 [2][n] (range p's list at rb[p]), i64 [2][nt]
+    dbuf<Int>, dcap<Int>, dcnt<Int>,            // segment descriptors {i32 start, i32 end} [w][t][dcap], counts i64 [w][t]
+    stats<Int>, epk<Int>, bar<Int>
+}
+
+ld64(p<Int>)<Int> -> { var<Int> r = 0
+    freedom { r = at(from<loc<Int>>(p)) }
+    return r }
+st64(p<Int>, v<Int>) -> { freedom { at(from<loc<Int>>(p)) = v } }
+ld32(p<Int>)<Int> -> { var<Int32> r = 0
+    freedom { r = at(from<loc<Int32>>(p)) }
+    return r as Int }
+st32(p<Int>, v<Int>) -> { freedom { at(from<loc<Int32>>(p)) = v as Int32 } }
+ldf(p<Int>)<Float32> -> { var<Float32> r = 0.0
+    freedom { r = at(from<loc<Float32>>(p)) }
+    return r }
+stf(p<Int>, v<Float32>) -> { freedom { at(from<loc<Float32>>(p)) = v } }
+
+alloc0(n<Int>, sz<Int>)<Int> -> { var<Int> p = 0
+    freedom { p = calloc(n, sz) }
+    return p }
+
+stat_slot(e<Eng>, t<Int>, f<Int>)<Int> -> { return e.stats + 8 * (t * 16 + f) }
+stat_add(e<Eng>, t<Int>, f<Int>, v<Int>) -> {
+    p<Int> = stat_slot(e, t, f)
+    st64(p, ld64(p) + v)
+}
+
+barrier(e<Eng>, k<Int>) -> {
+    atomic_add(e.bar, 1)
+    target<Int> = k * e.nt
+    var<Int> spins = 0
+    while (atomic_load(e.bar) < target) {
+        spins = spins + 1
+        if (spins > 2000) { freedom { sched_yield() } }
+    }
+}
+
+// Phase A (writer w): take chunk w of the step's combined source list (capped fired lists in
+// range order = ascending id, then the stimulus) and, reading each source's seg row ONCE, append
+// one {start, end} edge-segment descriptor per destination range t to stream [w][t]
+// (empty segments are written but not counted, so the stream stays branch-free and compact).
+emit_list(e<Eng>, w<Int>, fl<Int>, m<Int>, cm<Int>, check<Int>)<Int> -> {
+    seg<Int> = e.seg
+    ss<Int> = e.ss
+    nt<Int> = e.nt
+    n<Int> = e.n
+    dcap8<Int> = 8 * e.dcap
+    db<Int> = e.dbuf + dcap8 * nt * w
+    sw<Int> = ss / 8
+    rs<Int> = cm + 4096                                      // row scratch: 64 rows x ss bytes
+    var<Int> nv = 0
+    freedom {
+      var<Int> c0 = 0
+      while (c0 < m) {
+        var<Int> c1 = c0 + 64
+        if (c1 > m) { c1 = m }
+        // pass 1: copy the chunk's seg rows (independent loads -> many misses in flight)
+        var<Int> k = c0
+        while (k < c1) {
+            id<Int> = at(from<loc<Int32>>(fl + 4 * k)) as Int
+            var<Int> ok = 1
+            if (check != 0) { if (id < 0 || id >= n) { ok = 0 } }
+            dr<Int> = rs + ss * (k - c0)
+            if (ok == 1) {
+                sr0<Int> = seg + ss * id
+                var<Int> x = 0
+                while (x < sw) {
+                    at(from<loc<Int>>(dr + 8 * x)) = at(from<loc<Int>>(sr0 + 8 * x))
+                    x = x + 1
+                }
+            } else {
+                at(from<loc<Int>>(dr)) = -1
+            }
+            k = k + 1
+        }
+        // pass 2: emit descriptors from the scratch copies
+        k = c0
+        while (k < c1) {
+            sr<Int> = rs + ss * (k - c0)
+            base<Int> = at(from<loc<Int>>(sr))
+            if (base >= 0) {
+                nv = nv + 1
+                var<Int> lo = base + (at(from<loc<Int32>>(sr + 8)) as Int)
+                var<Int> t = 0
+                while (t < nt) {
+                    hi<Int> = base + (at(from<loc<Int32>>(sr + 12 + 4 * t)) as Int)
+                    c<Int> = at(from<loc<Int>>(cm + 8 * t))
+                    dp<Int> = db + dcap8 * t + 8 * c
+                    at(from<loc<Int32>>(dp)) = lo as Int32
+                    at(from<loc<Int32>>(dp + 4)) = hi as Int32
+                    at(from<loc<Int>>(cm + 8 * t)) = c + (((lo - hi) >> 63) & 1)
+                    lo = hi
+                    t = t + 1
+                }
+            }
+            k = k + 1
+        }
+        c0 = c1
+      }
+    }
+    return nv
+}
+
+desc_phase(e<Eng>, w<Int>, step<Int>) -> {
+    ta<Int> = time_nanos() else 0
+    pp<Int> = (step + 1) & 1                                 // lists written by step-1
+    nt<Int> = e.nt
+    cm<Int> = e.rng + 8 * 2048 * w                            // scratch: cnt[t] at 8t, capped m_q at 8(256+q)
+    var<Int> budget = e.max_active
+    var<Int> f_tot = 0
+    var<Int> q = 0
+    while (q < nt) {
+        cq<Int> = ld64(e.fcnt + 8 * (pp * nt + q))
+        f_tot = f_tot + cq
+        var<Int> m = cq
+        if (m > budget) { m = budget }
+        budget = budget - m
+        st64(cm + 8 * (256 + q), m)
+        st64(cm + 8 * q, 0)
+        q = q + 1
+    }
+    na<Int> = e.max_active - budget
+    if (w == 0) { stat_add(e, 0, 5, f_tot - na) }
+    s0<Int> = ld32(e.soff + 4 * step)
+    s1<Int> = ld32(e.soff + 4 * (step + 1))
+    tot<Int> = na + (s1 - s0)
+    p0<Int> = w * tot / nt
+    p1<Int> = (w + 1) * tot / nt
+    var<Int> p = p0
+    var<Int> qb = 0
+    q = 0
+    while (p < p1 && p < na) {
+        mq<Int> = ld64(cm + 8 * (256 + q))
+        if (p >= qb + mq) {
+            qb = qb + mq
+            q = q + 1
+        } else {
+            var<Int> h = qb + mq
+            if (h > p1) { h = p1 }
+            fl<Int> = e.fired + 4 * (pp * e.n + ld64(e.rb + 8 * q))
+            emit_list(e, w, fl + 4 * (p - qb), h - p, cm, 0)
+            p = h
+        }
+    }
+    if (p < p1) {
+        nstim<Int> = emit_list(e, w, e.sids + 4 * (s0 + p - na), p1 - p, cm, 1)
+        stat_add(e, w, 1, nstim)
+    }
+    q = 0
+    while (q < nt) {
+        st64(e.dcnt + 8 * (w * nt + q), ld64(cm + 8 * q))
+        q = q + 1
+    }
+    tb<Int> = time_nanos() else 0
+    stat_add(e, w, 9, tb - ta)
+}
+
+// Phase B (thread t) then leak / integrate / fire own range.
+step_phase(e<Eng>, t<Int>, step<Int>, ep<Int>) -> {
+    par<Int> = step & 1
+    ta<Int> = time_nanos() else 0
+    rec<Int> = e.rec
+    cur<Int> = e.cur
+    flag<Int> = e.flag
+    n<Int> = e.n
+    nt<Int> = e.nt
+    one8<UInt8> = 1
+    zero8<UInt8> = 0
+    var<Int> syn = 0
+    var<Int> w = 0
+    while (w < nt) {
+        c<Int> = ld64(e.dcnt + 8 * (w * nt + t))
+        dp0<Int> = e.dbuf + 8 * e.dcap * (w * nt + t)
+        freedom {
+            var<Int> k = 0
+            var<Int> tch = 0
+            while (k < c) {
+                if ((k & 63) == 0) {
+                    // touch the first record of the next 64 segments (independent loads)
+                    var<Int> k2 = k
+                    var<Int> k3 = k + 64
+                    if (k3 > c) { k3 = c }
+                    while (k2 < k3) {
+                        tch = tch + at(from<loc<Int32>>(rec + 8 * (at(from<loc<Int32>>(dp0 + 8 * k2)) as Int)))
+                        k2 = k2 + 1
+                    }
+                }
+                var<Int> ed = at(from<loc<Int32>>(dp0 + 8 * k)) as Int
+                ee<Int> = at(from<loc<Int32>>(dp0 + 8 * k + 4)) as Int
+                syn = syn + (ee - ed)
+                while (ed < ee) {
+                    d<Int> = at(from<loc<Int32>>(rec + 8 * ed)) as Int
+                    at(from<loc<Float32>>(cur + 4 * d)) = at(from<loc<Float32>>(cur + 4 * d)) + at(from<loc<Float32>>(rec + 8 * ed + 4))
+                    ed = ed + 1
+                }
+                k = k + 1
+            }
+            at(from<loc<Int>>(e.stats + 8 * (t * 16 + 10))) = tch
+        }
+        w = w + 1
+    }
+    tb<Int> = time_nanos() else 0
+    // leak / integrate / fire own range, ascending id
+    decay<Float32> = e.decay as Float32
+    vth<Float32> = e.vth as Float32
+    vm<Int> = e.vm
+    refr<Int> = e.refr
+    rs<Int> = e.refr_steps
+    zf<Float32> = 0.0
+    lo<Int> = ld64(e.rb + 8 * t)
+    hi<Int> = ld64(e.rb + 8 * (t + 1))
+    fo<Int> = e.fired + 4 * (par * e.n + lo)
+    var<Int> nf = 0
+    var<Int> hsum = 0
+    var<Int> hx = 0
+    var<Int> i = lo
+    nzb<Int32> = ((0 - 2147483647) - 1) as Int32            // bits of -0.0f = "untouched"
+    freedom {
+        while (i < hi) {
+            // I[] is reset to -0.0f, so vd + I == vd bit for bit for untouched neurons, and any
+            // touched neuron's sum has a different bit pattern (no weight is -0.0f, checked at
+            // load; x + -0.0f == x and a sum can only be -0.0f if every term is) -- so the bits
+            // of I double as the reference's "touched" flag and no flag array is needed
+            vd<Float32> = at(from<loc<Float32>>(vm + 4 * i)) * decay
+            ci<Int32> = at(from<loc<Int32>>(cur + 4 * i))
+            v<Float32> = vd + at(from<loc<Float32>>(cur + 4 * i))
+            at(from<loc<Int32>>(cur + 4 * i)) = nzb
+            at(from<loc<Float32>>(vm + 4 * i)) = v
+            if (v >= vth) {
+                if (ci != nzb) {
+                    if (step >= (at(from<loc<Int32>>(refr + 4 * i)) as Int)) {
+                        at(from<loc<Float32>>(vm + 4 * i)) = zf
+                        at(from<loc<Int32>>(refr + 4 * i)) = (step + rs) as Int32
+                        at(from<loc<Int32>>(fo + 4 * nf)) = i as Int32
+                        nf = nf + 1
+                        if (ep == 0) {
+                            key<Int> = step * n + i
+                            hsum = hsum + (key & 2147483647)
+                            hx = hx ^ ((((key ^ (key >> 17)) & 2147483647) * 1000003 + (key >> 31)) & 4611686018427387903)
+                        }
+                    }
+                } else {
+                    at(from<loc<Float32>>(vm + 4 * i)) = vd
+                }
+            }
+            i = i + 1
+        }
+    }
+    st64(e.fcnt + 8 * (par * e.nt + t), nf)
+    tc<Int> = time_nanos() else 0
+    stat_add(e, t, 0, syn)
+    stat_add(e, t, 2, nf)
+    stat_add(e, t, 3, hsum)
+    p<Int> = stat_slot(e, t, 4)
+    st64(p, ld64(p) ^ hx)
+    ek<Int> = e.epk + 8 * (t * e.epochs + ep)
+    st64(ek, ld64(ek) + nf)
+    stat_add(e, t, 6, tb - ta)
+    stat_add(e, t, 7, tc - tb)
+}
+
+reset_phase(e<Eng>, t<Int>) -> {
+    zf<Float32> = 0.0
+    z8<UInt8> = 0
+    lo<Int> = ld64(e.rb + 8 * t)
+    hi<Int> = ld64(e.rb + 8 * (t + 1))
+    var<Int> i = lo
+    while (i < hi) {
+        st32(e.cur + 4 * i, -2147483648)
+        stf(e.vm + 4 * i, zf)
+        st32(e.refr + 4 * i, 0)
+        i = i + 1
+    }
+    st64(e.fcnt + 8 * t, 0)
+    st64(e.fcnt + 8 * (e.nt + t), 0)
+}
+
+worker(e<Eng>, t<Int>)<Int> -> {
+    var<Int> k = 0
+    var<Int> ep = 0
+    while (ep < e.epochs) {
+        reset_phase(e, t)
+        k = k + 1
+        barrier(e, k)
+        var<Int> step = 0
+        while (step < e.steps) {
+            desc_phase(e, t, step)
+            tv<Int> = time_nanos() else 0
+            k = k + 1
+            barrier(e, k)
+            tw0<Int> = time_nanos() else 0
+            step_phase(e, t, step, ep)
+            tw<Int> = time_nanos() else 0
+            k = k + 1
+            barrier(e, k)
+            tx<Int> = time_nanos() else 0
+            stat_add(e, t, 8, (tx - tw) + (tw0 - tv))
+            step = step + 1
+        }
+        ep = ep + 1
+    }
+    return 0
+}
+
+env_int(name<String>, d<Int>)<Int> -> {
+    match (env_get(name)) {
+        s -> { return s.to_int() }
+        ? -> { return d }
+    }
+}
+
+slurp(path<String>)<String> -> {
+    match (open_read(path)) {
+        f -> {
+            match (read_all(f)) {
+                s -> { return s }
+                ? -> { return "" }
+            }
+        }
+        ? -> { return "" }
+    }
+}
+
+main()<Int> -> {
+    dir<String> = env_get("VYBFLY_LADDER_DIR") else "results/energy/curves/s1"
+    stim_path<String> = env_get("VYBFLY_LADDER_STIM") else "stim_s1.bin"
+    nt<Int> = env_int("VYBFLY_THREADS", 8)
+    epochs<Int> = env_int("VYBFLY_EPOCHS", 8)
+    steps<Int> = env_int("VYBFLY_STEPS", 1000)
+    gain<Int> = env_int("VYBFLY_SYN_GAIN", 6)
+    refr_steps<Int> = env_int("VYBFLY_REFR_STEPS", 20)
+    t_load0<Int> = time_nanos() else 0
+
+    s_ip<String> = slurp(dir + "/bin/csr.out.indptr.i64")
+    s_dst<String> = slurp(dir + "/bin/csr.out.indices.i32")
+    s_syn<String> = slurp(dir + "/bin/csr.out.syn.i32")
+    s_stim<String> = slurp(stim_path)
+    if (s_ip.len() < 16 || s_dst.len() < 4 || s_syn.len() != s_dst.len() || s_stim.len() < 8) {
+        println("ladder_desc: missing or inconsistent input files")
+        return 2
+    }
+    n<Int> = s_ip.len() / 8 - 1
+    ne<Int> = s_dst.len() / 4
+    var<Int> ip = 0
+    var<Int> dst = 0
+    var<Int> syn = 0
+    var<Int> sb = 0
+    freedom {
+        ip = addr(s_ip)
+        dst = addr(s_dst)
+        syn = addr(s_syn)
+        sb = addr(s_stim)
+    }
+    if (ld32(sb) < steps) {
+        println("ladder_desc: stimulus file covers fewer steps than requested")
+        return 2
+    }
+    // weights: synapse-count normalised, double accumulation in edge order (as sparse_prop.cu)
+    tin<Int> = alloc0(n, 8)
+    rec<Int> = alloc0(ne, 8)
+    g<Float> = gain as Float
+    var<Int> negz = 0
+    freedom {
+        var<Int> e1 = 0
+        while (e1 < ne) {
+            d<Int> = at(from<loc<Int32>>(dst + 4 * e1)) as Int
+            p<Int> = tin + 8 * d
+            at(from<loc<Float>>(p)) = at(from<loc<Float>>(p)) + ((at(from<loc<Int32>>(syn + 4 * e1)) as Int) as Float)
+            e1 = e1 + 1
+        }
+        e1 = 0
+        while (e1 < ne) {
+            d<Int> = at(from<loc<Int32>>(dst + 4 * e1)) as Int
+            tt<Float> = at(from<loc<Float>>(tin + 8 * d))
+            var<Float32> wf = 0.0
+            if (tt > 0.0) {
+                sv<Float> = (at(from<loc<Int32>>(syn + 4 * e1)) as Int) as Float
+                wf = ((g * sv) / tt) as Float32
+            }
+            at(from<loc<Int32>>(rec + 8 * e1)) = d as Int32
+            at(from<loc<Float32>>(rec + 8 * e1 + 4)) = wf
+            if (at(from<loc<Int32>>(rec + 8 * e1 + 4)) == (((0 - 2147483647) - 1) as Int32)) { negz = negz + 1 }
+            e1 = e1 + 1
+        }
+    }
+    if (negz > 0) {
+        println("ladder_desc: {} weights are -0.0f; the -0.0 touched encoding needs none".format(negz))
+        return 2
+    }
+    // contiguous destination ranges balanced by (in-degree + 4) per neuron
+    indeg<Int> = alloc0(n + 1, 8)
+    var<Int> unsorted = 0
+    freedom {
+        var<Int> e1 = 0
+        while (e1 < ne) {
+            d<Int> = at(from<loc<Int32>>(dst + 4 * e1)) as Int
+            at(from<loc<Int>>(indeg + 8 * d)) = at(from<loc<Int>>(indeg + 8 * d)) + 1
+            e1 = e1 + 1
+        }
+        var<Int> i0 = 0
+        while (i0 < n) {
+            var<Int> e2 = at(from<loc<Int>>(ip + 8 * i0)) + 1
+            ee2<Int> = at(from<loc<Int>>(ip + 8 * (i0 + 1)))
+            while (e2 < ee2) {
+                if (at(from<loc<Int32>>(dst + 4 * e2)) < at(from<loc<Int32>>(dst + 4 * (e2 - 1)))) { unsorted = unsorted + 1 }
+                e2 = e2 + 1
+            }
+            i0 = i0 + 1
+        }
+    }
+    if (unsorted > 0) {
+        println("ladder_desc: {} CSR rows entries out of target order; this engine needs sorted rows".format(unsorted))
+        return 2
+    }
+    rb<Int> = alloc0(nt + 1, 8)
+    var<Int> wtot = 0
+    var<Int> i1 = 0
+    while (i1 < n) { wtot = wtot + ld64(indeg + 8 * i1) + 4
+        i1 = i1 + 1 }
+    var<Int> acc = 0
+    var<Int> pr = 1
+    i1 = 0
+    while (i1 < n && pr < nt) {
+        acc = acc + ld64(indeg + 8 * i1) + 4
+        while (pr < nt && acc * nt >= wtot * pr) {
+            st64(rb + 8 * pr, i1 + 1)
+            pr = pr + 1
+        }
+        i1 = i1 + 1
+    }
+    while (pr <= nt) { st64(rb + 8 * pr, n)
+        pr = pr + 1 }
+    // seg table: row i = {i64 start, i32 off[0..nt]}, off[p] = first edge with target >= rb[p]
+    ss<Int> = ((8 + 4 * (nt + 1)) + 7) / 8 * 8
+    seg<Int> = alloc0(n, ss)
+    freedom {
+        var<Int> i2 = 0
+        while (i2 < n) {
+            sr<Int> = seg + ss * i2
+            st<Int> = at(from<loc<Int>>(ip + 8 * i2))
+            en<Int> = at(from<loc<Int>>(ip + 8 * (i2 + 1)))
+            at(from<loc<Int>>(sr)) = st
+            var<Int> ed = st
+            var<Int> p2 = 0
+            while (p2 <= nt) {
+                lim<Int> = at(from<loc<Int>>(rb + 8 * p2))
+                var<Int> go = 1
+                while (go == 1) {
+                    if (ed >= en) { go = 0 }
+                    else {
+                        if ((at(from<loc<Int32>>(dst + 4 * ed)) as Int) < lim) { ed = ed + 1 } else { go = 0 }
+                    }
+                }
+                if (p2 == nt) { ed = en }
+                at(from<loc<Int32>>(sr + 8 + 4 * p2)) = (ed - st) as Int32
+                p2 = p2 + 1
+            }
+            i2 = i2 + 1
+        }
+    }
+    if (ne >= 2147483647) {
+        println("ladder_desc: edge count exceeds i32 descriptor range")
+        return 2
+    }
+    var<Int> maxst = 0
+    var<Int> s2 = 0
+    while (s2 < steps) {
+        d2<Int> = ld32(sb + 4 + 4 * (s2 + 1)) - ld32(sb + 4 + 4 * s2)
+        if (d2 > maxst) { maxst = d2 }
+        s2 = s2 + 1
+    }
+    dcap<Int> = (300000 + maxst) / nt + 2
+    vth1<Float> = 1.0
+    decay1<Float> = 0.9
+    e<Eng> = Eng {
+        n = n, ne = ne, nt = nt, ss = ss,
+        steps = steps, epochs = epochs, max_active = 300000, refr_steps = refr_steps,
+        vth = vth1, decay = decay1,
+        seg = seg, rec = rec, rb = rb, rng = alloc0(nt * 2048 + 64, 8),
+        cur = alloc0(n, 4), vm = alloc0(n, 4), refr = alloc0(n, 4), flag = 0,
+        soff = sb + 4, sids = sb + 4 + 4 * (ld32(sb) + 1),
+        fired = alloc0(2 * n, 4), fcnt = alloc0(2 * nt, 8),
+        dbuf = alloc0(nt * nt * dcap, 8), dcap = dcap, dcnt = alloc0(nt * nt, 8),
+        stats = alloc0(nt * 16, 8), epk = alloc0(nt * epochs, 8),
+        bar = atomic_new(0) else 0
+    }
+    var<Int> t = 0
+    t_sim0<Int> = time_nanos() else 0
+    var<Vec<Int>> hs = Vec<Int>()
+    t = 1
+    while (t < nt) {
+        tid<Int> = t
+        h<Int> = thread_spawn(|| -> worker(e, tid)) else 0
+        hs.push(h)
+        t = t + 1
+    }
+    worker(e, 0)
+    var<Int> j = 0
+    while (j < hs.len()) {
+        thread_join(hs.get(j))
+        j = j + 1
+    }
+    t_end<Int> = time_nanos() else 0
+    var<Int> synev = 0
+    var<Int> stim = 0
+    var<Int> spk = 0
+    var<Int> hsum = 0
+    var<Int> hx = 0
+    t = 0
+    while (t < nt) {
+        synev = synev + ld64(stat_slot(e, t, 0))
+        stim = stim + ld64(stat_slot(e, t, 1))
+        spk = spk + ld64(stat_slot(e, t, 2))
+        hsum = hsum + ld64(stat_slot(e, t, 3))
+        hx = hx ^ ld64(stat_slot(e, t, 4))
+        t = t + 1
+    }
+    over<Int> = ld64(stat_slot(e, 0, 5))
+    var<Int> amax = 0
+    var<Int> bmax = 0
+    var<Int> asum = 0
+    var<Int> bsum = 0
+    var<Int> wsum = 0
+    var<Int> dsum = 0
+    t = 0
+    while (t < nt) {
+        a1<Int> = ld64(stat_slot(e, t, 6))
+        b1<Int> = ld64(stat_slot(e, t, 7))
+        if (a1 > amax) { amax = a1 }
+        if (b1 > bmax) { bmax = b1 }
+        asum = asum + a1
+        bsum = bsum + b1
+        wsum = wsum + ld64(stat_slot(e, t, 8))
+        dsum = dsum + ld64(stat_slot(e, t, 9))
+        t = t + 1
+    }
+    println("PHASES desc_mean_ms={} pull_max_ms={} pull_mean_ms={} integrate_max_ms={} integrate_mean_ms={} barrier_mean_ms={}".format(dsum / nt / 1000000, amax / 1000000, asum / nt / 1000000, bmax / 1000000, bsum / nt / 1000000, wsum / nt / 1000000))
+    var<Int> ident = 1
+    var<Int> ep0 = 0
+    var<Int> ep = 0
+    while (ep < epochs) {
+        var<Int> c = 0
+        t = 0
+        while (t < nt) { c = c + ld64(e.epk + 8 * (t * epochs + ep))
+            t = t + 1 }
+        if (ep == 0) { ep0 = c }
+        if (c != ep0) { ident = 0 }
+        ep = ep + 1
+    }
+    load_ms<Int> = (t_sim0 - t_load0) / 1000000
+    sim_ms<Int> = (t_end - t_sim0) / 1000000
+    println("RESULT engine=vyb_ladder_desc threads={} epochs={} steps={} n_neurons={} n_edges={} seg_stride={} load_ms={} sim_ms={} spikes={} stimulus_spikes={} synaptic_events={} overflow={} epochs_identical={} epoch0_spikes={} digest_sum={} digest_xor={}".format(nt, epochs, steps, n, ne, ss, load_ms, sim_ms, spk, stim, synev, over, ident, ep0, hsum, hx))
+    return 0
+}
