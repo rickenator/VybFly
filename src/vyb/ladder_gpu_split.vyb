@@ -33,6 +33,15 @@
 // VYBFLY_RDMA_DEV (rocep1s0f0) and VYBFLY_RDMA_GID (3, the RoCE v2 IPv4 GID) pick the port.
 // Both slots of the receive buffer alternate by exchange parity: the peer can only run one
 // exchange ahead, so it never writes into the slot this rank is still uploading from.
+// VYBFLY_SPLIT_ZC (1; two ranks, overlap schedule only): zero-copy exchange. The host send and receive
+// buffers (the same ones registered with the NIC for rdma) are page-locked and mapped into
+// the GPU with cuMemHostRegister. Update writes its fired list straight into the send buffer
+// (two halves by step parity, [count i64][ids]) and pushB reads the peer's list straight from
+// the receive slot, so the per-step fired-list cudaMemcpy D2H and the H2D of the peer's list
+// and its count go away; only the 8-byte count is still read back after a sync. GB10 has no
+// dma-buf/GPUDirect export of cuMemAlloc memory (DMA_BUF_SUPPORTED=0), but it is coherent
+// unified memory, so registered host memory is what both the NIC and the GPU can address.
+// If pinning fails the run falls back to the copying schedule (ZC=0) with a warning.
 import io::{open_read, read_all}
 import env::{env_get}
 import time::{time_nanos}
@@ -55,6 +64,8 @@ extern "C" {
     cuMemcpyDtoH_v2(dstHost<loc<CVoid>>, srcDevice<Int>, ByteCount<Int>)<CInt>
     cuMemsetD32_v2(dstDevice<Int>, ui<CUInt>, n<Int>)<CInt>
     cuCtxSynchronize()<CInt>
+    cuMemHostRegister_v2(p<loc<CVoid>>, bytesize<Int>, flags<CUInt>)<CInt>
+    cuMemHostGetDevicePointer_v2(pdptr<loc<Int>>, p<loc<CVoid>>, flags<CUInt>)<CInt>
     cuda_launch_n(f<loc<CVoid>>, gridX<CUInt>, gridY<CUInt>, gridZ<CUInt>,
                   blockX<CUInt>, blockY<CUInt>, blockZ<CUInt>,
                   kernelParams<Int>, nargs<Int>)<CInt>
@@ -107,6 +118,18 @@ download(h<Int>, d<Int>, bytes<Int>)<Int> -> {
         if (rc != 0) { ok = 0 }
     }
     return ok
+}
+// page-lock and map a host buffer for the GPU; returns the device-side address (0 on failure)
+hpin(h<Int>, bytes<Int>)<Int> -> {
+    var<Int> d = 0
+    freedom {
+        rc<CInt> = cuMemHostRegister_v2(from<loc<CVoid>>(h), bytes, 3)
+        if (rc == 0) {
+            rc2<CInt> = cuMemHostGetDevicePointer_v2(loc(d), from<loc<CVoid>>(h), 0)
+            if (rc2 != 0) { d = 0 }
+        } else { println("ladder_gpu_split: cuMemHostRegister rc={}".format(rc as Int)) }
+    }
+    return d
 }
 zero32(d<Int>, words<Int>)<Int> -> {
     var<Int> ok = 1
@@ -671,8 +694,11 @@ main()<Int> -> {
     vthb<Int> = ld32(fb + 4)
     nstat<Int> = 8 + epochs
     nwords<Int> = (nel + 31) / 32 + 1
-    // host exchange buffers: [count i64][ids i32 ...]
-    hsend<Int> = alloc0(maxa + 2, 4)
+    // host exchange buffers: [count i64][ids i32 ...]; zero-copy keeps two send halves
+    var<Int> zc = env_int("VYBFLY_SPLIT_ZC", 1)
+    if (parts != 2 || env_int("VYBFLY_SPLIT_OVERLAP", 1) != 1) { zc = 0 }
+    zstride<Int> = 4 * (maxa + 2)
+    hsend<Int> = alloc0((1 + zc) * (maxa + 2), 4)
     hrecv<Int> = alloc0(maxa + 2, 4)
     hctl<Int> = alloc0(4, 4)
 
@@ -702,9 +728,10 @@ main()<Int> -> {
         if (ld64(scratch) != n || ld64(scratch + 8) != ne) { println("ladder_gpu_split: ranks loaded different graphs"); return 8 }
     }
     var<Int> rs = 0
+    var<Int> hrx = 0
     if (parts == 2 && net == "rdma") {
-        hrx<Int> = alloc0(2 * (maxa + 2), 4)
-        rs = rdma_setup(fd, rdma_dev, rdma_gid, hsend, 4 * (maxa + 2), hrx, 4 * (maxa + 2))
+        hrx = alloc0(2 * (maxa + 2), 4)
+        rs = rdma_setup(fd, rdma_dev, rdma_gid, hsend, (1 + zc) * zstride, hrx, zstride)
         if (rs == 0) { return 9 }
     }
 
@@ -756,6 +783,33 @@ main()<Int> -> {
         ok = ok * zero32(d_stats, 2 * nstat)
         if (ok == 0) { println("ladder_gpu_split: upload failed"); return 6 }
         if (cuCtxSynchronize() != 0) { println("ladder_gpu_split: sync failed"); return 6 }
+        // zero-copy: device-side views of the pinned host buffers (deltas are 0 on GB10)
+        var<Int> zd_send = 0
+        var<Int> zd_rx = 0
+        var<Int> zh_ctl2 = 0
+        var<Int> zd_ctl2 = 0
+        if (zc == 1) {
+            ds<Int> = hpin(hsend, 2 * zstride)
+            var<Int> hr = hrecv
+            var<Int> hrb = zstride
+            if (rs != 0) {
+                hr = hrx
+                hrb = 2 * zstride
+            }
+            var<Int> dr = 0
+            if (ds != 0) { dr = hpin(hr, hrb) }
+            zh_ctl2 = alloc0(40000, 4)
+            var<Int> dc = 0
+            if (dr != 0) { dc = hpin(zh_ctl2, 4096) }
+            if (dc == 0) {
+                println("ladder_gpu_split: warning: cannot pin the exchange buffers, falling back to VYBFLY_SPLIT_ZC=0")
+                zc = 0
+            } else {
+                zd_send = ds - hsend
+                zd_rx = dr - hr
+                zd_ctl2 = dc
+            }
+        }
 
         var<Int> k_act = d_act
         var<Int> k_nxt = d_act
@@ -797,8 +851,11 @@ main()<Int> -> {
             pq[qi] = pp[qi]
             qi = qi + 1
         }
-        pq[4] = addr(d_peer)
-        pq[5] = addr(d_ctl2)
+        var<Int> q_act = d_peer
+        var<Int> q_ctl = d_ctl2
+        if (zc == 1) { q_ctl = zd_ctl2 }   // set after the pin fallback above
+        pq[4] = addr(q_act)
+        pq[5] = addr(q_ctl)
         pq[10] = addr(q_cur)
         pq[11] = addr(k_zero)
         pq[12] = addr(k_zero)
@@ -851,6 +908,71 @@ main()<Int> -> {
             k_ep = ep
             var<Int> cur = 0
             var<Int> step = 0
+            if (zc == 1) {
+            // Zero-copy overlapped schedule: same kernels and order as below, but update writes
+            // into the pinned send half for this parity and pushB reads the peer's list and its
+            // count in place. The sync after update is needed to read the count; it also means
+            // pushB of the previous exchange has finished before this rank posts its next write,
+            // so the peer can never overwrite a receive slot the GPU is still reading.
+            st32(zh_ctl2, 0)
+            st32(zh_ctl2 + 4, 0)
+            k_cur = 0
+            k_act = d_act
+            k_s0 = ld64(voff)
+            k_ns = ld64(voff + 8) - k_s0
+            ok = ok * launch(hpa, pblocks, blk, ppa, 15)
+            while (step < steps) {
+                q_cur = 0
+                ok = ok * launch(hpa, pblocks, blk, pqa, 15)
+                hb<Int> = hsend + zstride * (1 - cur)
+                k_nc = 1 - cur
+                k_nxt = hb + 8 + zd_send
+                k_step = step
+                ok = ok * launch(hua, ugrid, blk, pua, 20)
+                tc0<Int> = time_nanos() else 0
+                if (cuCtxSynchronize() != 0) { ok = 0 }
+                tcg<Int> = time_nanos() else 0
+                ok = ok * download(hctl, d_ctl, 8)
+                cl<Int> = ld32(hctl + 4 * (1 - cur))
+                var<Int> cdl = cl
+                if (cdl > maxa) { cdl = maxa }
+                st64(hb, cdl)
+                tcd<Int> = time_nanos() else 0
+                if (step + 1 < steps) {
+                    k_cur = 1 - cur
+                    k_act = k_nxt
+                    k_s0 = ld64(voff + 8 * (step + 1))
+                    k_ns = ld64(voff + 8 * (step + 2)) - k_s0
+                    ok = ok * launch(hpa, pblocks, blk, ppa, 15)
+                }
+                var<Int> rb = hrecv
+                var<Int> cp = 0
+                if (rs != 0) {
+                    cp = rdma_exchange(rs, hb, 8 + 4 * cdl)
+                    rb = ld64(rs + 128)
+                } else { cp = exchange(fd, hb, 8 + 4 * cdl, hrecv) }
+                if (cp < 0) {
+                    ok = 0
+                    cp = 0
+                }
+                tcn<Int> = time_nanos() else 0
+                t_gpu = t_gpu + (tcg - tc0)
+                t_dl = t_dl + (tcd - tcg)
+                t_net = t_net + (tcn - tcd)
+                var<Int> take = cp
+                if (cdl + take > maxa) {
+                    host_over = host_over + cdl + take - maxa
+                    take = maxa - cdl
+                }
+                q_act = rb + 8 + zd_rx
+                st32(zh_ctl2, take)
+                if (cl + cp > max_union) { max_union = cl + cp }
+                tc1<Int> = time_nanos() else 0
+                t_comm = t_comm + (tc1 - tc0)
+                cur = 1 - cur
+                step = step + 1
+            }
+            } else {
             if (overlap == 1) {
             // Overlapped schedule. The push is split: pushA (own fired ids + stimulus) for step
             // t+1 is launched before the network exchange of step t, so it runs while the
@@ -992,6 +1114,7 @@ main()<Int> -> {
                 step = step + 1
             }
             }
+            }
             if (ok == 0) { println("ladder_gpu_split: launch or exchange failed at epoch {}".format(ep)); return 7 }
             ep = ep + 1
         }
@@ -1004,7 +1127,7 @@ main()<Int> -> {
         load_ms<Int> = (t_sim0 - t_load0) / 1000000
         sim_ms<Int> = (t_end - t_sim0) / 1000000
         comm_ms<Int> = t_comm / 1000000
-        println("PART rank={} parts={} lo={} hi={} owned_edges={} sim_ms={} comm_ms={} max_union={} gpu_wait_ms={} dtoh_ms={} net_ms={}".format(rank, parts, lo, hi, nel, sim_ms, comm_ms, max_union, t_gpu / 1000000, t_dl / 1000000, t_net / 1000000))
+        println("PART rank={} parts={} lo={} hi={} owned_edges={} sim_ms={} comm_ms={} max_union={} gpu_wait_ms={} dtoh_ms={} net_ms={} zero_copy={}".format(rank, parts, lo, hi, nel, sim_ms, comm_ms, max_union, t_gpu / 1000000, t_dl / 1000000, t_net / 1000000, zc))
         if (parts == 2) {
             if (rank == 1) {
                 ok = ok * send_all(fd, hst, 8 * nstat)

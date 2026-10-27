@@ -231,8 +231,31 @@ At 10x, 40x and 80x RDMA pays off as well. These are 8 epochs, two runs each, al
 | 80x | 34.05 s, 34.10 s | not run | **15.60 s**, 15.62 s | 2.18x |
 
 So with RDMA two Sparks now beat one at every scale tried, including 10x, where TCP lost, and the
-gain grows with scale. At 80x the wire itself is 0.9 to 1.7 s of the 15.6 s per rank; the rest of the
-exchange is the fired-list copy back to the host (dtoh_ms 12.3 to 12.6 s, partly overlapped).
+gain grows with scale. At 80x the wire itself is 0.9 to 1.7 s of the 15.6 s per rank. An earlier
+version of this note put most of the rest down to a 12.3 to 12.6 s fired-list copy back to the host.
+That was wrong: the copy ran on the legacy stream, so `dtoh_ms` also counted the wait for that
+step's GPU work. The copy itself is about 2 to 3% of the step.
+
+The zero-copy exchange (`VYBFLY_SPLIT_ZC`, default 1, used with two ranks and the overlapped push)
+removes even that. The GB10's GPU shares the host's memory, so the send and receive buffers are pinned in place
+with `cuMemHostRegister` and the kernels use them directly. The update kernel writes the fired list
+straight into the RDMA send buffer, and the push kernel reads the peer's list straight from the
+receive buffer. Only an 8-byte count comes back per step. GPUDirect RDMA from device memory is not
+available here: the driver reports no dma-buf and no GPUDirect RDMA support, and registering a device
+pointer with ibverbs fails without root. On GB10, though, pinned host memory is the same physical
+memory, so registering it has the same effect. If pinning fails the engine warns and falls back to
+copies (`VYBFLY_SPLIT_ZC=0` forces that). Both modes are bit-exact (8 epochs):
+
+| 8 epochs | ZC off | ZC on |
+|---|---|---|
+| 10x, RDMA | 2.61 s | **2.51 s** |
+| 10x, TCP | 4.75 s | **4.10 s** |
+| 40x, RDMA | 8.06 s | **7.81 s** |
+
+At 40x with ZC on, rank 1 spends 7.27 s waiting on the GPU, 0.04 s on copies and 0.48 s on the
+network. Against an ideal of 7.35 s, what is left is about 0.46 s of per-step exchange and barrier
+latency. Sending a bitmap instead of an id list would cut the bytes only about 1.4x at this firing
+rate. 80x with ZC on has not been measured yet.
 
 Run it, rank 0 first, on two machines that share the graph files:
 

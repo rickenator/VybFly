@@ -519,6 +519,36 @@
      "n_neurons": 11140400,
      "n_edges": 224835333
     }
+   },
+   "zero_copy": {
+    "env": "VYBFLY_SPLIT_ZC (default 1; two ranks + overlapped push); 0 = device buffers + copies",
+    "method": "send/recv buffers pinned with cuMemHostRegister (GB10 unified memory); update kernel writes the fired list into the send buffer, push kernel reads the peer list from the receive buffer; 8-byte count download per step",
+    "gpudirect_rdma": "not available without root: DMA_BUF_SUPPORTED=0, GPU_DIRECT_RDMA_SUPPORTED=0, ibv_reg_mr on a device pointer fails; ibv_reg_mr on pinned host memory works and is the same physical memory on GB10",
+    "dtoh_correction": "the earlier 80x dtoh_ms 12.3-12.6 s was mostly the legacy-stream wait for the step's GPU work; the copy itself is ~2-3%",
+    "sim_s": {
+     "10x_rdma": {
+      "zc0": 2.61,
+      "zc1": 2.51
+     },
+     "10x_tcp": {
+      "zc0": 4.752,
+      "zc1": 4.101
+     },
+     "40x_rdma": {
+      "zc0": 8.06,
+      "zc1": 7.814
+     }
+    },
+    "40x_rank1_profile_s_zc1": {
+     "gpu_wait": 7.27,
+     "dtoh": 0.04,
+     "network": 0.48
+    },
+    "bit_exact": {
+     "10x": true,
+     "40x": true
+    },
+    "80x": "not yet measured with ZC"
    }
   }
  },
