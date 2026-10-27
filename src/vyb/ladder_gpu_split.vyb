@@ -23,6 +23,16 @@
 // of this rank's own spikes (and the stimulus) before the exchange and the peer's after it;
 // both only OR bits and add counts, so results cannot change. VYBFLY_SPLIT_PROF (0): sync after
 // update to split the time into GPU / download / network (adds a sync per step).
+// VYBFLY_SPLIT_NET (tcp): transport for the per-step list exchange. "rdma" writes each list
+// straight into the peer's memory with an RDMA WRITE WITH IMMEDIATE over RoCE (libibverbs,
+// no root needed; the TCP socket is kept for bootstrap and the final stats). The verbs are
+// looked up with dlopen/dlsym at run time (the JIT binds every extern when it loads the module,
+// so static externs would make libibverbs a hard dependency even for tcp) and called through
+// function pointers; ibv_post_send/ibv_post_recv/ibv_poll_cq are static inlines in verbs.h, so
+// they are called through the provider's ibv_context.ops function pointers.
+// VYBFLY_RDMA_DEV (rocep1s0f0) and VYBFLY_RDMA_GID (3, the RoCE v2 IPv4 GID) pick the port.
+// Both slots of the receive buffer alternate by exchange parity: the peer can only run one
+// exchange ahead, so it never writes into the slot this rank is still uploading from.
 import io::{open_read, read_all}
 import env::{env_get}
 import time::{time_nanos}
@@ -48,6 +58,9 @@ extern "C" {
     cuda_launch_n(f<loc<CVoid>>, gridX<CUInt>, gridY<CUInt>, gridZ<CUInt>,
                   blockX<CUInt>, blockY<CUInt>, blockZ<CUInt>,
                   kernelParams<Int>, nargs<Int>)<CInt>
+    strcmp(a<Int>, b<CString>)<CInt>
+    dlopen(name<CString>, flags<CInt>)<Int>
+    dlsym(h<Int>, name<CString>)<Int>
 }
 
 ld64(p<Int>)<Int> -> { var<Int> r = 0
@@ -62,6 +75,12 @@ st32(p<Int>, v<Int>) -> { freedom { at(from<loc<Int32>>(p)) = v as Int32 } }
 alloc0(n<Int>, sz<Int>)<Int> -> { var<Int> p = 0
     freedom { p = calloc(n, sz) }
     return p }
+ldu32(p<Int>)<Int> -> { var<UInt32> r = 0
+    freedom { r = at(from<loc<UInt32>>(p)) }
+    return r as Int }
+stu32(p<Int>, v<Int>) -> { freedom { at(from<loc<UInt32>>(p)) = v as UInt32 } }
+st16(p<Int>, v<Int>) -> { freedom { at(from<loc<UInt16>>(p)) = v as UInt16 } }
+st8(p<Int>, v<Int>) -> { freedom { at(from<loc<UInt8>>(p)) = v as UInt8 } }
 
 dalloc(bytes<Int>)<Int> -> {
     var<Int> d = 0
@@ -161,6 +180,265 @@ exchange(fd<Int>, sp<Int>, slen<Int>, rp<Int>)<Int> -> {
     if (ok == 0) { return 0 - 1 }
     return ld64(rp)
 }
+// ---- RDMA transport (libibverbs, RoCE v2) ---------------------------------------------------
+// Layouts are rdma-core 50 on aarch64 / x86-64 (LP64): ibv_context.ops.poll_cq @96,
+// post_send @208, post_recv @216; ibv_send_wr 128 B, ibv_sge 16 B, ibv_recv_wr 32 B, ibv_wc 48 B,
+// ibv_qp_init_attr 64 B, ibv_qp_attr 144 B. State block (8-byte words): 0 ctx, 1 qp, 2 cq,
+// 3 send wr, 4 sge, 5 bad wr, 6 wc array, 7 recv wr, 8 lkey, 9 peer rkey, 10 peer buffer,
+// 11 slot bytes, 12 writes posted, 13 writes completed, 14 receives completed, 15 local
+// receive buffer, 16 slot of the last receive.
+// fp is the address of a cell holding the function pointer
+ibv_call3(fp<Int>, a<Int>, b<Int>, c<Int>)<Int> -> {
+    var<Int> r = 0
+    freedom {
+        f<loc<fn(Int, Int, Int) -> CInt>> = at(from<loc<loc<fn(Int, Int, Int) -> CInt>>>(fp))
+        rc<CInt> = f(a, b, c)
+        if (rc < 0) { r = 0 - 1 } else { r = rc as Int }
+    }
+    return r
+}
+ibv_icall4(fp<Int>, a<Int>, b<Int>, c<Int>, d<Int>)<Int> -> {
+    var<Int> r = 0
+    freedom {
+        f<loc<fn(Int, Int, Int, Int) -> CInt>> = at(from<loc<loc<fn(Int, Int, Int, Int) -> CInt>>>(fp))
+        rc<CInt> = f(a, b, c, d)
+        if (rc < 0) { r = 0 - 1 } else { r = rc as Int }
+    }
+    return r
+}
+ibv_pcall1(fp<Int>, a<Int>)<Int> -> {
+    var<Int> r = 0
+    freedom {
+        f<loc<fn(Int) -> Int>> = at(from<loc<loc<fn(Int) -> Int>>>(fp))
+        rv<Int> = f(a)
+        r = rv
+    }
+    return r
+}
+ibv_pcall2(fp<Int>, a<Int>, b<Int>)<Int> -> {
+    var<Int> r = 0
+    freedom {
+        f<loc<fn(Int, Int) -> Int>> = at(from<loc<loc<fn(Int, Int) -> Int>>>(fp))
+        rv<Int> = f(a, b)
+        r = rv
+    }
+    return r
+}
+ibv_pcall4(fp<Int>, a<Int>, b<Int>, c<Int>, d<Int>)<Int> -> {
+    var<Int> r = 0
+    freedom {
+        f<loc<fn(Int, Int, Int, Int) -> Int>> = at(from<loc<loc<fn(Int, Int, Int, Int) -> Int>>>(fp))
+        rv<Int> = f(a, b, c, d)
+        r = rv
+    }
+    return r
+}
+ibv_pcall5(fp<Int>, a<Int>, b<Int>, c<Int>, d<Int>, e<Int>)<Int> -> {
+    var<Int> r = 0
+    freedom {
+        f<loc<fn(Int, Int, Int, Int, Int) -> Int>> = at(from<loc<loc<fn(Int, Int, Int, Int, Int) -> Int>>>(fp))
+        rv<Int> = f(a, b, c, d, e)
+        r = rv
+    }
+    return r
+}
+// libibverbs entry points, resolved at run time: 0 get_device_list, 1 get_device_name,
+// 2 open_device, 3 alloc_pd, 4 reg_mr, 5 create_cq, 6 create_qp, 7 modify_qp, 8 query_gid,
+// 9 query_port. Returns the table, or 0 if the library or a symbol is missing.
+ibv_load()<Int> -> {
+    vt<Int> = alloc0(10, 8)
+    var<Int> h = 0
+    freedom { h = dlopen("libibverbs.so.1", 2) }
+    if (h == 0) { println("ladder_gpu_split: cannot dlopen libibverbs.so.1"); return 0 }
+    names<[String; 10]> = ["ibv_get_device_list", "ibv_get_device_name", "ibv_open_device", "ibv_alloc_pd",
+        "ibv_reg_mr", "ibv_create_cq", "ibv_create_qp", "ibv_modify_qp", "ibv_query_gid", "ibv_query_port"]
+    var<Int> i = 0
+    while (i < 10) {
+        var<Int> f = 0
+        nm<String> = names[i]
+        freedom { f = dlsym(h, nm) }
+        if (f == 0) { println("ladder_gpu_split: libibverbs has no " + nm); return 0 }
+        st64(vt + 8 * i, f)
+        i = i + 1
+    }
+    return vt
+}
+rdma_post_recvs(rs<Int>, k<Int>)<Int> -> {
+    ctx<Int> = ld64(rs)
+    rwr<Int> = ld64(rs + 56)
+    var<Int> i = 0
+    var<Int> ok = 1
+    while (i < k && ok == 1) {
+        st64(rwr, 9)
+        st64(rwr + 8, 0)
+        st64(rwr + 16, 0)
+        st32(rwr + 24, 0)
+        if (ibv_call3(ctx + 216, ld64(rs + 8), rwr, ld64(rs + 40)) != 0) { ok = 0 }
+        i = i + 1
+    }
+    return ok
+}
+// QP setup + info swap over the bootstrap socket. Returns the state block, or 0.
+rdma_setup(fd<Int>, devname<String>, gidx<Int>, sbuf<Int>, sbytes<Int>, rbuf<Int>, slot<Int>)<Int> -> {
+    vt<Int> = ibv_load()
+    if (vt == 0) { return 0 }
+    var<Int> ctx = 0
+    ndev<Int> = alloc0(1, 8)
+    list<Int> = ibv_pcall1(vt, ndev)
+    var<Int> i = 0
+    while (list != 0 && i < ld32(ndev) && ctx == 0) {
+        d<Int> = ld64(list + 8 * i)
+        var<Int> same = 1
+        nmp<Int> = ibv_pcall1(vt + 8, d)
+        freedom { if (strcmp(nmp, devname) == 0) { same = 0 } }
+        if (same == 0) { ctx = ibv_pcall1(vt + 16, d) }
+        i = i + 1
+    }
+    if (ctx == 0) { println("ladder_gpu_split: cannot open RDMA device " + devname); return 0 }
+    var<Int> pd = 0
+    var<Int> cq = 0
+    var<Int> qp = 0
+    var<Int> smr = 0
+    var<Int> rmr = 0
+    pattr<Int> = alloc0(64, 1)
+    gid<Int> = alloc0(16, 1)
+    ia<Int> = alloc0(64, 1)
+    pd = ibv_pcall1(vt + 24, ctx)
+    if (pd != 0) {
+        cq = ibv_pcall5(vt + 40, ctx, 1024, 0, 0, 0)
+        smr = ibv_pcall4(vt + 32, pd, sbuf, sbytes, 1)
+        rmr = ibv_pcall4(vt + 32, pd, rbuf, 2 * slot, 7)
+    }
+    if (cq == 0 || smr == 0 || rmr == 0) { println("ladder_gpu_split: RDMA pd/cq/mr setup failed"); return 0 }
+    st64(ia + 8, cq)
+    st64(ia + 16, cq)
+    st32(ia + 32, 256)
+    st32(ia + 36, 512)
+    st32(ia + 40, 1)
+    st32(ia + 44, 1)
+    st32(ia + 48, 64)
+    st32(ia + 52, 2)
+    qp = ibv_pcall2(vt + 48, pd, ia)
+    ibv_call3(vt + 72, ctx, 1, pattr)
+    gq<Int> = ibv_icall4(vt + 64, ctx, 1, gidx, gid)
+    if (qp == 0 || gq != 0) { println("ladder_gpu_split: RDMA create_qp/query_gid failed"); return 0 }
+    rs<Int> = alloc0(24, 8)
+    st64(rs, ctx)
+    st64(rs + 8, qp)
+    st64(rs + 16, cq)
+    st64(rs + 24, alloc0(128, 1))
+    st64(rs + 32, alloc0(16, 1))
+    st64(rs + 40, alloc0(8, 1))
+    st64(rs + 48, alloc0(16 * 48, 1))
+    st64(rs + 56, alloc0(32, 1))
+    st64(rs + 64, ldu32(smr + 36))
+    st64(rs + 88, slot)
+    st64(rs + 120, rbuf)
+    psn<Int> = 4242
+    me<Int> = alloc0(48, 1)
+    you<Int> = alloc0(48, 1)
+    st64(me, ldu32(qp + 52))
+    st64(me + 8, ldu32(rmr + 40))
+    st64(me + 16, rbuf)
+    st64(me + 24, psn)
+    st64(me + 32, ld64(gid))
+    st64(me + 40, ld64(gid + 8))
+    if (send_all(fd, me, 48) == 0 || recv_all(fd, you, 48) == 0) { println("ladder_gpu_split: RDMA info swap failed"); return 0 }
+    st64(rs + 72, ld64(you + 8))
+    st64(rs + 80, ld64(you + 16))
+    // RESET -> INIT -> (post receives) -> RTR -> RTS
+    a1<Int> = alloc0(144, 1)
+    st32(a1, 1)
+    st8(a1 + 129, 1)
+    st32(a1 + 32, 7)
+    a2<Int> = alloc0(144, 1)
+    st32(a2, 2)
+    st32(a2 + 8, ld32(pattr + 8))
+    stu32(a2 + 28, ld64(you))
+    stu32(a2 + 20, ld64(you + 24))
+    st8(a2 + 127, 1)
+    st8(a2 + 128, 12)
+    st64(a2 + 56, ld64(you + 32))
+    st64(a2 + 64, ld64(you + 40))
+    st8(a2 + 76, gidx)
+    st8(a2 + 77, 1)
+    st8(a2 + 85, 1)
+    st8(a2 + 86, 1)
+    a3<Int> = alloc0(144, 1)
+    st32(a3, 3)
+    st8(a3 + 130, 14)
+    st8(a3 + 131, 7)
+    st8(a3 + 132, 7)
+    stu32(a3 + 24, psn)
+    st8(a3 + 126, 1)
+    var<Int> bad = 0
+    if (ibv_call3(vt + 56, qp, a1, 57) != 0) { bad = 1 }
+    if (bad == 0 && rdma_post_recvs(rs, 256) == 0) { bad = 2 }
+    if (bad == 0 && ibv_call3(vt + 56, qp, a2, 1216897) != 0) { bad = 3 }
+    if (bad == 0 && ibv_call3(vt + 56, qp, a3, 77313) != 0) { bad = 4 }
+    if (bad != 0) { println("ladder_gpu_split: RDMA QP bring-up failed at stage {}".format(bad)); return 0 }
+    // both QPs must be RTS before either side writes
+    if (send_all(fd, me, 8) == 0 || recv_all(fd, you, 8) == 0) { println("ladder_gpu_split: RDMA barrier failed"); return 0 }
+    println("ladder_gpu_split: transport rdma dev={} gid_index={} qpn={} active_mtu_enum={}".format(devname, gidx, ldu32(qp + 52), ld32(pattr + 8)))
+    return rs
+}
+// One duplex exchange: RDMA WRITE WITH IMM of [sp, sp+slen) into the peer's slot for this
+// exchange (parity of the exchange count), then wait for our write's completion (so sp can be
+// reused) and the peer's write into our slot. Returns the peer's count, or -1; the received
+// message's address is left in word 16 of the state block.
+rdma_exchange(rs<Int>, sp<Int>, slen<Int>)<Int> -> {
+    ctx<Int> = ld64(rs)
+    wr<Int> = ld64(rs + 24)
+    sge<Int> = ld64(rs + 32)
+    wc<Int> = ld64(rs + 48)
+    slot<Int> = ld64(rs + 88)
+    var<Int> posted = ld64(rs + 96)
+    var<Int> sdone = ld64(rs + 104)
+    var<Int> rdone = ld64(rs + 112)
+    par<Int> = posted % 2
+    st64(sge, sp)
+    st32(sge + 8, slen)
+    stu32(sge + 12, ld64(rs + 64))
+    st64(wr, 7)
+    st64(wr + 8, 0)
+    st64(wr + 16, sge)
+    st32(wr + 24, 1)
+    st32(wr + 28, 1)
+    var<Int> flags = 2
+    if (slen <= 64) { flags = 2 + 8 }
+    st32(wr + 32, flags)
+    stu32(wr + 36, ld64(sp))
+    st64(wr + 40, ld64(rs + 80) + par * slot)
+    stu32(wr + 48, ld64(rs + 72))
+    if (ibv_call3(ctx + 208, ld64(rs + 8), wr, ld64(rs + 40)) != 0) { println("ladder_gpu_split: ibv_post_send failed"); return 0 - 1 }
+    posted = posted + 1
+    var<Int> ok = 1
+    while (ok == 1 && (sdone < posted || rdone < posted)) {
+        m<Int> = ibv_call3(ctx + 96, ld64(rs + 16), 16, wc)
+        if (m < 0) { ok = 0 }
+        var<Int> j = 0
+        while (ok == 1 && j < m) {
+            e<Int> = wc + 48 * j
+            if (ldu32(e + 8) != 0) {
+                println("ladder_gpu_split: RDMA completion error status={} opcode={}".format(ldu32(e + 8), ldu32(e + 12)))
+                ok = 0
+            } else {
+                if (ldu32(e + 12) == 129) {
+                    rdone = rdone + 1
+                    if (rdma_post_recvs(rs, 1) == 0) { ok = 0 }
+                } else { sdone = sdone + 1 }
+            }
+            j = j + 1
+        }
+    }
+    st64(rs + 96, posted)
+    st64(rs + 104, sdone)
+    st64(rs + 112, rdone)
+    if (ok == 0) { return 0 - 1 }
+    rp<Int> = ld64(rs + 120) + par * slot
+    st64(rs + 128, rp)
+    return ld64(rp)
+}
 set_opt(fd<Int>, level<Int>, opt<Int>, scratch<Int>) -> {
     st32(scratch, 1)
     freedom { setsockopt(fd as Int32, level as Int32, opt as Int32, from<loc<CVoid>>(scratch), 4) }
@@ -203,6 +481,13 @@ main()<Int> -> {
     parts<Int> = env_int("VYBFLY_SPLIT_PARTS", 2)
     rank<Int> = env_int("VYBFLY_SPLIT_RANK", 0)
     port<Int> = env_int("VYBFLY_SPLIT_PORT", 47011)
+    net<String> = env_get("VYBFLY_SPLIT_NET") else "tcp"
+    rdma_dev<String> = env_get("VYBFLY_RDMA_DEV") else "rocep1s0f0"
+    rdma_gid<Int> = env_int("VYBFLY_RDMA_GID", 3)
+    if (net != "tcp" && net != "rdma") {
+        println("ladder_gpu_split: VYBFLY_SPLIT_NET must be tcp or rdma")
+        return 2
+    }
     if (parts < 1 || parts > 2 || rank < 0 || rank >= parts) {
         println("ladder_gpu_split: VYBFLY_SPLIT_PARTS must be 1 or 2 and 0 <= VYBFLY_SPLIT_RANK < parts")
         return 2
@@ -416,6 +701,12 @@ main()<Int> -> {
         if (recv_all(fd, scratch, 16) == 0) { println("ladder_gpu_split: handshake recv failed"); return 8 }
         if (ld64(scratch) != n || ld64(scratch + 8) != ne) { println("ladder_gpu_split: ranks loaded different graphs"); return 8 }
     }
+    var<Int> rs = 0
+    if (parts == 2 && net == "rdma") {
+        hrx<Int> = alloc0(2 * (maxa + 2), 4)
+        rs = rdma_setup(fd, rdma_dev, rdma_gid, hsend, 4 * (maxa + 2), hrx, 4 * (maxa + 2))
+        if (rs == 0) { return 9 }
+    }
 
     // ---- CUDA setup -------------------------------------------------------------------------
     freedom {
@@ -597,7 +888,12 @@ main()<Int> -> {
                     k_ns = ld64(voff + 8 * (step + 2)) - k_s0
                     ok = ok * launch(hpa, pblocks, blk, ppa, 15)
                 }
-                var<Int> cp = exchange(fd, hsend, 8 + 4 * cdl, hrecv)
+                var<Int> rb = hrecv
+                var<Int> cp = 0
+                if (rs != 0) {
+                    cp = rdma_exchange(rs, hsend, 8 + 4 * cdl)
+                    rb = ld64(rs + 128)
+                } else { cp = exchange(fd, hsend, 8 + 4 * cdl, hrecv) }
                 if (cp < 0) {
                     ok = 0
                     cp = 0
@@ -611,7 +907,7 @@ main()<Int> -> {
                     host_over = host_over + cdl + take - maxa
                     take = maxa - cdl
                 }
-                ok = ok * upload(d_peer, hrecv + 8, 4 * take)
+                ok = ok * upload(d_peer, rb + 8, 4 * take)
                 st32(hctl2, take)
                 st32(hctl2 + 4, take)
                 ok = ok * upload(d_ctl2, hctl2, 8)
@@ -647,6 +943,15 @@ main()<Int> -> {
                     ok = ok * download(hsend + 8, k_nxt, 4 * cdl)
                     tcd<Int> = time_nanos() else 0
                     var<Int> cp = 0
+                    var<Int> rb = hrecv
+                    if (rs != 0) {
+                        cp = rdma_exchange(rs, hsend, 8 + 4 * cdl)
+                        rb = ld64(rs + 128)
+                        if (cp < 0) {
+                            ok = 0
+                            cp = 0
+                        }
+                    } else {
                     if (duplex == 1) {
                         cp = exchange(fd, hsend, 8 + 4 * cdl, hrecv)
                         if (cp < 0) {
@@ -666,6 +971,7 @@ main()<Int> -> {
                         ok = ok * send_all(fd, hsend, 8 + 4 * cdl)
                     }
                     }
+                    }
                     tcn<Int> = time_nanos() else 0
                     t_gpu = t_gpu + (tcg - tc0)
                     t_dl = t_dl + (tcd - tcg)
@@ -675,7 +981,7 @@ main()<Int> -> {
                         host_over = host_over + cdl + take - maxa
                         take = maxa - cdl
                     }
-                    ok = ok * upload(k_nxt + 4 * cdl, hrecv + 8, 4 * take)
+                    ok = ok * upload(k_nxt + 4 * cdl, rb + 8, 4 * take)
                     st32(hctl, cl + cp)
                     ok = ok * upload(d_ctl + 4 * (1 - cur), hctl, 4)
                     if (cl + cp > max_union) { max_union = cl + cp }

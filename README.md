@@ -182,8 +182,8 @@ for the same uncapped run in Vyb.
 `src/vyb/ladder_gpu_split.vyb` runs one connectome across both Sparks. Neurons are cut by
 target at half the in-edges. Each rank keeps every source row, but only the edges into its own
 neurons, so a step needs nothing from the peer except the list of neurons that fired. After
-each step the ranks swap fired-id lists over TCP on the direct 200 GbE link, then push the
-peer's spikes into their own targets. It is bit-exact at 10x, 20x and 40x (digests equal to the C++
+each step the ranks swap fired-id lists on the direct 200 GbE link, over TCP or with RDMA
+writes (`VYBFLY_SPLIT_NET=rdma`), then push the peer's spikes into their own targets. It is bit-exact at 10x, 20x and 40x (digests equal to the C++
 reference), and with `VYBFLY_SPLIT_PARTS=1` it is the single-GPU engine.
 
 | 20x, 8 epochs | sim | GPU time per rank | network |
@@ -191,7 +191,8 @@ reference), and with `VYBFLY_SPLIT_PARTS=1` it is the single-GPU engine.
 | one GB10 (`ladder_gpu`) | 7.45 s | 7.45 s | none |
 | two GB10s, serialized exchange | 8.85 s | ~3.7 to 4.1 s | ~3.4 s |
 | two GB10s, full-duplex exchange | 7.51 s (profiled), 6.79 s | ~3.7 to 4.1 s | ~3.1 to 3.5 s |
-| two GB10s, full-duplex, own push overlapped with the exchange | **6.64 s**, 7.30 s | ~3.7 to 4.1 s | ~2.7 to 3.2 s (sim minus GPU) |
+| two GB10s, full-duplex, own push overlapped with the exchange | 6.64 s, 7.30 s, 7.59 s | ~3.7 to 4.1 s | ~2.7 to 3.2 s (sim minus GPU) |
+| two GB10s, RDMA exchange (`VYBFLY_SPLIT_NET=rdma`), overlap on | **4.54 s**, 4.57 s | ~3.3 to 3.7 s (GPU plus copy-back) | ~0.24 to 1.08 s |
 
 At 40x the split wins clearly. Two GB10s (duplex and overlap on) take **11.35 s** (best of 2;
 the other run took 12.29 s) against 14.71 s on one GB10. That is 1.30x faster, and again
@@ -200,12 +201,23 @@ bit-exact. The GPU work per step doubles from 20x, but the exchange cost grows l
 The split halves the GPU time, but the exchange costs about 0.35 ms per step. A ping-pong test
 over the same link shows why: 36 us for 8 bytes with busy-polling, but about 475 us for 240 KB
 each way, and about 800 us with blocking sockets. Socket buffers are capped at 212 KB
-(`net.core.wmem_max`) without root. So two Sparks only just beat one at 20x, beat it by 1.30x at 40x, and lose at
-10x (6.09 s against about 4.2 s, measured with the serialized exchange). The ConnectX ports
-expose RoCE devices, so RDMA for the id lists is the next step. The overlap's gain is within
+(`net.core.wmem_max`) without root. So over TCP two Sparks only just beat one at 20x, beat it by 1.30x at 40x, and lose at
+10x (6.09 s against about 4.2 s, measured with the serialized exchange). The overlap's gain is within
 run-to-run noise, since the GPU push is short next to the exchange. The overlap and the duplex
 exchange are on by default (`VYBFLY_SPLIT_OVERLAP`, `VYBFLY_SPLIT_DUPLEX`). Both only reorder
 bit-ORs and integer sums, so they cannot change a result.
+
+RDMA removes most of the exchange cost, and it needs no root. The ConnectX ports expose RoCE v2
+devices that an ordinary user can open (`/dev/infiniband/uverbs*` is world-writable and the
+memlock limit is unlimited). With `VYBFLY_SPLIT_NET=rdma` each rank registers its send buffer and
+a two-slot receive buffer, swaps queue-pair details over the TCP connection, then posts one RDMA
+write-with-immediate per step into the peer's slot, with the id count in the immediate.
+libibverbs is opened with `dlopen` at run time, so a TCP run needs nothing new. At 20x this takes
+**4.54 s** (best of 2; the other run took 4.57 s), against 7.59 s over TCP in the same session and
+7.45 s on one GB10. That is 1.64x faster than one GB10, and bit-exact. A ping-pong written in Vyb
+over the same verbs takes 2.3 us for 16 bytes and 87.5 us for 1 MB each way (12 GB/s), against
+100 to 230 us and 355 to 454 us over TCP. Most of the remaining exchange time is the copy of the
+fired list back to the host. 40x and 10x have not been rerun over RDMA yet.
 
 Run it, rank 0 first, on two machines that share the graph files:
 
@@ -215,6 +227,8 @@ VYBFLY_SPLIT_PARTS=2 VYBFLY_SPLIT_RANK=0 scripts/gpu/run_split_rank.sh <ladder>/
 # on the rank-1 host
 VYBFLY_SPLIT_PARTS=2 VYBFLY_SPLIT_RANK=1 VYBFLY_SPLIT_PEER=<rank-0 ip> \
   scripts/gpu/run_split_rank.sh <ladder>/s20 <ladder>/stim_s20.bin
+# for the RDMA exchange, set VYBFLY_SPLIT_NET=rdma on both hosts (VYBFLY_RDMA_DEV and
+# VYBFLY_RDMA_GID pick the RoCE device and GID index; defaults rocep1s0f0 and 3)
 ```
 
 On the Arm host, `ladder_prop` also beats `ladder_desc` at 5x and 10x, the opposite of the i9. `scripts/cpu/run_ladder.sh` therefore picks `ladder_prop` on aarch64.

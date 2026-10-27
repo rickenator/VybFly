@@ -158,7 +158,27 @@ GPU) and in 2.46 s on an RTX 3090 (4.3x). Writing them turned up the following.
 - The `network` stdlib only sends and receives `String`s. The two-Spark split moves raw
   `[i64 count][i32 ids]` buffers, so it declares libc `send`/`recv`/`setsockopt`/`close`/`usleep`
   as externs and hard-codes `MSG_DONTWAIT`, `MSG_NOSIGNAL`, `TCP_NODELAY` and `SO_REUSEADDR`.
-  A byte-buffer `socket_send_raw`/`socket_recv_into`, a non-blocking flag and the socket-option
-  constants would remove that.
-- There is no RDMA (ibverbs) binding. Over TCP the per-step id exchange, not the GPU, bounds the
-  two-Spark run.
+  **Being fixed** on Vyb branch `perf/net-bytes` (PR pending): `socket_send_bytes`,
+  `socket_recv_bytes`/`_exact` and a framed full-duplex `socket_exchange_bytes`/`_range` over
+  `Vec<UInt8>`, with two tests. The split keeps its externs until that merges.
+
+### RDMA from plain externs (no root)
+
+The split's RDMA exchange (`VYBFLY_SPLIT_NET=rdma`) is ibverbs called from Vyb with no C shim.
+It works, but it surfaced:
+
+- **The JIT binds every extern when it loads a module, and only dlopens a fixed list of
+  libraries** (ssl, sqlite3, git2, cuda, SDL3). There is no flag or environment variable to add
+  one. Plain `ibv_*` externs failed with "Symbols not found" unless the run used
+  `LD_PRELOAD=libibverbs.so.1`, and they broke the TCP path too. The engine now resolves the
+  verbs with `dlopen`/`dlsym` and calls them through function pointers. A `--link`-style library
+  list for the JIT, or lazy extern binding, would make plain externs usable.
+- **Calling a `loc<fn(...)>` pointer:** `f(...) as Int` fails ("'as' on a wildcard error requires
+  an error pointer"), and assigning the call to an existing `var` fails ("could not determine
+  type of LHS or RHS"). Only a fresh typed declaration (`rc<CInt> = f(...)`) works.
+- **`CInt as Int` warns** "Storing i32 into location of type i64" (see the `CInt as` miscompile
+  above), so negative return codes are tested before the cast.
+- **No C struct layouts.** `ibv_post_send`, `ibv_post_recv` and `ibv_poll_cq` are `static inline`
+  in `verbs.h`, so they are called through `ibv_context.ops` at byte offsets. Every work request,
+  SGE, completion and QP attribute is also filled in by offset, about 40 constants taken from
+  rdma-core 50 on aarch64. A header-derived struct import would remove them.
