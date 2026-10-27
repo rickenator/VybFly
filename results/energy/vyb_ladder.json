@@ -29,7 +29,24 @@
    },
    "best": "ladder_prop",
    "speedup_vs_baseline": 1.2809917355371903,
-   "vs_gpu_kernel": 0.32266666666666666
+   "vs_gpu_kernel": 0.32266666666666666,
+   "ladder_desc_4byte_descriptors": {
+    "sim_s": 1.368,
+    "rss_mb": 136,
+    "events_per_s": 769455228.0701754,
+    "wall_per_bio_s": 0.342,
+    "vyb": "stock 0.7.7 (e4af3343)",
+    "reps": 2,
+    "stat": "min"
+   },
+   "ab_stock_vs_jit_pr": {
+    "stock_ladder_prop_sim_s": 1.216,
+    "stock_ladder_seg_sim_s": 2.274,
+    "stock_ladder_desc_sim_s": 1.341,
+    "pr_jit_inline_host_cpu_ladder_prop_sim_s": 1.204,
+    "pr_jit_inline_host_cpu_ladder_seg_sim_s": 2.171,
+    "pr_jit_inline_host_cpu_ladder_desc_sim_s": 1.324
+   }
   },
   "2x": {
    "synaptic_events": 1999239704,
@@ -58,7 +75,24 @@
    },
    "best": "ladder_prop",
    "speedup_vs_baseline": 1.596928982725528,
-   "vs_gpu_kernel": 0.826984126984127
+   "vs_gpu_kernel": 0.826984126984127,
+   "ladder_desc_4byte_descriptors": {
+    "sim_s": 2.616,
+    "rss_mb": 192,
+    "events_per_s": 764235360.8562691,
+    "wall_per_bio_s": 0.654,
+    "vyb": "stock 0.7.7 (e4af3343)",
+    "reps": 2,
+    "stat": "min"
+   },
+   "ab_stock_vs_jit_pr": {
+    "stock_ladder_prop_sim_s": 2.597,
+    "stock_ladder_seg_sim_s": 4.199,
+    "stock_ladder_desc_sim_s": 2.712,
+    "pr_jit_inline_host_cpu_ladder_prop_sim_s": 2.562,
+    "pr_jit_inline_host_cpu_ladder_seg_sim_s": 4.077,
+    "pr_jit_inline_host_cpu_ladder_desc_sim_s": 2.746
+   }
   },
   "5x": {
    "synaptic_events": 5223696696,
@@ -85,9 +119,26 @@
     "events_per_s": 669018531.7622951,
     "wall_per_bio_s": 1.952
    },
-   "best": "ladder_desc",
-   "speedup_vs_baseline": 1.679047131147541,
-   "vs_gpu_kernel": 1.3602787456445993
+   "best": "ladder_desc (4-byte descriptors)",
+   "speedup_vs_baseline": 1.748,
+   "vs_gpu_kernel": 1.3066202090592334,
+   "ladder_desc_4byte_descriptors": {
+    "sim_s": 7.5,
+    "rss_mb": 363,
+    "events_per_s": 696492892.8,
+    "wall_per_bio_s": 1.875,
+    "vyb": "stock 0.7.7 (e4af3343)",
+    "reps": 2,
+    "stat": "min"
+   },
+   "ab_stock_vs_jit_pr": {
+    "stock_ladder_prop_sim_s": 8.464,
+    "stock_ladder_seg_sim_s": 10.779,
+    "stock_ladder_desc_sim_s": 7.724,
+    "pr_jit_inline_host_cpu_ladder_prop_sim_s": 8.336,
+    "pr_jit_inline_host_cpu_ladder_seg_sim_s": 10.66,
+    "pr_jit_inline_host_cpu_ladder_desc_sim_s": 7.895
+   }
   },
   "10x": {
    "synaptic_events": 10691095088,
@@ -114,9 +165,27 @@
     "events_per_s": 599949219.3041526,
     "wall_per_bio_s": 4.455
    },
-   "best": "ladder_desc",
-   "speedup_vs_baseline": 1.7413019079685748,
-   "vs_gpu_kernel": 1.6685393258426966
+   "best": "ladder_desc (4-byte descriptors)",
+   "speedup_vs_baseline": 1.87040385774563,
+   "vs_gpu_kernel": 1.553370786516854,
+   "ladder_desc_4byte_descriptors": {
+    "sim_s": 16.59,
+    "rss_mb": 667,
+    "events_per_s": 644430083.6648583,
+    "wall_per_bio_s": 4.1475,
+    "vyb": "stock 0.7.7 (e4af3343)",
+    "reps": 2,
+    "stat": "min"
+   },
+   "ab_stock_vs_jit_pr": {
+    "stock_ladder_prop_sim_s": 20.729,
+    "stock_ladder_seg_sim_s": 22.5,
+    "stock_ladder_desc_sim_s": 17.967,
+    "pr_jit_inline_host_cpu_ladder_prop_sim_s": 20.75,
+    "pr_jit_inline_host_cpu_ladder_seg_sim_s": 21.842,
+    "pr_jit_inline_host_cpu_ladder_desc_sim_s": 18.164
+   }
   }
- }
+ },
+ "ab_note": "Clean A/B, idle CPU, 2 reps (min), builds interleaved: stock Vyb 0.7.7 vs the jit inline/host-CPU PR; 4-byte descriptors measured on stock. CPU only (CUDA_VISIBLE_DEVICES empty)."
 }

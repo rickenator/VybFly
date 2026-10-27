@@ -1,3 +1,14 @@
+// ladder_desc.vyb - "descriptor pull" CPU engine for the FlyScale 1x-10x ladder workload, in Vyb.
+//
+// Like ladder_seg below, but each step the threads first turn the source list into per-(writer,
+// range) streams of edge-segment descriptors, and each range owner then pulls only its own
+// segments. A descriptor is ONE 4-byte slot: start | len << dnb (dnb = bits for n_edges). A
+// segment with len >= 2^(32-dnb) - 1 takes two slots, an escape length then the end index. The
+// smaller stream (it was {i32 start, i32 end}) cut 10x sim time by about 7% on an idle
+// i9-10850K. Descriptor order and edge order are unchanged, so the sums, and the digest, are
+// bit-identical.
+//
+// Based on:
 // ladder_seg.vyb - "segmented pull" CPU engine for the FlyScale 1x-10x ladder workload, in Vyb.
 //
 // Same model, inputs, canonical order and RESULT line as ladder_prop.vyb (see there), but one
@@ -35,7 +46,8 @@ struct Eng {
     cur<Int>, vm<Int>, refr<Int>, flag<Int>,
     soff<Int>, sids<Int>,
     fired<Int>, fcnt<Int>,                      // i32 [2][n] (range p's list at rb[p]), i64 [2][nt]
-    dbuf<Int>, dcap<Int>, dcnt<Int>,            // segment descriptors {i32 start, i32 end} [w][t][dcap], counts i64 [w][t]
+    dbuf<Int>, dcap<Int>, dcnt<Int>,            // 4-byte segment descriptors [w][t][dcap slots], counts i64 [w][t]
+    dnb<Int>, dmsk<Int>, desc<Int>,             // slot = start | len << dnb; len == desc -> next slot holds end
     stats<Int>, epk<Int>, bar<Int>
 }
 
@@ -81,8 +93,10 @@ emit_list(e<Eng>, w<Int>, fl<Int>, m<Int>, cm<Int>, check<Int>)<Int> -> {
     ss<Int> = e.ss
     nt<Int> = e.nt
     n<Int> = e.n
-    dcap8<Int> = 8 * e.dcap
+    dcap8<Int> = 4 * e.dcap
     db<Int> = e.dbuf + dcap8 * nt * w
+    dnb<Int> = e.dnb
+    desc<Int> = e.desc
     sw<Int> = ss / 8
     rs<Int> = cm + 4096                                      // row scratch: 64 rows x ss bytes
     var<Int> nv = 0
@@ -122,10 +136,14 @@ emit_list(e<Eng>, w<Int>, fl<Int>, m<Int>, cm<Int>, check<Int>)<Int> -> {
                 while (t < nt) {
                     hi<Int> = base + (at(from<loc<Int32>>(sr + 12 + 4 * t)) as Int)
                     c<Int> = at(from<loc<Int>>(cm + 8 * t))
-                    dp<Int> = db + dcap8 * t + 8 * c
-                    at(from<loc<Int32>>(dp)) = lo as Int32
-                    at(from<loc<Int32>>(dp + 4)) = hi as Int32
-                    at(from<loc<Int>>(cm + 8 * t)) = c + (((lo - hi) >> 63) & 1)
+                    dp<Int> = db + dcap8 * t + 4 * c
+                    // branch-free: always write both slots; the count says how many are live
+                    ln<Int> = hi - lo
+                    var<Int> lc = ln
+                    if (lc > desc) { lc = desc }
+                    at(from<loc<UInt32>>(dp)) = (lo | (lc << dnb)) as UInt32
+                    at(from<loc<UInt32>>(dp + 4)) = hi as UInt32
+                    at(from<loc<Int>>(cm + 8 * t)) = c + (((0 - ln) >> 63) & 1) + (((desc - 1 - ln) >> 63) & 1)
                     lo = hi
                     t = t + 1
                 }
@@ -201,13 +219,14 @@ step_phase(e<Eng>, t<Int>, step<Int>, ep<Int>) -> {
     flag<Int> = e.flag
     n<Int> = e.n
     nt<Int> = e.nt
-    one8<UInt8> = 1
-    zero8<UInt8> = 0
+    dnb<Int> = e.dnb
+    dmsk<Int> = e.dmsk
+    desc<Int> = e.desc
     var<Int> syn = 0
     var<Int> w = 0
     while (w < nt) {
         c<Int> = ld64(e.dcnt + 8 * (w * nt + t))
-        dp0<Int> = e.dbuf + 8 * e.dcap * (w * nt + t)
+        dp0<Int> = e.dbuf + 4 * e.dcap * (w * nt + t)
         freedom {
             var<Int> k = 0
             var<Int> tch = 0
@@ -218,12 +237,17 @@ step_phase(e<Eng>, t<Int>, step<Int>, ep<Int>) -> {
                     var<Int> k3 = k + 64
                     if (k3 > c) { k3 = c }
                     while (k2 < k3) {
-                        tch = tch + at(from<loc<Int32>>(rec + 8 * (at(from<loc<Int32>>(dp0 + 8 * k2)) as Int)))
+                        tch = tch + at(from<loc<Int32>>(rec + 8 * ((at(from<loc<UInt32>>(dp0 + 4 * k2)) as Int) & dmsk)))
                         k2 = k2 + 1
                     }
                 }
-                var<Int> ed = at(from<loc<Int32>>(dp0 + 8 * k)) as Int
-                ee<Int> = at(from<loc<Int32>>(dp0 + 8 * k + 4)) as Int
+                wd<Int> = at(from<loc<UInt32>>(dp0 + 4 * k)) as Int
+                var<Int> ed = wd & dmsk
+                var<Int> ee = ed + (wd >> dnb)
+                if ((wd >> dnb) == desc) {
+                    ee = at(from<loc<UInt32>>(dp0 + 4 * k + 4)) as Int
+                    k = k + 1
+                }
                 syn = syn + (ee - ed)
                 while (ed < ee) {
                     d<Int> = at(from<loc<Int32>>(rec + 8 * ed)) as Int
@@ -506,7 +530,14 @@ main()<Int> -> {
         if (d2 > maxst) { maxst = d2 }
         s2 = s2 + 1
     }
-    dcap<Int> = (300000 + maxst) / nt + 2
+    // at most one segment per (source, range): 2 slots each when long, +2 for the trailing write
+    dcap<Int> = 2 * ((300000 + maxst) / nt + 2) + 2
+    var<Int> dnb = 1
+    while ((1 << dnb) <= ne) { dnb = dnb + 1 }
+    if (dnb > 30) {
+        println("ladder_desc: {} edges leave fewer than 2 length bits in a descriptor".format(ne))
+        return 2
+    }
     vth1<Float> = 1.0
     decay1<Float> = 0.9
     e<Eng> = Eng {
@@ -517,7 +548,8 @@ main()<Int> -> {
         cur = alloc0(n, 4), vm = alloc0(n, 4), refr = alloc0(n, 4), flag = 0,
         soff = sb + 4, sids = sb + 4 + 4 * (ld32(sb) + 1),
         fired = alloc0(2 * n, 4), fcnt = alloc0(2 * nt, 8),
-        dbuf = alloc0(nt * nt * dcap, 8), dcap = dcap, dcnt = alloc0(nt * nt, 8),
+        dbuf = alloc0(nt * nt * dcap, 4), dcap = dcap, dcnt = alloc0(nt * nt, 8),
+        dnb = dnb, dmsk = (1 << dnb) - 1, desc = (1 << (32 - dnb)) - 1,
         stats = alloc0(nt * 16, 8), epk = alloc0(nt * epochs, 8),
         bar = atomic_new(0) else 0
     }

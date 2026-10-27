@@ -108,8 +108,8 @@ workload on the 1x–10x ladder graphs. The workload is dt 0.5 ms, with 8 epochs
 
 - `ladder_prop` uses per-(thread, block) edge bins. It is the fastest engine at 1x and 2x.
 - `ladder_seg` pulls along static per-row target segments.
-- `ladder_desc` streams segment descriptors that are built once per step. It is the fastest
-  engine at 5x and 10x.
+- `ladder_desc` streams 4-byte segment descriptors that are built once per step. It is the
+  fastest engine at 5x and 10x.
 
 Each engine reproduces the spike-set digest of the deterministic C++ reference
 (`scripts/cpu/sparse_prop_cpu.cpp`) **bit for bit**, at every scale and at every thread count
@@ -123,14 +123,17 @@ are in `results/energy/vyb_ladder.json`.
 |---|---|---|---|---|---|---|---|---|
 | 1x  | 1.05 G  | 1.55 s  | **1.21 s** (prop)  | 870 M | 0.30 | 146 MB | 8.32 s  | 3.75 s  |
 | 2x  | 2.00 G  | 4.16 s  | **2.60 s** (prop)  | 767 M | 0.65 | 193 MB | 14.97 s | 3.15 s  |
-| 5x  | 5.22 G  | 13.11 s | **7.81 s** (desc)  | 669 M | 1.95 | 371 MB | 43.45 s | 5.74 s  |
-| 10x | 10.69 G | 31.03 s | **17.82 s** (desc) | 600 M | 4.46 | 673 MB | 88.06 s | 10.68 s |
+| 5x  | 5.22 G  | 13.11 s | **7.50 s** (desc) | 696 M | 1.88 | 363 MB | 43.45 s | 5.74 s  |
+| 10x | 10.69 G | 31.03 s | **16.59 s** (desc) | 644 M | 4.15 | 667 MB | 88.06 s | 10.68 s |
 
-The "now" column was measured with a Vyb build that includes the JIT changes in the open Vyb
-PR (inlining at `-O2`, a host-CPU target machine). Those changes do not matter here. A clean
-back-to-back rerun on an idle machine (2 repetitions per engine and scale, both builds
+The 1x and 2x "now" values were measured with a Vyb build that includes the JIT changes in the
+open Vyb PR (inlining at `-O2`, a host-CPU target machine). The 5x and 10x values were measured
+on stock Vyb 0.7.7, after `ladder_desc` moved to 4-byte descriptors. The JIT changes do not
+matter here.
+A clean back-to-back rerun on an idle machine (2 repetitions per engine and scale, both builds
 interleaved) gave identical digests on stock Vyb 0.7.7, and the best engine at each scale ran
-within about 2% of the PR build: 1.22 s at 1x, 2.60 s at 2x, 7.72 s at 5x and 17.97 s at 10x.
+within about 2% of the PR build: 1.22 s at 1x, 2.60 s at 2x, 7.72 s at 5x and 17.97 s at 10x
+(those last two are with the old 8-byte descriptors).
 Only `ladder_seg` gained, by 2–3%. The compiler friction this work turned up is in
 `docs/DOGFOODING.md`.
 
@@ -261,7 +264,7 @@ limitations section and its honesty-log appendix.
 | V1 Vyb-native loader | **done** — 26/26 invariants match the Python reference |
 | M1 whole-connectome LIF baseline | **done** — dense and sparse engines agree exactly; 1 s of brain in 120 s of CPU |
 | M2 Vyb discrete-event engine | **done** — 4/4 replications match the reference exactly |
-| M2b Vyb multithreaded CPU ladder (1x–10x) | **done** — bit-exact digests vs the C++ reference; 10x runs at 4.46 s wall per bio-s |
+| M2b Vyb multithreaded CPU ladder (1x–10x) | **done** — bit-exact digests vs the C++ reference; 10x runs at 4.15 s wall per bio-s |
 | M3 Vyb GPU kernels | **done** — tick-for-tick agreement with the CPU reference (512-neuron fixture) |
 | M4 energy instrumentation | **done** — GPU device power measured; CPU power unavailable on this machine |
 | M5–M8 geometry, downscaling, upscaling, closure | **done** — see section 5 of the paper |
