@@ -235,3 +235,16 @@ The Vyb language and compiler used for the production path:
 Built and executed with an autonomous agent harness ([hermes-agent](https://hermes-agent.nousresearch.com)).
 Every number in the paper is generated from an artifact in `results/` — there are no illustrative
 figures, and nothing in this README that isn't measured somewhere on disk.
+
+
+## The Vyb family
+
+Vyb is a language with more than one consumer; each project below is written in
+it and is a real, running thing rather than a demo.
+
+| project | what it is |
+|---|---|
+| **[Vyb](https://github.com/rickenator/Vyb)** | the language, the LLVM JIT/AOT compiler and the standard library — [vyb-lang.org](https://vyb-lang.org/) |
+| **[VybOS](https://github.com/rickenator/VybOS)** | a Linux-based OS whose declarative, content-addressed configuration and control framework are Vyb; PID 1 is Vyb |
+| **VybWin** *(private for now)* | the window environment for VybOS: apps are cards summoned into an arena, with the ledger one flip away |
+| **[VybForge](https://github.com/rickenator/VybForge)** | the shop floor: a desired-state interviewer for VybOS, a Vyb-native on-GPU inference substrate, and the self-contained voice loop |
