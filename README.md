@@ -170,7 +170,10 @@ the best of 2. Earlier runs beside a resident LLM server were no slower (10x bes
 the GB10 engine is bandwidth-bound, not contention-bound. At 10x, nsys puts the step at about
 410 us of update plus 110 us of push, close to the memory-bandwidth floor of about 75 MB per
 step. On the 3090 (936 GB/s), 1x is slower than 2x because the 8,000 steps of two launches
-each are launch-latency-bound at that size. These GB10 times are from before the u8 weight codes
+each are launch-latency-bound at that size. The 20x and 40x GB10 times here predate the
+u8 weight codes and the stimulus-flag bitmap: with them the same 8-epoch 40x run is
+**12.77 s** on one GB10 and **6.59 s** on the two-Spark RDMA split (see the u8-codes
+section below), still bit-exact. These GB10 times are from before the u8 weight codes
 described below; with them the GB10 takes 0.85, 0.90, 1.84, 3.34, 6.45 and 12.77 s at 1x to 40x.
 
 The 20x and 40x graphs come from `scripts/` the same way as the ladder (n = 2,785,100 and
