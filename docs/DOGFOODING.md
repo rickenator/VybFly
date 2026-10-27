@@ -104,5 +104,45 @@ repo do not depend on any of them: they produce the same digests on stock Vyb 0.
   plus reading the `-c x.o -O2` object with `objdump`.
 - pytest is not in the system Python or the project `.venv`. It is only an optional `dev`
   dependency. With it installed (`pip install pytest` plus the project dependencies), `tests/`
-  passes 20/20. The ladder equivalence checks are digest comparisons of the `RESULT` line against
+  passes 30/30. The ladder equivalence checks are digest comparisons of the `RESULT` line against
   `sparse_prop_cpu`.
+
+## GPU ladder engine (perf/ursela-fly, Oct 2026)
+
+The ladder engine `src/vyb/ladder_gpu.vyb` and its kernels `src/vyb_kernels/ladder_gpu_kernel.vyb`
+are bit-exact at 1x to 10x, and run 10x in 3.94 s on a GB10. That is 2.6x the CUDA kernel on
+the same GPU. Writing them turned up the following.
+
+### Compiler (fixed on Vyb branch `perf/kernel-atomics-bits`, PR open)
+
+- **Miscompile: `x<Int> = f() as Int` with `f` returning `CInt` kept stale high bits.** `CInt`,
+  `CUInt`, `CLong`, `CSize` and the other C aliases were missing from the integer-class table.
+  As a result, `as` between them and `Int` became an identity, and an i32 was stored into an
+  i64 slot with only a "Type mismatch in assignment" warning. It hit host FFI code (CUDA driver
+  return codes) and kernel intrinsics alike: for example, `-5 as Int` read back as
+  1236950581243.
+  - **Fixed:** the aliases are classified, and an int-to-int `as` now always extends or truncates,
+    with zero extension for unsigned sources. Covered by `test/types/cint_as_int_widen_test.vyb`.
+- **Missing kernel intrinsics** for anything exact. Without them there was no way to set a bit
+  atomically, count spikes per warp, or reduce a 64-bit digest.
+  - **Added:** `atomic_{or,and,xor}_u32`, `atomic_add_i64`, `atomic_xor_i64`, `atomic_add_f32`,
+    `atomic_max_i32`, `popc_u32`, `ctz_u32` and `ballot_u32`. Each lowers to
+    `atom`/`red.global` or `vote.sync.ballot`. Covered by `test/kernel/test_atomics_bits.vyb`
+    plus an on-GPU check (`check_atomics_bits.py`, PASS on GB10).
+- Stock Vyb cannot compile the kernel until that PR lands, so the PTX is committed next to the
+  source. The host runner itself runs on stock 0.7.7.
+
+### Still open
+
+- There is no 64-bit warp shuffle. The digest butterfly moves i64 bits through
+  `shfl_xor_f64(f64_from_bits(x))`.
+- The NVPTX path neither unrolls nor software-pipelines a data-dependent `ctz` loop, so each
+  set bit paid a full memory latency. Hand-grouping 8 weight loads per round, summed in order,
+  took 10x from 5.98 s to 4.19 s. A `#pragma unroll`-style hint, or an independent-load
+  scheduling pass, would make this automatic.
+- `fail` is a keyword, so `var<Int> fail = 0` is a parse error whose message does not name the
+  keyword.
+- `cuLaunchKernel` parameters are built by hand, as an `[Int; N]` of `addr()` cells. A typed
+  launch helper in the stdlib would remove a whole class of argument-order bugs.
+- There are no GPU timing hooks (events) in the stdlib; times are host wall clock around one
+  final `cuCtxSynchronize`.

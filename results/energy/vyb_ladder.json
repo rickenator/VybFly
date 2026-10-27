@@ -46,6 +46,31 @@
     "pr_jit_inline_host_cpu_ladder_prop_sim_s": 1.204,
     "pr_jit_inline_host_cpu_ladder_seg_sim_s": 2.171,
     "pr_jit_inline_host_cpu_ladder_desc_sim_s": 1.324
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 0.798,
+    "load_s": 0.211,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true,
+    "spikes_synaptic_events_epoch0_match": true,
+    "overflow": 0,
+    "epochs_identical": true,
+    "events_per_s": 1319066105.2631578,
+    "vs_gpu_kernel_3090": 4.6992481203007515,
+    "vs_sparse_prop_cu_gb10": 4.593984962406014
+   },
+   "sparse_prop_cu_gb10": {
+    "kernel_s": 3.666,
+    "spikes": 49198504,
+    "synaptic_events": 1052614920,
+    "exact": false,
+    "note": "float atomicAdd accumulation: spikes/synaptic events drift from the exact reference"
+   },
+   "vyb_cpu_dgx_spark_arm": {
+    "ladder_prop_16t": 0.964,
+    "digest_matches_cpp_reference": true,
+    "stat": "single run"
    }
   },
   "2x": {
@@ -92,6 +117,32 @@
     "pr_jit_inline_host_cpu_ladder_prop_sim_s": 2.562,
     "pr_jit_inline_host_cpu_ladder_seg_sim_s": 4.077,
     "pr_jit_inline_host_cpu_ladder_desc_sim_s": 2.746
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 0.894,
+    "load_s": 0.237,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true,
+    "spikes_synaptic_events_epoch0_match": true,
+    "overflow": 0,
+    "epochs_identical": true,
+    "events_per_s": 2236286022.3713646,
+    "vs_gpu_kernel_3090": 3.523489932885906,
+    "vs_sparse_prop_cu_gb10": 3.403803131991052
+   },
+   "sparse_prop_cu_gb10": {
+    "kernel_s": 3.043,
+    "spikes": 96193120,
+    "synaptic_events": 1999239202,
+    "exact": false,
+    "note": "float atomicAdd accumulation: spikes/synaptic events drift from the exact reference"
+   },
+   "vyb_cpu_dgx_spark_arm": {
+    "ladder_prop_16t": 1.88,
+    "ladder_prop_20t": 1.91,
+    "digest_matches_cpp_reference": true,
+    "stat": "single run"
    }
   },
   "5x": {
@@ -138,6 +189,33 @@
     "pr_jit_inline_host_cpu_ladder_prop_sim_s": 8.336,
     "pr_jit_inline_host_cpu_ladder_seg_sim_s": 10.66,
     "pr_jit_inline_host_cpu_ladder_desc_sim_s": 7.895
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 2.15,
+    "load_s": 0.334,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true,
+    "spikes_synaptic_events_epoch0_match": true,
+    "overflow": 0,
+    "epochs_identical": true,
+    "events_per_s": 2429626370.2325583,
+    "vs_gpu_kernel_3090": 2.6697674418604653,
+    "vs_sparse_prop_cu_gb10": 2.46
+   },
+   "sparse_prop_cu_gb10": {
+    "kernel_s": 5.289,
+    "spikes": 241365656,
+    "synaptic_events": 5223701330,
+    "exact": false,
+    "note": "float atomicAdd accumulation: spikes/synaptic events drift from the exact reference"
+   },
+   "vyb_cpu_dgx_spark_arm": {
+    "ladder_desc_16t": 5.741,
+    "ladder_desc_20t": 5.658,
+    "ladder_prop_20t": 4.245,
+    "digest_matches_cpp_reference": true,
+    "stat": "single run"
    }
   },
   "10x": {
@@ -184,8 +262,58 @@
     "pr_jit_inline_host_cpu_ladder_prop_sim_s": 20.75,
     "pr_jit_inline_host_cpu_ladder_seg_sim_s": 21.842,
     "pr_jit_inline_host_cpu_ladder_desc_sim_s": 18.164
+   },
+   "vyb_gpu_gb10": {
+    "sim_s": 3.94,
+    "load_s": 0.551,
+    "reps": 2,
+    "stat": "min",
+    "digest_matches_cpp_reference": true,
+    "spikes_synaptic_events_epoch0_match": true,
+    "overflow": 0,
+    "epochs_identical": true,
+    "events_per_s": 2713475910.6598983,
+    "vs_gpu_kernel_3090": 2.7106598984771573,
+    "vs_sparse_prop_cu_gb10": 2.612690355329949
+   },
+   "sparse_prop_cu_gb10": {
+    "kernel_s": 10.294,
+    "spikes": 481969421,
+    "synaptic_events": 10691094744,
+    "kernel_s_other_run": 11.102,
+    "exact": false,
+    "note": "float atomicAdd accumulation: spikes/synaptic events drift from the exact reference"
+   },
+   "vyb_cpu_dgx_spark_arm": {
+    "ladder_desc_16t": 12.476,
+    "ladder_desc_20t": 11.061,
+    "ladder_prop_20t": 7.524,
+    "digest_matches_cpp_reference": true,
+    "stat": "single run"
    }
   }
  },
- "ab_note": "Clean A/B, idle CPU, 2 reps (min), builds interleaved: stock Vyb 0.7.7 vs the jit inline/host-CPU PR; 4-byte descriptors measured on stock. CPU only (CUDA_VISIBLE_DEVICES empty)."
+ "ab_note": "Clean A/B, idle CPU, 2 reps (min), builds interleaved: stock Vyb 0.7.7 vs the jit inline/host-CPU PR; 4-byte descriptors measured on stock. CPU only (CUDA_VISIBLE_DEVICES empty).",
+ "gpu_engine": {
+  "engine": "src/vyb/ladder_gpu.vyb + src/vyb_kernels/ladder_gpu_kernel.vyb (PTX committed)",
+  "host": "DGX Spark (GB10, sm_121, 273 GB/s unified LPDDR5X), shared with a resident LLM server; PTX emitted for sm_86 and JIT-compiled by the driver",
+  "vyb": "host runner on stock Vyb 0.7.7 (c14d4768); kernel PTX from Vyb branch perf/kernel-atomics-bits (needs the new atomics/ballot/popc/ctz intrinsics)",
+  "method": "exact without float atomics: push sets bits of a CSC-position bitmap (red.global.or), update walks each target's bitmap range in ascending source order (ctz) with 8 weight loads in flight per round, summing in the reference order",
+  "rtx3090": "not measured: the 3090 was busy with another job during this work",
+  "profile_10x_us_per_step": {
+   "update": 408,
+   "push": 112,
+   "note": "nsys, 2 epochs; update is near the GB10 bandwidth floor (~75 MB/step)"
+  },
+  "history_10x_sim_s": {
+   "v1 one-at-a-time ctz walk": 5.975,
+   "4 loads in flight": 4.525,
+   "8 loads in flight": 4.194,
+   "+ 32-bit cptr": 3.94
+  }
+ },
+ "arm_cpu": {
+  "host": "DGX Spark righty, 20 Arm cores (10 X925 + 10 A725), stock Vyb 0.7.7, beside a resident LLM server",
+  "finding": "ladder_prop beats ladder_desc at 5x and 10x on Arm (10x 7.52 s vs 11.06 s, 5x 4.25 vs 5.66 s), so run_ladder.sh auto picks ladder_prop on aarch64"
+ }
 }

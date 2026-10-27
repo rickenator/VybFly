@@ -137,6 +137,54 @@ within about 2% of the PR build: 1.22 s at 1x, 2.60 s at 2x, 7.72 s at 5x and 17
 Only `ladder_seg` gained, by 2–3%. The compiler friction this work turned up is in
 `docs/DOGFOODING.md`.
 
+### The Vyb GPU engine: bit-exact, 2.6x the CUDA kernel on the same GPU
+
+`src/vyb/ladder_gpu.vyb` runs the same ladder workload on an NVIDIA GPU through the CUDA driver
+API, with device kernels written in Vyb (`src/vyb_kernels/ladder_gpu_kernel.vyb`). It matches
+the C++ reference **bit for bit** at every scale: the spike count, synaptic events, epoch-0
+spikes and both digests. The existing CUDA kernel (`sparse_prop.cu`) does not, because it
+accumulates with float `atomicAdd`.
+
+The engine is exact without float atomics:
+
+- The push kernel only sets bits. A warp per active source sets one bit per out-edge in a
+  bitmap over CSC positions, which are each target's in-edges sorted by source.
+- The update kernel uses one thread per neuron. It walks its CSC range in ascending order and
+  sums the weights in exactly the reference order, keeping 8 weight loads in flight per round.
+  It then integrates and fires, and appends spikes warp-aggregated.
+
+| scale | Vyb GPU engine (GB10) | `sparse_prop.cu` (same GB10) | GPU kernel (RTX 3090) | Vyb CPU, 20 Arm cores (GB10 host) |
+|---|---|---|---|---|
+| 1x  | **0.80 s** | 3.67 s (inexact) | 3.75 s  | 0.96 s (prop, 16 threads) |
+| 2x  | **0.89 s** | 3.04 s (inexact) | 3.15 s  | 1.88 s (prop, 16 threads) |
+| 5x  | **2.15 s** | 5.29 s (inexact) | 5.74 s  | 4.25 s (prop) |
+| 10x | **3.94 s** | 10.29 s (inexact) | 10.68 s | 7.52 s (prop) |
+
+The GB10 is a DGX Spark with 273 GB/s of unified memory. Its GPU was shared with a resident LLM
+server, so the times are the best of 2 runs. The 3090 number for the Vyb engine is still to be
+measured, because that GPU was busy throughout. At 10x, nsys puts the step at about 410 us of
+update plus 110 us of push, close to the memory-bandwidth floor of about 75 MB per step.
+
+On the Arm host, `ladder_prop` also beats `ladder_desc` at 5x and 10x, the opposite of the i9. `scripts/cpu/run_ladder.sh` therefore picks `ladder_prop` on aarch64.
+
+Run it:
+
+```sh
+VYBFLY_ENGINE=gpu VYBFLY_LADDER_DIR=<ladder>/s10 VYBFLY_LADDER_STIM=<ladder>/stim_s10.bin \
+  VYBFLY_EPOCHS=8 VYB=vyb scripts/cpu/run_ladder.sh --module-path "$VYB_STDLIB"
+```
+
+This works on stock Vyb 0.7.7, because the kernel is committed as PTX (sm_86, which the driver
+JIT-compiles for newer GPUs). Regenerating the PTX needs the kernel intrinsics in Vyb PR
+`perf/kernel-atomics-bits`:
+
+```sh
+vyb --kernel src/vyb_kernels/ladder_gpu_kernel.vyb --gpu sm_86 --ptx src/vyb_kernels/ladder_gpu_kernel.ptx
+```
+
+Further knobs are `VYBFLY_GPU_BLOCK` (256), `VYBFLY_GPU_PUSH_BLOCKS` (2048) and
+`VYBFLY_GPU_DEVICE` (0).
+
 ## Jargon decoder
 
 | term | what it means here |
