@@ -1,0 +1,466 @@
+// ladder_prop.vyb - multithreaded CPU engine for the FlyScale 1x-10x ladder workload, in Vyb.
+//
+// The model is scripts/cuda/sparse_prop.cu's sparse event-driven LIF propagation over the FlyWire
+// CSR (results/energy/curves/s<k>/bin): every neuron that fired on the previous step scatters its
+// out-edges' weights into the targets' input I[], the step's stimulus neurons do the same, then
+// every neuron leaks (V *= decay) and every touched neuron integrates V += I, thresholds and enters
+// a refractory window. Weights are the built-in synapse-count-normalised ones (computed in double
+// exactly as the CUDA host does); the stimulus is the CUDA mt19937_64 schedule, read from the
+// --stim-file format that scripts/cpu/sparse_prop_cpu.cpp --dump-stim writes.
+//
+// Determinism. The GPU accumulates with float atomicAdd, so its last bits (and, at 2x+, its spike
+// totals run to run) depend on thread timing. This engine fixes the canonical order of
+// scripts/cpu/sparse_prop_cpu.cpp -- active list in ascending neuron id, input accumulated source
+// by source over (active ++ stimulus), edges in CSR order -- and reproduces it BIT FOR BIT at any
+// thread count:
+//   phase A (scatter): thread s takes a contiguous chunk of the source list and bins its
+//     (target, weight) pairs by destination block, preserving the order inside each bin;
+//   phase B (integrate): the owner of block b replays bins (s = 0..T-1, b) in order -- so every
+//     neuron's input is summed in exactly the sequential source/edge order -- then leaks,
+//     integrates and fires its block in ascending id, which makes the concatenated per-block fired
+//     lists the next step's ascending active list.
+// Two spin barriers per step; no locks, no atomics on the hot path.
+//
+// The hot loops run in `freedom` over raw calloc'd buffers: Vyb's thread closures may only capture
+// handoff-capable values (copies / our<T>), so disjoint-slice writes from several threads into one
+// array go through addresses (see docs/DOGFOODING.md).
+//
+// Config via environment: VYBFLY_LADDER_DIR (csr dir), VYBFLY_LADDER_STIM (stim file),
+// VYBFLY_THREADS (default 8), VYBFLY_EPOCHS (8), VYBFLY_STEPS (1000), VYBFLY_SYN_GAIN (6),
+// VYBFLY_REFR_STEPS (20).
+import io::{open_read, read_all}
+import env::{env_get}
+import time::{time_nanos}
+import threads::{thread_spawn, thread_join, atomic_new, atomic_add, atomic_load}
+
+extern "C" {
+    calloc(n<Int>, sz<Int>)<Int>
+    realloc(p<Int>, sz<Int>)<Int>
+    sched_yield()<CInt>
+}
+
+struct Eng {
+    n<Int>, ne<Int>, nt<Int>, shift<Int>, blk<Int>, nblk<Int>,
+    steps<Int>, epochs<Int>, max_active<Int>, refr_steps<Int>,
+    vth<Float>, decay<Float>,                   // used as Float32 in the kernel
+    ip<Int>, dst<Int>, w<Int>,                  // CSR: i64 indptr, i32 targets, f32 weights
+    cur<Int>, vm<Int>, refr<Int>, flag<Int>,    // f32 I, f32 V, i32 refractory-until, i32 touched
+    soff<Int>, sids<Int>,                       // stimulus: i32 offsets[steps+1], i32 ids
+    fired<Int>, fcnt<Int>,                      // i32 [2][nblk*blk], i64 [2][nblk]
+    poff<Int>, pbuf<Int>, pcap<Int>, srcb<Int>, bcnt<Int>,
+    stats<Int>, epk<Int>, bar<Int>
+}
+
+ld64(p<Int>)<Int> -> { var<Int> r = 0
+    freedom { r = at(from<loc<Int>>(p)) }
+    return r }
+st64(p<Int>, v<Int>) -> { freedom { at(from<loc<Int>>(p)) = v } }
+ld32(p<Int>)<Int> -> { var<Int32> r = 0
+    freedom { r = at(from<loc<Int32>>(p)) }
+    return r as Int }
+st32(p<Int>, v<Int>) -> { freedom { at(from<loc<Int32>>(p)) = v as Int32 } }
+ldf(p<Int>)<Float32> -> { var<Float32> r = 0.0
+    freedom { r = at(from<loc<Float32>>(p)) }
+    return r }
+stf(p<Int>, v<Float32>) -> { freedom { at(from<loc<Float32>>(p)) = v } }
+
+alloc0(n<Int>, sz<Int>)<Int> -> { var<Int> p = 0
+    freedom { p = calloc(n, sz) }
+    return p }
+
+stat_slot(e<Eng>, t<Int>, f<Int>)<Int> -> { return e.stats + 8 * (t * 16 + f) }
+stat_add(e<Eng>, t<Int>, f<Int>, v<Int>) -> {
+    p<Int> = stat_slot(e, t, f)
+    st64(p, ld64(p) + v)
+}
+
+barrier(e<Eng>, k<Int>) -> {
+    atomic_add(e.bar, 1)
+    target<Int> = k * e.nt
+    var<Int> spins = 0
+    while (atomic_load(e.bar) < target) {
+        spins = spins + 1
+        if (spins > 2000) { freedom { sched_yield() } }
+    }
+}
+
+// Phase A for thread t: build the chunk's source list, bin its edges by destination block.
+scatter_phase(e<Eng>, t<Int>, step<Int>) -> {
+    pp<Int> = (step + 1) & 1                                 // set written by step-1
+    fbase<Int> = e.fired + 4 * pp * e.nblk * e.blk
+    cbase<Int> = e.fcnt + 8 * pp * e.nblk
+    var<Int> f_tot = 0
+    var<Int> b = 0
+    while (b < e.nblk) { f_tot = f_tot + ld64(cbase + 8 * b)
+        b = b + 1 }
+    var<Int> na = f_tot
+    if (na > e.max_active) { na = e.max_active }
+    if (t == 0) { stat_add(e, 0, 5, f_tot - na) }
+    s0<Int> = ld32(e.soff + 4 * step)
+    s1<Int> = ld32(e.soff + 4 * (step + 1))
+    total<Int> = na + (s1 - s0)
+    lo<Int> = (t * total) / e.nt
+    hi<Int> = ((t + 1) * total) / e.nt
+    src<Int> = ld64(e.srcb + 8 * t)
+    var<Int> ns = 0
+    var<Int> q = lo
+    var<Int> cb = 0
+    var<Int> c0 = 0
+    while (q < hi && q < na) {
+        while (q >= c0 + ld64(cbase + 8 * cb)) { c0 = c0 + ld64(cbase + 8 * cb)
+            cb = cb + 1 }
+        st32(src + 4 * ns, ld32(fbase + 4 * (cb * e.blk + (q - c0))))
+        ns = ns + 1
+        q = q + 1
+    }
+    var<Int> nstim = 0
+    while (q < hi) {
+        id<Int> = ld32(e.sids + 4 * (s0 + q - na))
+        if (id >= 0 && id < e.n) {
+            st32(src + 4 * ns, id)
+            ns = ns + 1
+            nstim = nstim + 1
+        }
+        q = q + 1
+    }
+    // pass 1: count per destination block
+    cnt<Int> = e.bcnt + 8 * t * (e.nblk + 1)
+    b = 0
+    while (b <= e.nblk) { st64(cnt + 8 * b, 0)
+        b = b + 1 }
+    var<Int> syn = 0
+    var<Int> k = 0
+    sh<Int> = e.shift
+    dst<Int> = e.dst
+    freedom {
+        while (k < ns) {
+            i<Int> = at(from<loc<Int32>>(src + 4 * k)) as Int
+            var<Int> ed = at(from<loc<Int>>(e.ip + 8 * i))
+            ee<Int> = at(from<loc<Int>>(e.ip + 8 * (i + 1)))
+            if (ee > ed) { syn = syn + (ee - ed) }
+            while (ed < ee) {
+                d<Int> = at(from<loc<Int32>>(dst + 4 * ed)) as Int
+                cp<Int> = cnt + 8 * (d >> sh)
+                at(from<loc<Int>>(cp)) = at(from<loc<Int>>(cp)) + 1
+                ed = ed + 1
+            }
+            k = k + 1
+        }
+    }
+    // offsets (exclusive prefix) into poff[t]; cnt becomes the write cursor
+    po<Int> = e.poff + 8 * t * (e.nblk + 1)
+    var<Int> run = 0
+    b = 0
+    while (b < e.nblk) {
+        c<Int> = ld64(cnt + 8 * b)
+        st64(po + 8 * b, run)
+        st64(cnt + 8 * b, run)
+        run = run + c
+        b = b + 1
+    }
+    st64(po + 8 * e.nblk, run)
+    if (run * 8 > ld64(e.pcap + 8 * t)) {
+        var<Int> np = 0
+        nbytes<Int> = run * 8 + run * 4 + 4096
+        old<Int> = ld64(e.pbuf + 8 * t)
+        freedom { np = realloc(old, nbytes) }
+        st64(e.pbuf + 8 * t, np)
+        st64(e.pcap + 8 * t, nbytes)
+    }
+    buf<Int> = ld64(e.pbuf + 8 * t)
+    wv<Int> = e.w
+    k = 0
+    freedom {
+        while (k < ns) {
+            i<Int> = at(from<loc<Int32>>(src + 4 * k)) as Int
+            var<Int> ed = at(from<loc<Int>>(e.ip + 8 * i))
+            ee<Int> = at(from<loc<Int>>(e.ip + 8 * (i + 1)))
+            while (ed < ee) {
+                d<Int> = at(from<loc<Int32>>(dst + 4 * ed)) as Int
+                cp<Int> = cnt + 8 * (d >> sh)
+                slot<Int> = at(from<loc<Int>>(cp))
+                at(from<loc<Int>>(cp)) = slot + 1
+                at(from<loc<Int32>>(buf + 8 * slot)) = d as Int32
+                at(from<loc<Float32>>(buf + 8 * slot + 4)) = at(from<loc<Float32>>(wv + 4 * ed))
+                ed = ed + 1
+            }
+            k = k + 1
+        }
+    }
+    stat_add(e, t, 0, syn)
+    stat_add(e, t, 1, nstim)
+}
+
+// Phase B for thread t: replay bins into owned blocks, then leak / integrate / fire.
+integrate_phase(e<Eng>, t<Int>, step<Int>, ep<Int>) -> {
+    par<Int> = step & 1
+    fbase<Int> = e.fired + 4 * par * e.nblk * e.blk
+    cbase<Int> = e.fcnt + 8 * par * e.nblk
+    decay<Float32> = e.decay as Float32
+    vth<Float32> = e.vth as Float32
+    cur<Int> = e.cur
+    vm<Int> = e.vm
+    refr<Int> = e.refr
+    flag<Int> = e.flag
+    rs<Int> = e.refr_steps
+    zf<Float32> = 0.0
+    one32<Int32> = 1
+    zero32<Int32> = 0
+    var<Int> spk = 0
+    var<Int> hsum = 0
+    var<Int> hx = 0
+    var<Int> b = t
+    while (b < e.nblk) {
+        var<Int> s = 0
+        while (s < e.nt) {
+            po<Int> = e.poff + 8 * s * (e.nblk + 1)
+            buf<Int> = ld64(e.pbuf + 8 * s)
+            var<Int> k = ld64(po + 8 * b)
+            kend<Int> = ld64(po + 8 * (b + 1))
+            freedom {
+                while (k < kend) {
+                    d<Int> = at(from<loc<Int32>>(buf + 8 * k)) as Int
+                    x<Float32> = at(from<loc<Float32>>(buf + 8 * k + 4))
+                    at(from<loc<Float32>>(cur + 4 * d)) = at(from<loc<Float32>>(cur + 4 * d)) + x
+                    at(from<loc<Int32>>(flag + 4 * d)) = one32
+                    k = k + 1
+                }
+            }
+            s = s + 1
+        }
+        lo<Int> = b * e.blk
+        var<Int> hi = lo + e.blk
+        if (hi > e.n) { hi = e.n }
+        fl<Int> = fbase + 4 * b * e.blk
+        var<Int> nf = 0
+        var<Int> i = lo
+        freedom {
+            while (i < hi) {
+                vd<Float32> = at(from<loc<Float32>>(vm + 4 * i)) * decay
+                if (at(from<loc<Int32>>(flag + 4 * i)) != 0) {
+                    v<Float32> = vd + at(from<loc<Float32>>(cur + 4 * i))
+                    at(from<loc<Float32>>(cur + 4 * i)) = zf
+                    at(from<loc<Int32>>(flag + 4 * i)) = zero32
+                    if (v >= vth && step >= (at(from<loc<Int32>>(refr + 4 * i)) as Int)) {
+                        at(from<loc<Float32>>(vm + 4 * i)) = zf
+                        at(from<loc<Int32>>(refr + 4 * i)) = (step + rs) as Int32
+                        at(from<loc<Int32>>(fl + 4 * nf)) = i as Int32
+                        nf = nf + 1
+                        if (ep == 0) {
+                            key<Int> = step * e.n + i
+                            hsum = hsum + (key & 2147483647)
+                            hx = hx ^ ((((key ^ (key >> 17)) & 2147483647) * 1000003 + (key >> 31)) & 4611686018427387903)
+                        }
+                    } else {
+                        at(from<loc<Float32>>(vm + 4 * i)) = v
+                    }
+                } else {
+                    at(from<loc<Float32>>(vm + 4 * i)) = vd
+                }
+                i = i + 1
+            }
+        }
+        st64(cbase + 8 * b, nf)
+        spk = spk + nf
+        b = b + e.nt
+    }
+    stat_add(e, t, 2, spk)
+    stat_add(e, t, 3, hsum)
+    p<Int> = stat_slot(e, t, 4)
+    st64(p, ld64(p) ^ hx)
+    ek<Int> = e.epk + 8 * (t * e.epochs + ep)
+    st64(ek, ld64(ek) + spk)
+}
+
+reset_phase(e<Eng>, t<Int>) -> {
+    zf<Float32> = 0.0
+    var<Int> b = t
+    while (b < e.nblk) {
+        lo<Int> = b * e.blk
+        var<Int> hi = lo + e.blk
+        if (hi > e.n) { hi = e.n }
+        var<Int> i = lo
+        while (i < hi) {
+            stf(e.cur + 4 * i, zf)
+            stf(e.vm + 4 * i, zf)
+            st32(e.refr + 4 * i, 0)
+            st32(e.flag + 4 * i, 0)
+            i = i + 1
+        }
+        st64(e.fcnt + 8 * b, 0)
+        st64(e.fcnt + 8 * (e.nblk + b), 0)
+        b = b + e.nt
+    }
+}
+
+worker(e<Eng>, t<Int>)<Int> -> {
+    var<Int> k = 0
+    var<Int> ep = 0
+    while (ep < e.epochs) {
+        reset_phase(e, t)
+        k = k + 1
+        barrier(e, k)
+        var<Int> step = 0
+        while (step < e.steps) {
+            scatter_phase(e, t, step)
+            k = k + 1
+            barrier(e, k)
+            integrate_phase(e, t, step, ep)
+            k = k + 1
+            barrier(e, k)
+            step = step + 1
+        }
+        ep = ep + 1
+    }
+    return 0
+}
+
+env_int(name<String>, d<Int>)<Int> -> {
+    match (env_get(name)) {
+        s -> { return s.to_int() }
+        ? -> { return d }
+    }
+}
+
+slurp(path<String>)<String> -> {
+    match (open_read(path)) {
+        f -> {
+            match (read_all(f)) {
+                s -> { return s }
+                ? -> { return "" }
+            }
+        }
+        ? -> { return "" }
+    }
+}
+
+main()<Int> -> {
+    dir<String> = env_get("VYBFLY_LADDER_DIR") else "results/energy/curves/s1"
+    stim_path<String> = env_get("VYBFLY_LADDER_STIM") else "stim_s1.bin"
+    nt<Int> = env_int("VYBFLY_THREADS", 8)
+    epochs<Int> = env_int("VYBFLY_EPOCHS", 8)
+    steps<Int> = env_int("VYBFLY_STEPS", 1000)
+    gain<Int> = env_int("VYBFLY_SYN_GAIN", 6)
+    refr_steps<Int> = env_int("VYBFLY_REFR_STEPS", 20)
+    t_load0<Int> = time_nanos() else 0
+
+    s_ip<String> = slurp(dir + "/bin/csr.out.indptr.i64")
+    s_dst<String> = slurp(dir + "/bin/csr.out.indices.i32")
+    s_syn<String> = slurp(dir + "/bin/csr.out.syn.i32")
+    s_stim<String> = slurp(stim_path)
+    if (s_ip.len() < 16 || s_dst.len() < 4 || s_syn.len() != s_dst.len() || s_stim.len() < 8) {
+        println("ladder_prop: missing or inconsistent input files")
+        return 2
+    }
+    n<Int> = s_ip.len() / 8 - 1
+    ne<Int> = s_dst.len() / 4
+    var<Int> ip = 0
+    var<Int> dst = 0
+    var<Int> syn = 0
+    var<Int> sb = 0
+    freedom {
+        ip = addr(s_ip)
+        dst = addr(s_dst)
+        syn = addr(s_syn)
+        sb = addr(s_stim)
+    }
+    if (ld32(sb) < steps) {
+        println("ladder_prop: stimulus file covers fewer steps than requested")
+        return 2
+    }
+    // weights: synapse-count normalised, double accumulation in edge order (as sparse_prop.cu)
+    tin<Int> = alloc0(n, 8)
+    w<Int> = alloc0(ne, 4)
+    g<Float> = gain as Float
+    freedom {
+        var<Int> e1 = 0
+        while (e1 < ne) {
+            d<Int> = at(from<loc<Int32>>(dst + 4 * e1)) as Int
+            p<Int> = tin + 8 * d
+            at(from<loc<Float>>(p)) = at(from<loc<Float>>(p)) + ((at(from<loc<Int32>>(syn + 4 * e1)) as Int) as Float)
+            e1 = e1 + 1
+        }
+        e1 = 0
+        while (e1 < ne) {
+            d<Int> = at(from<loc<Int32>>(dst + 4 * e1)) as Int
+            tt<Float> = at(from<loc<Float>>(tin + 8 * d))
+            if (tt > 0.0) {
+                sv<Float> = (at(from<loc<Int32>>(syn + 4 * e1)) as Int) as Float
+                at(from<loc<Float32>>(w + 4 * e1)) = ((g * sv) / tt) as Float32
+            }
+            e1 = e1 + 1
+        }
+    }
+    // destination blocks: power-of-two size, ~8 blocks per thread
+    var<Int> shift = 6
+    while ((1 << (shift + 1)) * nt * 8 <= n) { shift = shift + 1 }
+    blk<Int> = 1 << shift
+    nblk<Int> = (n + blk - 1) / blk
+    vth1<Float> = 1.0
+    decay1<Float> = 0.9
+    e<Eng> = Eng {
+        n = n, ne = ne, nt = nt, shift = shift, blk = blk, nblk = nblk,
+        steps = steps, epochs = epochs, max_active = 300000, refr_steps = refr_steps,
+        vth = vth1, decay = decay1,
+        ip = ip, dst = dst, w = w,
+        cur = alloc0(n, 4), vm = alloc0(n, 4), refr = alloc0(n, 4), flag = alloc0(n, 4),
+        soff = sb + 4, sids = sb + 4 + 4 * (ld32(sb) + 1),
+        fired = alloc0(2 * nblk * blk, 4), fcnt = alloc0(2 * nblk, 8),
+        poff = alloc0(nt * (nblk + 1), 8), pbuf = alloc0(nt, 8), pcap = alloc0(nt, 8),
+        srcb = alloc0(nt, 8), bcnt = alloc0(nt * (nblk + 1), 8),
+        stats = alloc0(nt * 16, 8), epk = alloc0(nt * epochs, 8),
+        bar = atomic_new(0) else 0
+    }
+    var<Int> t = 0
+    while (t < nt) {
+        st64(e.srcb + 8 * t, alloc0(n + 4096, 4))
+        t = t + 1
+    }
+    t_sim0<Int> = time_nanos() else 0
+    var<Vec<Int>> hs = Vec<Int>()
+    t = 1
+    while (t < nt) {
+        tid<Int> = t
+        h<Int> = thread_spawn(|| -> worker(e, tid)) else 0
+        hs.push(h)
+        t = t + 1
+    }
+    worker(e, 0)
+    var<Int> j = 0
+    while (j < hs.len()) {
+        thread_join(hs.get(j))
+        j = j + 1
+    }
+    t_end<Int> = time_nanos() else 0
+    var<Int> synev = 0
+    var<Int> stim = 0
+    var<Int> spk = 0
+    var<Int> hsum = 0
+    var<Int> hx = 0
+    t = 0
+    while (t < nt) {
+        synev = synev + ld64(stat_slot(e, t, 0))
+        stim = stim + ld64(stat_slot(e, t, 1))
+        spk = spk + ld64(stat_slot(e, t, 2))
+        hsum = hsum + ld64(stat_slot(e, t, 3))
+        hx = hx ^ ld64(stat_slot(e, t, 4))
+        t = t + 1
+    }
+    over<Int> = ld64(stat_slot(e, 0, 5))
+    var<Int> ident = 1
+    var<Int> ep0 = 0
+    var<Int> ep = 0
+    while (ep < epochs) {
+        var<Int> c = 0
+        t = 0
+        while (t < nt) { c = c + ld64(e.epk + 8 * (t * epochs + ep))
+            t = t + 1 }
+        if (ep == 0) { ep0 = c }
+        if (c != ep0) { ident = 0 }
+        ep = ep + 1
+    }
+    load_ms<Int> = (t_sim0 - t_load0) / 1000000
+    sim_ms<Int> = (t_end - t_sim0) / 1000000
+    println("RESULT engine=vyb_ladder threads={} epochs={} steps={} n_neurons={} n_edges={} blocks={} block={} load_ms={} sim_ms={} spikes={} stimulus_spikes={} synaptic_events={} overflow={} epochs_identical={} epoch0_spikes={} digest_sum={} digest_xor={}".format(nt, epochs, steps, n, ne, nblk, blk, load_ms, sim_ms, spk, stim, synev, over, ident, ep0, hsum, hx))
+    return 0
+}
