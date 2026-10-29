@@ -554,6 +554,42 @@ Synapse count must **not automatically scale quadratically**.
 
 The connectivity law should preserve biological sparsity.
 
+## Dual-Spark capacity ceiling (phase-3 layout, measured)
+
+The phase-3 GPU DES stores the graph as CSR with **8 bytes per contact**
+(i32 post-index + i32 weight; delays ride in the event schedule, not per
+contact) and ~40 bytes per neuron (v 8, accum 8, refr/fired/src/next_ids 4
+each, indptr ~4). At the connectome's own density of ~245 contacts per neuron
+(34.15 M / 139,255) that gives, per node with ~115 GiB usable of the 121 GB
+unified pool:
+
+| deployment | contact budget | neurons at 245 c/n | fly-brain multiple |
+|---|---|---|---|
+| 1 Spark, 8 B/contact | ~14.4 G | ~59 M | ~420× |
+| 2 Sparks, 8 B/contact, ~10% cut duplication | ~26 G | ~106 M | ~765× |
+| 2 Sparks, 8 B/contact, 70% workspace headroom | ~18 G | ~74 M | ~530× |
+| 2 Sparks, 12 B/contact (f32 weights), 70% | ~13 G | ~55 M | ~400× |
+
+So the realistic ceiling for the dual-Spark cluster is **~10^8 neurons — on the
+order of 100 million, roughly 400-750× the fly brain** depending on weight
+precision and workspace headroom. The binding constraint is contact bytes, not
+neuron state (13.9 M neurons of state is < 1 GB). 100× (3.47 B contacts) needs
+only ~28 GB of CSR — one Spark holds it with room to spare. Runtime is
+event-driven and scales with spike count, not neuron count; per-tick launch
+overhead at 10^7-10^8 neuron grids is the open question and is exactly what the
+1×/10× godzilla runs measure before a Spark window is spent.
+
+**Partitioning:** the 2-Spark numbers assume graph partitioning with boundary
+edges exchanged over RoCE (the `VYBFLY_SPLIT_NET` two-Spark split path), not
+full duplication; a bad cut can push the duplication well past 10% and the
+ceiling down proportionally.
+
+**Training is out of scope for this project.** The connectome is a fixed,
+loaded structure — weights come from the measured synapse counts, not from
+learning. Any training/learning extension (plasticity rules, STDP, or learned
+weights) is future work and would change the memory math above (mutable weights
+per contact, optimizer state), so it is noted here as a boundary, not a plan.
+
 If average degree remains approximately bounded, then:
 
 $$
